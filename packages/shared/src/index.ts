@@ -3,12 +3,11 @@
  * This package contains code shared between client and server.
  */
 
-// API response wrapper type
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+// Export all types
+export * from './types/index.js';
+
+// Export all schemas
+export * from './schemas/index.js';
 
 // Health check response
 export interface HealthCheckResponse {
@@ -20,6 +19,9 @@ export interface HealthCheckResponse {
 // App version constant
 export const APP_VERSION = '0.0.1';
 
+// Import types for use in utility functions
+import type { ApiResponse, ApiError } from './types/api.js';
+
 // Utility function to create a typed API response
 export function createSuccessResponse<T>(data: T): ApiResponse<T> {
   return {
@@ -28,9 +30,17 @@ export function createSuccessResponse<T>(data: T): ApiResponse<T> {
   };
 }
 
-export function createErrorResponse(error: string): ApiResponse<never> {
+export function createErrorResponse(
+  code: string,
+  message: string,
+  details?: unknown
+): ApiError {
   return {
     success: false,
-    error,
+    error: {
+      code,
+      message,
+      details,
+    },
   };
 }

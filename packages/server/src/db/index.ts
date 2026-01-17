@@ -2,12 +2,48 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { Migrator } from './migrator.js';
+import { migrations } from './migrations/index.js';
+import { seedDatabase } from './seed.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH =
-  process.env['DB_PATH'] ?? path.join(__dirname, '../../data/lifting.db');
+
+export interface DatabaseConfig {
+  filename: string;
+  inMemory?: boolean;
+}
 
 let db: Database.Database | null = null;
+
+export function getDefaultDatabasePath(): string {
+  return (
+    process.env['DB_PATH'] ?? path.join(__dirname, '../../data/lifting.db')
+  );
+}
+
+export function createDatabase(config: DatabaseConfig): Database.Database {
+  const filename = config.inMemory ? ':memory:' : config.filename;
+
+  // Ensure data directory exists for file-based databases
+  if (!config.inMemory) {
+    const dataDir = path.dirname(filename);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+  }
+
+  const database = new Database(filename);
+
+  // Enable foreign keys
+  database.pragma('foreign_keys = ON');
+
+  // WAL mode for better concurrency (only for file-based databases)
+  if (!config.inMemory) {
+    database.pragma('journal_mode = WAL');
+  }
+
+  return database;
+}
 
 export function getDatabase(): Database.Database {
   if (db === null) {
@@ -19,18 +55,17 @@ export function getDatabase(): Database.Database {
 }
 
 export function initializeDatabase(): Database.Database {
-  // Ensure data directory exists
-  const dataDir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
+  const dbPath = getDefaultDatabasePath();
+  db = createDatabase({ filename: dbPath });
 
-  db = new Database(DB_PATH);
+  // Run migrations
+  const migrator = new Migrator(db, migrations);
+  migrator.up();
 
-  // Enable WAL mode for better concurrent access
-  db.pragma('journal_mode = WAL');
+  // Seed default data
+  seedDatabase(db);
 
-  console.log(`Database initialized at ${DB_PATH}`);
+  console.log(`Database initialized at ${dbPath}`);
 
   return db;
 }
@@ -41,3 +76,7 @@ export function closeDatabase(): void {
     db = null;
   }
 }
+
+export { Migrator } from './migrator.js';
+export { migrations } from './migrations/index.js';
+export { seedDatabase, seedDefaultExercises, DEFAULT_EXERCISES } from './seed.js';

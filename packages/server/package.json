@@ -16,7 +16,9 @@
     "@lifting/shared": "*",
     "better-sqlite3": "^11.7.0",
     "cors": "^2.8.5",
-    "express": "^4.18.3"
+    "express": "^4.18.3",
+    "helmet": "^8.1.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.9",

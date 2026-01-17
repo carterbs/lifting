@@ -1,0 +1,14 @@
+import { Router } from 'express';
+import { healthRouter } from './health.js';
+import { exerciseRouter } from './exercise.routes.js';
+import { planRouter } from './plan.routes.js';
+import { mesocycleRouter } from './mesocycle.routes.js';
+import { workoutRouter } from './workout.routes.js';
+
+export const apiRouter = Router();
+
+apiRouter.use('/health', healthRouter);
+apiRouter.use('/exercises', exerciseRouter);
+apiRouter.use('/plans', planRouter);
+apiRouter.use('/mesocycles', mesocycleRouter);
+apiRouter.use('/workouts', workoutRouter);
