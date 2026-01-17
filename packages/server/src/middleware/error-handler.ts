@@ -32,6 +32,12 @@ export class ConflictError extends AppError {
   }
 }
 
+export class ForbiddenError extends AppError {
+  constructor(message: string) {
+    super(403, 'FORBIDDEN', message);
+  }
+}
+
 export function errorHandler(
   err: Error,
   _req: Request,

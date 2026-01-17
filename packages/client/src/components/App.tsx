@@ -1,59 +1,23 @@
-import { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Box, Container, Heading, Text, Flex } from '@radix-ui/themes';
-import { APP_VERSION, type HealthCheckResponse } from '@lifting/shared';
+import { BottomNav } from './Navigation';
+import { ExerciseLibraryPage } from '../pages';
 
-interface HealthStatus {
-  loading: boolean;
-  data: HealthCheckResponse | null;
-  error: string | null;
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
-export function App(): JSX.Element {
-  const [health, setHealth] = useState<HealthStatus>({
-    loading: true,
-    data: null,
-    error: null,
-  });
-
-  useEffect(() => {
-    const fetchHealth = async (): Promise<void> => {
-      try {
-        const response = await fetch('/api/health');
-        const result = (await response.json()) as {
-          success: boolean;
-          data?: HealthCheckResponse;
-          error?: string;
-        };
-
-        if (result.success && result.data !== undefined) {
-          setHealth({ loading: false, data: result.data, error: null });
-        } else {
-          setHealth({
-            loading: false,
-            data: null,
-            error: result.error ?? 'Unknown error',
-          });
-        }
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Failed to fetch health status';
-        setHealth({ loading: false, data: null, error: errorMessage });
-      }
-    };
-
-    void fetchHealth();
-  }, []);
-
+function TodayPage(): JSX.Element {
   return (
     <Container size="2" p="4">
       <Flex direction="column" gap="4">
-        <Heading size="8" align="center">
-          Lifting
-        </Heading>
-        <Text align="center" color="gray">
-          Workout Tracker v{APP_VERSION}
-        </Text>
-
+        <Heading size="6">Today</Heading>
         <Box
           p="4"
           style={{
@@ -61,27 +25,53 @@ export function App(): JSX.Element {
             borderRadius: 'var(--radius-3)',
           }}
         >
-          <Heading size="4" mb="2">
-            Server Status
-          </Heading>
-          {health.loading && <Text>Checking server connection...</Text>}
-          {health.error !== null && (
-            <Text color="red">Error: {health.error}</Text>
-          )}
-          {health.data !== null && (
-            <Flex direction="column" gap="1">
-              <Text>
-                Status:{' '}
-                <Text color="green" weight="bold">
-                  {health.data.status}
-                </Text>
-              </Text>
-              <Text>Version: {health.data.version}</Text>
-              <Text>Last checked: {health.data.timestamp}</Text>
-            </Flex>
-          )}
+          <Text color="gray">No workout scheduled for today.</Text>
         </Box>
       </Flex>
     </Container>
+  );
+}
+
+function MesoPage(): JSX.Element {
+  return (
+    <Container size="2" p="4">
+      <Flex direction="column" gap="4">
+        <Heading size="6">Mesocycle</Heading>
+        <Box
+          p="4"
+          style={{
+            backgroundColor: 'var(--gray-2)',
+            borderRadius: 'var(--radius-3)',
+          }}
+        >
+          <Text color="gray">No active mesocycle. Create a plan first!</Text>
+        </Box>
+      </Flex>
+    </Container>
+  );
+}
+
+function AppContent(): JSX.Element {
+  return (
+    <>
+      <Box style={{ paddingBottom: '80px' }}>
+        <Routes>
+          <Route path="/" element={<TodayPage />} />
+          <Route path="/meso" element={<MesoPage />} />
+          <Route path="/exercises" element={<ExerciseLibraryPage />} />
+        </Routes>
+      </Box>
+      <BottomNav />
+    </>
+  );
+}
+
+export function App(): JSX.Element {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }

@@ -14,6 +14,11 @@ export interface DatabaseConfig {
 }
 
 let db: Database.Database | null = null;
+let testDb: Database.Database | null = null;
+
+export function setTestDatabase(database: Database.Database | null): void {
+  testDb = database;
+}
 
 export function getDefaultDatabasePath(): string {
   return (
@@ -46,6 +51,11 @@ export function createDatabase(config: DatabaseConfig): Database.Database {
 }
 
 export function getDatabase(): Database.Database {
+  // Use test database if set (for testing)
+  if (testDb !== null) {
+    return testDb;
+  }
+
   if (db === null) {
     throw new Error(
       'Database not initialized. Call initializeDatabase() first.'

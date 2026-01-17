@@ -1,0 +1,140 @@
+import { useLocation, Link } from 'react-router-dom';
+import { Flex, Text } from '@radix-ui/themes';
+
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const navItems: NavItem[] = [
+  {
+    path: '/',
+    label: 'Today',
+    icon: <CalendarIcon />,
+  },
+  {
+    path: '/meso',
+    label: 'Meso',
+    icon: <ListIcon />,
+  },
+  {
+    path: '/exercises',
+    label: 'Exercises',
+    icon: <DumbbellIcon />,
+  },
+];
+
+export function BottomNav(): JSX.Element {
+  const location = useLocation();
+
+  return (
+    <Flex
+      asChild
+      justify="between"
+      align="center"
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '64px',
+        backgroundColor: 'var(--gray-1)',
+        borderTop: '1px solid var(--gray-5)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
+    >
+      <nav aria-label="Main navigation">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '4px',
+                textDecoration: 'none',
+                color: isActive ? 'var(--accent-9)' : 'var(--gray-11)',
+                padding: '8px 16px',
+              }}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              {item.icon}
+              <Text size="1" weight={isActive ? 'medium' : 'regular'}>
+                {item.label}
+              </Text>
+            </Link>
+          );
+        })}
+      </nav>
+    </Flex>
+  );
+}
+
+function CalendarIcon(): JSX.Element {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function ListIcon(): JSX.Element {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="3.01" y2="6" />
+      <line x1="3" y1="12" x2="3.01" y2="12" />
+      <line x1="3" y1="18" x2="3.01" y2="18" />
+    </svg>
+  );
+}
+
+function DumbbellIcon(): JSX.Element {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m6.5 6.5 11 11" />
+      <path d="m21 21-1-1" />
+      <path d="m3 3 1 1" />
+      <path d="m18 22 4-4" />
+      <path d="m2 6 4-4" />
+      <path d="m3 10 7-7" />
+      <path d="m14 21 7-7" />
+    </svg>
+  );
+}

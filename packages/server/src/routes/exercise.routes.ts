@@ -6,7 +6,11 @@ import {
   type Exercise,
 } from '@lifting/shared';
 import { validate } from '../middleware/validate.js';
-import { NotFoundError, ConflictError } from '../middleware/error-handler.js';
+import {
+  NotFoundError,
+  ConflictError,
+  ForbiddenError,
+} from '../middleware/error-handler.js';
 import { getExerciseRepository } from '../repositories/index.js';
 
 export const exerciseRouter = Router();
@@ -121,15 +125,21 @@ exerciseRouter.delete(
         throw new NotFoundError('Exercise', req.params['id'] ?? 'unknown');
       }
 
+      const exercise = repository.findById(id);
+
+      if (!exercise) {
+        throw new NotFoundError('Exercise', id);
+      }
+
+      if (!exercise.is_custom) {
+        throw new ForbiddenError('Cannot delete built-in exercises');
+      }
+
       if (repository.isInUse(id)) {
         throw new ConflictError('Cannot delete exercise that is used in a plan');
       }
 
-      const deleted = repository.delete(id);
-
-      if (!deleted) {
-        throw new NotFoundError('Exercise', id);
-      }
+      repository.delete(id);
 
       res.status(204).send();
     } catch (error) {

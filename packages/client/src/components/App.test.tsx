@@ -1,55 +1,60 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
+import type { Exercise, ApiResponse } from '@lifting/shared';
 import { App } from './App';
 
-// Mock fetch
-global.fetch = vi.fn();
+const mockExercises: Exercise[] = [
+  {
+    id: 1,
+    name: 'Bench Press',
+    weight_increment: 5,
+    is_custom: false,
+    created_at: '2024-01-01T00:00:00.000Z',
+    updated_at: '2024-01-01T00:00:00.000Z',
+  },
+];
 
-function renderWithTheme(
-  component: React.ReactNode
-): ReturnType<typeof render> {
-  return render(<Theme>{component}</Theme>);
-}
+const handlers = [
+  http.get('/api/exercises', () => {
+    const response: ApiResponse<Exercise[]> = {
+      success: true,
+      data: mockExercises,
+    };
+    return HttpResponse.json(response);
+  }),
+];
+
+const server = setupServer(...handlers);
 
 describe('App', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+  afterAll(() => server.close());
+  afterEach(() => server.resetHandlers());
 
-  afterEach(() => {
-    cleanup();
-  });
-
-  it('should render the heading', () => {
-    vi.mocked(fetch).mockResolvedValueOnce({
-      json: () =>
-        Promise.resolve({
-          success: true,
-          data: {
-            status: 'ok',
-            version: '0.0.1',
-            timestamp: new Date().toISOString(),
-          },
-        }),
-    } as Response);
-
-    renderWithTheme(<App />);
-
-    expect(
-      screen.getByRole('heading', { name: 'Lifting' })
-    ).toBeInTheDocument();
-  });
-
-  it('should show loading state initially', () => {
-    vi.mocked(fetch).mockImplementation(
-      () => new Promise(() => {}) // Never resolves
+  it('should render the app with navigation', () => {
+    render(
+      <Theme>
+        <App />
+      </Theme>
     );
 
-    renderWithTheme(<App />);
+    const nav = screen.getByRole('navigation');
+    expect(nav).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Today/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Meso/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Exercises/i })).toBeInTheDocument();
+  });
 
-    expect(
-      screen.getByText('Checking server connection...')
-    ).toBeInTheDocument();
+  it('should show Today page by default', () => {
+    render(
+      <Theme>
+        <App />
+      </Theme>
+    );
+
+    expect(screen.getByRole('heading', { name: 'Today' })).toBeInTheDocument();
   });
 });

@@ -26,6 +26,17 @@ let mesocycleRepository: MesocycleRepository | null = null;
 let workoutRepository: WorkoutRepository | null = null;
 let workoutSetRepository: WorkoutSetRepository | null = null;
 
+// Reset all repository singletons (for testing)
+export function resetRepositories(): void {
+  exerciseRepository = null;
+  planRepository = null;
+  planDayRepository = null;
+  planDayExerciseRepository = null;
+  mesocycleRepository = null;
+  workoutRepository = null;
+  workoutSetRepository = null;
+}
+
 export function getExerciseRepository(): ExerciseRepository {
   if (!exerciseRepository) {
     exerciseRepository = new ExerciseRepository(getDatabase());
