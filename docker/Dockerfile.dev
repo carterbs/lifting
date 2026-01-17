@@ -1,0 +1,27 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies for better-sqlite3 compilation
+RUN apk add --no-cache python3 make g++
+
+# Copy package files
+COPY package*.json ./
+COPY packages/shared/package*.json ./packages/shared/
+COPY packages/server/package*.json ./packages/server/
+COPY packages/client/package*.json ./packages/client/
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Build shared package
+RUN npm run build -w @lifting/shared
+
+# Expose ports
+EXPOSE 3000 3001
+
+# Start development servers
+CMD ["npm", "run", "dev"]

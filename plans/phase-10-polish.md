@@ -23,7 +23,7 @@ export const colors = {
     200: '#81E6D9',
     300: '#4FD1C5',
     400: '#38B2AC',
-    500: '#319795',  // Main primary
+    500: '#319795', // Main primary
     600: '#2C7A7B',
     700: '#285E61',
     800: '#234E52',
@@ -37,7 +37,7 @@ export const colors = {
     200: '#FEB2B2',
     300: '#FC8181',
     400: '#F56565',
-    500: '#E53E3E',  // Main accent
+    500: '#E53E3E', // Main accent
     600: '#C53030',
     700: '#9B2C2C',
     800: '#822727',
@@ -72,6 +72,7 @@ export const colors = {
 ```
 
 **Implementation Tasks:**
+
 - [ ] Create `/client/src/theme/colors.ts` with the color palette
 - [ ] Create `/client/src/theme/index.ts` to export theme configuration
 - [ ] Update Radix UI theme provider to use custom colors
@@ -82,6 +83,7 @@ export const colors = {
 ### 1.2 Bottom Tab Navigation
 
 **Component Structure:**
+
 ```typescript
 // client/src/components/navigation/BottomNav.tsx
 interface NavTab {
@@ -99,6 +101,7 @@ const tabs: NavTab[] = [
 ```
 
 **Implementation Tasks:**
+
 - [ ] Create `BottomNav` component with fixed positioning at viewport bottom
 - [ ] Implement active state highlighting using route matching
 - [ ] Add touch-friendly tap targets (minimum 44x44px)
@@ -111,6 +114,7 @@ const tabs: NavTab[] = [
 - [ ] Add safe area insets for notched devices
 
 **Styling:**
+
 ```css
 .bottom-nav {
   position: fixed;
@@ -131,6 +135,7 @@ const tabs: NavTab[] = [
 ### 1.3 Typography System
 
 **Font Stack:**
+
 ```typescript
 // client/src/theme/typography.ts
 export const typography = {
@@ -140,12 +145,12 @@ export const typography = {
   },
 
   fontSize: {
-    xs: '0.75rem',    // 12px - captions
-    sm: '0.875rem',   // 14px - secondary text
-    base: '1rem',     // 16px - body text
-    lg: '1.125rem',   // 18px - emphasized body
-    xl: '1.25rem',    // 20px - section headers
-    '2xl': '1.5rem',  // 24px - page titles
+    xs: '0.75rem', // 12px - captions
+    sm: '0.875rem', // 14px - secondary text
+    base: '1rem', // 16px - body text
+    lg: '1.125rem', // 18px - emphasized body
+    xl: '1.25rem', // 20px - section headers
+    '2xl': '1.5rem', // 24px - page titles
     '3xl': '1.875rem', // 30px - large titles
   },
 
@@ -165,6 +170,7 @@ export const typography = {
 ```
 
 **Implementation Tasks:**
+
 - [ ] Create typography configuration file
 - [ ] Define heading styles (h1-h6) with consistent hierarchy
 - [ ] Define body text styles
@@ -174,20 +180,21 @@ export const typography = {
 ### 1.4 Spacing System
 
 **Spacing Scale:**
+
 ```typescript
 // client/src/theme/spacing.ts
 export const spacing = {
   0: '0',
-  1: '0.25rem',   // 4px
-  2: '0.5rem',    // 8px
-  3: '0.75rem',   // 12px
-  4: '1rem',      // 16px
-  5: '1.25rem',   // 20px
-  6: '1.5rem',    // 24px
-  8: '2rem',      // 32px
-  10: '2.5rem',   // 40px
-  12: '3rem',     // 48px
-  16: '4rem',     // 64px
+  1: '0.25rem', // 4px
+  2: '0.5rem', // 8px
+  3: '0.75rem', // 12px
+  4: '1rem', // 16px
+  5: '1.25rem', // 20px
+  6: '1.5rem', // 24px
+  8: '2rem', // 32px
+  10: '2.5rem', // 40px
+  12: '3rem', // 48px
+  16: '4rem', // 64px
 };
 
 // Component-specific
@@ -204,6 +211,7 @@ export const componentSpacing = {
 ```
 
 **Implementation Tasks:**
+
 - [ ] Create spacing configuration file
 - [ ] Audit all components for consistent spacing usage
 - [ ] Add page-level padding that accounts for bottom nav
@@ -212,6 +220,7 @@ export const componentSpacing = {
 ### 1.5 Loading States
 
 **Loading Component Variants:**
+
 ```typescript
 // client/src/components/ui/Loading.tsx
 
@@ -248,6 +257,7 @@ export const ExerciseListSkeleton: React.FC<{ count?: number }> = ({ count = 5 }
 ```
 
 **Implementation Tasks:**
+
 - [ ] Create `Spinner` component with size variants
 - [ ] Create skeleton components for:
   - Workout card
@@ -261,6 +271,7 @@ export const ExerciseListSkeleton: React.FC<{ count?: number }> = ({ count = 5 }
 ### 1.6 Error States
 
 **Error Component:**
+
 ```typescript
 // client/src/components/ui/ErrorState.tsx
 interface ErrorStateProps {
@@ -291,6 +302,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
 ```
 
 **Implementation Tasks:**
+
 - [ ] Create `ErrorState` component with retry functionality
 - [ ] Create `ErrorBoundary` component for React error catching
 - [ ] Add error states to all API hooks
@@ -304,6 +316,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
 ### 1.7 Empty States
 
 **Empty State Components:**
+
 ```typescript
 // client/src/components/ui/EmptyState.tsx
 interface EmptyStateProps {
@@ -363,6 +376,7 @@ export const NoWorkoutTodayEmpty: React.FC = () => (
 ```
 
 **Implementation Tasks:**
+
 - [ ] Create base `EmptyState` component
 - [ ] Create specific empty states for:
   - No plans created
@@ -377,13 +391,14 @@ export const NoWorkoutTodayEmpty: React.FC = () => (
 ### 1.8 Mobile-Responsive Design
 
 **Breakpoints:**
+
 ```typescript
 // client/src/theme/breakpoints.ts
 export const breakpoints = {
-  sm: '640px',   // Small phones
-  md: '768px',   // Large phones / small tablets
-  lg: '1024px',  // Tablets
-  xl: '1280px',  // Desktop
+  sm: '640px', // Small phones
+  md: '768px', // Large phones / small tablets
+  lg: '1024px', // Tablets
+  xl: '1280px', // Desktop
 };
 
 // Mobile-first media queries
@@ -396,6 +411,7 @@ export const media = {
 ```
 
 **Mobile-First Principles:**
+
 - [ ] All touch targets minimum 44x44px
 - [ ] Forms use appropriate input types (`inputmode="numeric"` for weights/reps)
 - [ ] Large, easy-to-tap buttons during workout
@@ -404,6 +420,7 @@ export const media = {
 - [ ] Viewport meta tag with `user-scalable=no` during workout (optional)
 
 **Implementation Tasks:**
+
 - [ ] Audit all components for mobile usability
 - [ ] Test on various viewport sizes (320px - 428px width)
 - [ ] Ensure workout logging UI is thumb-friendly
@@ -418,6 +435,7 @@ export const media = {
 ### 2.1 Multi-stage Dockerfile
 
 **File: `/Dockerfile.prod`**
+
 ```dockerfile
 # ================================================
 # Stage 1: Build client
@@ -494,6 +512,7 @@ CMD ["node", "dist/index.js"]
 ```
 
 **Implementation Tasks:**
+
 - [ ] Create `/Dockerfile.prod` with multi-stage build
 - [ ] Optimize layer caching (package.json before source)
 - [ ] Configure non-root user for security
@@ -503,6 +522,7 @@ CMD ["node", "dist/index.js"]
 ### 2.2 Docker Compose Production
 
 **File: `/docker-compose.prod.yml`**
+
 ```yaml
 version: '3.8'
 
@@ -514,23 +534,31 @@ services:
     container_name: lifting-app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - lifting-data:/app/data
     environment:
       - NODE_ENV=production
       - DATABASE_PATH=/app/data/lifting.db
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://localhost:3000/api/health',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
 volumes:
   lifting-data:
@@ -538,6 +566,7 @@ volumes:
 ```
 
 **Implementation Tasks:**
+
 - [ ] Create `/docker-compose.prod.yml`
 - [ ] Configure named volume for database persistence
 - [ ] Set restart policy to `unless-stopped`
@@ -547,6 +576,7 @@ volumes:
 ### 2.3 Health Check Endpoint
 
 **Server Implementation:**
+
 ```typescript
 // server/src/routes/health.ts
 import { Router } from 'express';
@@ -592,6 +622,7 @@ export default router;
 ```
 
 **Implementation Tasks:**
+
 - [ ] Create `/server/src/routes/health.ts`
 - [ ] Register health route in Express app
 - [ ] Include database connectivity check
@@ -600,6 +631,7 @@ export default router;
 ### 2.4 Production Server Configuration
 
 **Updates to server/src/index.ts:**
+
 ```typescript
 // server/src/index.ts
 import express from 'express';
@@ -610,19 +642,21 @@ import helmet from 'helmet';
 const app = express();
 
 // Security headers
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
-      mediaSrc: ["'self'"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:'],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        mediaSrc: ["'self'"],
+      },
     },
-  },
-}));
+  })
+);
 
 // Compression
 app.use(compression());
@@ -648,6 +682,7 @@ app.listen(PORT, () => {
 ```
 
 **Implementation Tasks:**
+
 - [ ] Add `helmet` for security headers
 - [ ] Add `compression` middleware
 - [ ] Configure static file serving for production
@@ -661,7 +696,8 @@ app.listen(PORT, () => {
 ### 3.1 README.md
 
 **File: `/README.md`**
-```markdown
+
+````markdown
 # Lifting - Weight Training Workout Tracker
 
 A personal weight training workout tracker designed for progressive overload training with mesocycle planning.
@@ -698,14 +734,17 @@ A personal weight training workout tracker designed for progressive overload tra
    git clone <repository-url>
    cd lifting
    ```
+````
 
 2. **Install dependencies**
+
    ```bash
    # Install all dependencies (root, client, server)
    npm install
    ```
 
 3. **Start development servers**
+
    ```bash
    # Start both client and server in development mode
    npm run dev
@@ -715,6 +754,7 @@ A personal weight training workout tracker designed for progressive overload tra
    - Server: http://localhost:3001
 
 4. **Run tests**
+
    ```bash
    # Unit tests
    npm run test
@@ -740,16 +780,19 @@ docker-compose up --build
 ### Production Docker Build
 
 1. **Build the production image**
+
    ```bash
    docker-compose -f docker-compose.prod.yml build
    ```
 
 2. **Run in production**
+
    ```bash
    docker-compose -f docker-compose.prod.yml up -d
    ```
 
 3. **View logs**
+
    ```bash
    docker-compose -f docker-compose.prod.yml logs -f
    ```
@@ -773,10 +816,10 @@ docker cp ./backup.db lifting-app:/app/data/lifting.db
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NODE_ENV` | Environment mode | `development` |
-| `PORT` | Server port | `3000` |
+| Variable        | Description               | Default             |
+| --------------- | ------------------------- | ------------------- |
+| `NODE_ENV`      | Environment mode          | `development`       |
+| `PORT`          | Server port               | `3000`              |
 | `DATABASE_PATH` | SQLite database file path | `./data/lifting.db` |
 
 ## Project Structure
@@ -832,7 +875,8 @@ lifting/
 ## License
 
 MIT
-```
+
+````
 
 **Implementation Tasks:**
 - [ ] Create comprehensive README.md
@@ -867,11 +911,12 @@ npm run test:e2e -- --testPathPattern="workout-logging"
 
 # Run with headed browser for debugging
 npm run test:e2e -- --headed
-```
+````
 
 ### 4.2 Manual Testing Checklist
 
 **Today Tab:**
+
 - [ ] Shows "Rest day" when no workout scheduled
 - [ ] Shows workout summary when workout exists
 - [ ] Can start workout
@@ -884,6 +929,7 @@ npm run test:e2e -- --headed
 - [ ] Progress persists after completion
 
 **Meso Tab:**
+
 - [ ] Shows empty state when no active meso
 - [ ] Can view available plans
 - [ ] Can start a mesocycle
@@ -893,6 +939,7 @@ npm run test:e2e -- --headed
 - [ ] Deload week appears after 6 weeks
 
 **Library Tab:**
+
 - [ ] Shows all exercises
 - [ ] Can add new exercise
 - [ ] Can edit exercise
@@ -901,6 +948,7 @@ npm run test:e2e -- --headed
 - [ ] Exercise shows in plan creation
 
 **Cross-cutting:**
+
 - [ ] Loading states appear during data fetches
 - [ ] Error states appear with retry option on failures
 - [ ] Empty states are informative and actionable
@@ -911,6 +959,7 @@ npm run test:e2e -- --headed
 ### 4.3 Docker Production Build Verification
 
 **Build and Test Commands:**
+
 ```bash
 # Build production image
 docker-compose -f docker-compose.prod.yml build
@@ -940,6 +989,7 @@ docker-compose -f docker-compose.prod.yml down -v
 ```
 
 **Verification Checklist:**
+
 - [ ] Production build completes without errors
 - [ ] Container starts successfully
 - [ ] Health check endpoint returns healthy
@@ -956,6 +1006,7 @@ docker-compose -f docker-compose.prod.yml down -v
 ### 5.1 Favicon
 
 **Implementation:**
+
 ```bash
 # Create favicon files in client/public/
 # - favicon.ico (16x16, 32x32, 48x48)
@@ -965,11 +1016,12 @@ docker-compose -f docker-compose.prod.yml down -v
 ```
 
 **client/index.html updates:**
+
 ```html
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 ```
 
 **Design:** Simple dumbbell or weight plate icon in primary teal color
@@ -982,12 +1034,17 @@ docker-compose -f docker-compose.prod.yml down -v
 ### 5.2 App Title
 
 **client/index.html:**
+
 ```html
 <title>Lifting - Workout Tracker</title>
-<meta name="description" content="Personal weight training workout tracker with progressive overload planning">
+<meta
+  name="description"
+  content="Personal weight training workout tracker with progressive overload planning"
+/>
 ```
 
 **Dynamic titles per page:**
+
 ```typescript
 // client/src/hooks/usePageTitle.ts
 export function usePageTitle(title: string) {
@@ -1001,7 +1058,7 @@ export function usePageTitle(title: string) {
 }
 
 // Usage
-usePageTitle('Today');  // "Today | Lifting"
+usePageTitle('Today'); // "Today | Lifting"
 usePageTitle('Leg Day'); // "Leg Day | Lifting"
 ```
 
@@ -1021,14 +1078,17 @@ usePageTitle('Leg Day'); // "Leg Day | Lifting"
 | `n` | New (exercise/plan) | Library/Plans |
 
 **Implementation:**
+
 ```typescript
 // client/src/hooks/useKeyboardShortcuts.ts
 export function useKeyboardShortcuts() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       // Don't trigger if user is typing
-      if (e.target instanceof HTMLInputElement ||
-          e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
 
@@ -1062,6 +1122,7 @@ export function useKeyboardShortcuts() {
 ## 6. Implementation Order
 
 ### Phase 10A: UI Foundation (Day 1-2)
+
 1. Set up theme system (colors, typography, spacing)
 2. Create BottomNav component
 3. Set up page routes and navigation
@@ -1070,6 +1131,7 @@ export function useKeyboardShortcuts() {
 6. Create EmptyState components
 
 ### Phase 10B: UI Integration (Day 2-3)
+
 7. Apply theme to all existing components
 8. Add loading states to all data hooks
 9. Add error states with retry
@@ -1078,6 +1140,7 @@ export function useKeyboardShortcuts() {
 12. Accessibility review (ARIA labels, focus states)
 
 ### Phase 10C: Production Docker (Day 3-4)
+
 13. Create Dockerfile.prod
 14. Create docker-compose.prod.yml
 15. Implement health check endpoint
@@ -1086,6 +1149,7 @@ export function useKeyboardShortcuts() {
 18. Test production build
 
 ### Phase 10D: Documentation & Testing (Day 4-5)
+
 19. Write comprehensive README.md
 20. Run full E2E test suite
 21. Manual testing of all flows
@@ -1097,6 +1161,7 @@ export function useKeyboardShortcuts() {
 ## 7. Success Criteria
 
 ### UI Polish
+
 - [ ] Consistent color palette applied throughout app
 - [ ] Bottom tab navigation functional on all pages
 - [ ] Typography hierarchy is clear and readable
@@ -1109,6 +1174,7 @@ export function useKeyboardShortcuts() {
 - [ ] No horizontal scroll on mobile
 
 ### Production Docker
+
 - [ ] `docker-compose -f docker-compose.prod.yml build` succeeds
 - [ ] `docker-compose -f docker-compose.prod.yml up` starts healthy container
 - [ ] `/api/health` returns 200 with healthy status
@@ -1118,17 +1184,20 @@ export function useKeyboardShortcuts() {
 - [ ] Logs are captured and rotated
 
 ### Documentation
+
 - [ ] README has clear setup instructions
 - [ ] README has deployment instructions
 - [ ] README documents all environment variables
 - [ ] README explains project structure
 
 ### Testing
+
 - [ ] All E2E tests pass
 - [ ] Manual testing checklist completed with no critical issues
 - [ ] Production Docker build verified working
 
 ### Nice-to-Haves (Optional)
+
 - [ ] Favicon displays in browser tab
 - [ ] Page title updates per route
 - [ ] Basic keyboard shortcuts work
@@ -1200,6 +1269,7 @@ No additional client dependencies required (Radix UI already provides icons and 
 ## 10. Files to Create/Modify
 
 ### New Files
+
 - `/client/src/theme/colors.ts`
 - `/client/src/theme/typography.ts`
 - `/client/src/theme/spacing.ts`
@@ -1219,6 +1289,7 @@ No additional client dependencies required (Radix UI already provides icons and 
 - `/client/public/favicon.ico` (optional)
 
 ### Modified Files
+
 - `/client/src/App.tsx` - Add theme provider, routing
 - `/client/src/index.html` - Add favicon links, meta tags
 - `/client/src/index.css` - Add CSS variables from theme

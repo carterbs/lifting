@@ -7,14 +7,17 @@ This phase implements the core workout tracking feature using a strict Test-Driv
 ## Key Design Decisions
 
 ### 1. Out-of-Order Set Logging
+
 Users can log sets for any exercise in any order. This reflects real gym conditions where equipment availability varies. The UI presents all exercises at once, and users tap to log whichever set they're ready to complete.
 
 ### 2. Hybrid Persistence Strategy
+
 - **Intra-workout**: State saved to localStorage on every change (resilient to browser crashes, page refreshes)
 - **Workout completion**: Full state persisted to SQLite database
 - **Sync strategy**: On app load, check localStorage for in-progress workout; restore state if found
 
 ### 3. Flexible Completion Rules
+
 - Workouts can be completed even with pending (unlogged) sets
 - Sets can be skipped individually
 - Entire workouts can be skipped (counts as a workout day for mesocycle tracking)
@@ -87,6 +90,7 @@ packages/api/
 **Purpose**: Retrieve a workout with all its sets, organized by exercise.
 
 **Test Cases** (write these first):
+
 ```typescript
 describe('GET /api/workouts/:id', () => {
   it('should return 404 for non-existent workout', async () => {
@@ -116,11 +120,11 @@ describe('GET /api/workouts/:id', () => {
               targetWeight: expect.any(Number),
               actualReps: null,
               actualWeight: null,
-              status: 'pending'
-            })
-          ])
-        })
-      ])
+              status: 'pending',
+            }),
+          ]),
+        }),
+      ]),
     });
   });
 
@@ -139,13 +143,16 @@ describe('GET /api/workouts/:id', () => {
     const response = await request(app).get('/api/workouts/1');
 
     // Exercises should be ordered by their position in the plan
-    const exerciseIds = response.body.exercises.map((e: Exercise) => e.exerciseId);
+    const exerciseIds = response.body.exercises.map(
+      (e: Exercise) => e.exerciseId
+    );
     expect(exerciseIds).toEqual([1, 2, 3]); // In plan order
   });
 });
 ```
 
 **Response Shape**:
+
 ```typescript
 interface GetWorkoutResponse {
   id: number;
@@ -177,6 +184,7 @@ interface GetWorkoutResponse {
 **Purpose**: Mark a workout as in-progress (started).
 
 **Test Cases**:
+
 ```typescript
 describe('PUT /api/workouts/:id/start', () => {
   it('should return 404 for non-existent workout', async () => {
@@ -223,6 +231,7 @@ describe('PUT /api/workouts/:id/start', () => {
 **Purpose**: Mark a workout as completed.
 
 **Test Cases**:
+
 ```typescript
 describe('PUT /api/workouts/:id/complete', () => {
   it('should return 404 for non-existent workout', async () => {
@@ -244,7 +253,7 @@ describe('PUT /api/workouts/:id/complete', () => {
     await request(app).put('/api/workouts/1/start');
     await request(app).put('/api/workout-sets/1/log').send({
       actualReps: 8,
-      actualWeight: 30
+      actualWeight: 30,
     });
     // Leave other sets as pending
 
@@ -266,7 +275,9 @@ describe('PUT /api/workouts/:id/complete', () => {
     const response = await request(app).put('/api/workouts/1/complete');
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Cannot complete a workout that has not been started');
+    expect(response.body.error).toBe(
+      'Cannot complete a workout that has not been started'
+    );
   });
 
   it('should return 400 when completing already completed workout', async () => {
@@ -293,6 +304,7 @@ describe('PUT /api/workouts/:id/complete', () => {
 **Purpose**: Skip an entire workout.
 
 **Test Cases**:
+
 ```typescript
 describe('PUT /api/workouts/:id/skip', () => {
   it('should return 404 for non-existent workout', async () => {
@@ -339,8 +351,8 @@ describe('PUT /api/workouts/:id/skip', () => {
 
     // Verify all sets are skipped
     const workout = await request(app).get('/api/workouts/1');
-    const allSetsSkipped = workout.body.exercises.every(
-      (e: Exercise) => e.sets.every((s: WorkoutSet) => s.status === 'skipped')
+    const allSetsSkipped = workout.body.exercises.every((e: Exercise) =>
+      e.sets.every((s: WorkoutSet) => s.status === 'skipped')
     );
     expect(allSetsSkipped).toBe(true);
   });
@@ -352,6 +364,7 @@ describe('PUT /api/workouts/:id/skip', () => {
 **Purpose**: Log actual reps and weight for a single set.
 
 **Test Cases**:
+
 ```typescript
 describe('PUT /api/workout-sets/:id/log', () => {
   it('should return 404 for non-existent set', async () => {
@@ -375,7 +388,7 @@ describe('PUT /api/workout-sets/:id/log', () => {
       actualReps: 8,
       actualWeight: 30,
       status: 'logged',
-      loggedAt: expect.any(String)
+      loggedAt: expect.any(String),
     });
   });
 
@@ -449,7 +462,9 @@ describe('PUT /api/workout-sets/:id/log', () => {
       .send({ actualReps: 8, actualWeight: 30 });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Cannot log sets for a workout that has not been started');
+    expect(response.body.error).toBe(
+      'Cannot log sets for a workout that has not been started'
+    );
   });
 
   it('should return 400 when logging set for completed workout', async () => {
@@ -505,6 +520,7 @@ describe('PUT /api/workout-sets/:id/log', () => {
 **Purpose**: Skip a single set.
 
 **Test Cases**:
+
 ```typescript
 describe('PUT /api/workout-sets/:id/skip', () => {
   it('should return 404 for non-existent set', async () => {
@@ -539,7 +555,9 @@ describe('PUT /api/workout-sets/:id/skip', () => {
     const response = await request(app).put('/api/workout-sets/1/skip');
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Cannot skip sets for a workout that has not been started');
+    expect(response.body.error).toBe(
+      'Cannot skip sets for a workout that has not been started'
+    );
   });
 
   it('should return 400 when skipping set for completed workout', async () => {
@@ -549,7 +567,9 @@ describe('PUT /api/workout-sets/:id/skip', () => {
     const response = await request(app).put('/api/workout-sets/1/skip');
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Cannot skip sets for a completed workout');
+    expect(response.body.error).toBe(
+      'Cannot skip sets for a completed workout'
+    );
   });
 });
 ```
@@ -569,6 +589,7 @@ interface WorkoutService {
 ```
 
 **Service Tests**:
+
 ```typescript
 describe('WorkoutService', () => {
   describe('getById', () => {
@@ -628,6 +649,7 @@ interface LogSetInput {
 ```
 
 **Service Tests**:
+
 ```typescript
 describe('WorkoutSetService', () => {
   describe('getById', () => {
@@ -701,11 +723,13 @@ packages/web/
 #### TodayPage.tsx
 
 **Responsibilities**:
+
 - Fetch today's workout on mount
 - Display "No workout scheduled" when appropriate
 - Render WorkoutView when workout exists
 
 **Test Cases**:
+
 ```typescript
 describe('TodayPage', () => {
   it('should show loading state initially');
@@ -719,6 +743,7 @@ describe('TodayPage', () => {
 #### WorkoutView.tsx
 
 **Responsibilities**:
+
 - Display workout header (date, status)
 - List all exercises with their sets
 - Provide "Start Workout" button if scheduled
@@ -727,6 +752,7 @@ describe('TodayPage', () => {
 - Sync state to localStorage on every change
 
 **Props**:
+
 ```typescript
 interface WorkoutViewProps {
   workout: WorkoutWithSets;
@@ -739,6 +765,7 @@ interface WorkoutViewProps {
 ```
 
 **Test Cases**:
+
 ```typescript
 describe('WorkoutView', () => {
   it('should display workout date');
@@ -758,12 +785,14 @@ describe('WorkoutView', () => {
 #### ExerciseCard.tsx
 
 **Responsibilities**:
+
 - Display exercise name
 - Display rest time
 - Render all sets for the exercise
 - Show progress indicator (e.g., "2/3 sets completed")
 
 **Props**:
+
 ```typescript
 interface ExerciseCardProps {
   exercise: ExerciseWithSets;
@@ -774,6 +803,7 @@ interface ExerciseCardProps {
 ```
 
 **Test Cases**:
+
 ```typescript
 describe('ExerciseCard', () => {
   it('should display exercise name');
@@ -787,6 +817,7 @@ describe('ExerciseCard', () => {
 #### SetRow.tsx
 
 **Responsibilities**:
+
 - Display set number, target reps, target weight
 - Display actual values when logged
 - Provide tap-to-log functionality
@@ -794,6 +825,7 @@ describe('ExerciseCard', () => {
 - Visual distinction for logged, pending, and skipped states
 
 **Props**:
+
 ```typescript
 interface SetRowProps {
   set: WorkoutSet;
@@ -804,6 +836,7 @@ interface SetRowProps {
 ```
 
 **Test Cases**:
+
 ```typescript
 describe('SetRow', () => {
   it('should display set number');
@@ -823,6 +856,7 @@ describe('SetRow', () => {
 #### LogSetModal.tsx
 
 **Responsibilities**:
+
 - Modal dialog for logging set details
 - Pre-fill with target values (or actual values if re-logging)
 - Number inputs for reps and weight
@@ -830,6 +864,7 @@ describe('SetRow', () => {
 - Input validation
 
 **Props**:
+
 ```typescript
 interface LogSetModalProps {
   open: boolean;
@@ -840,6 +875,7 @@ interface LogSetModalProps {
 ```
 
 **Test Cases**:
+
 ```typescript
 describe('LogSetModal', () => {
   it('should display set number in title');
@@ -866,7 +902,10 @@ const WORKOUT_STORAGE_KEY = 'lifting-app-workout-state';
 
 interface StoredWorkoutState {
   workoutId: number;
-  sets: Map<number, { actualReps: number; actualWeight: number; status: SetStatus }>;
+  sets: Map<
+    number,
+    { actualReps: number; actualWeight: number; status: SetStatus }
+  >;
   lastUpdated: string;
 }
 
@@ -878,6 +917,7 @@ function useLocalStorageWorkout(workoutId: number) {
 ```
 
 **Test Cases**:
+
 ```typescript
 describe('useLocalStorageWorkout', () => {
   it('should return null when no stored state');
@@ -894,6 +934,7 @@ describe('useLocalStorageWorkout', () => {
 #### Recovery Flow
 
 When loading the Today page:
+
 1. Fetch today's workout from API
 2. Check localStorage for stored workout state
 3. If stored state exists for same workout ID:
@@ -907,6 +948,7 @@ When loading the Today page:
 ### useWorkout.ts Hook
 
 **Responsibilities**:
+
 - Fetch workout data
 - Manage optimistic updates
 - Sync with localStorage
@@ -930,9 +972,10 @@ function useWorkout(): UseWorkoutReturn {
 ```
 
 **Test Cases**:
+
 ```typescript
 describe('useWorkout', () => {
-  it('should fetch today\'s workout on mount');
+  it("should fetch today's workout on mount");
   it('should set loading state during fetch');
   it('should handle fetch errors');
 
@@ -1327,6 +1370,7 @@ export async function clearWorkouts() {
 ## Success Criteria
 
 ### Functionality
+
 - [ ] User can view today's scheduled workout on the Today tab
 - [ ] User can start a workout (changes status to in_progress)
 - [ ] User can log any set in any order with actual reps and weight
@@ -1339,6 +1383,7 @@ export async function clearWorkouts() {
 - [ ] "No workout scheduled" message shows when appropriate
 
 ### Testing
+
 - [ ] 100% unit test coverage for backend services
 - [ ] 100% unit test coverage for backend routes
 - [ ] 100% unit test coverage for frontend hooks
@@ -1352,12 +1397,14 @@ export async function clearWorkouts() {
   - [ ] Page refresh persistence
 
 ### Code Quality
+
 - [ ] No TypeScript `any` types
 - [ ] All linting rules passing
 - [ ] Code review completed
 - [ ] No console errors or warnings
 
 ### Performance
+
 - [ ] Today page loads in under 1 second
 - [ ] Set logging feels instant (optimistic updates)
 - [ ] localStorage operations do not block UI
@@ -1406,6 +1453,7 @@ Closes #XX
 ## Dependencies
 
 This phase depends on:
+
 - Phase 1: Project setup (monorepo, TypeScript, linting)
 - Phase 2: Database setup (SQLite, migrations)
 - Phase 3: Exercise library (exercises table)
@@ -1413,6 +1461,7 @@ This phase depends on:
 - Phase 5: Mesocycle generation (mesocycles, workouts, workout_sets tables)
 
 This phase enables:
+
 - Phase 7: Rest timer
 - Phase 8: Progressive overload automation
 - Phase 9: Workout history view
@@ -1421,13 +1470,13 @@ This phase enables:
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|------------|
-| localStorage quota exceeded | Implement cleanup strategy; only store essential data |
-| Offline state conflicts | Clear localStorage on workout completion; server is source of truth |
-| Race conditions in optimistic updates | Use React Query or similar for cache management |
-| Large workout data | Paginate or lazy-load if >50 sets (unlikely) |
-| Mobile keyboard UX | Use `inputmode="numeric"` for number inputs |
+| Risk                                  | Mitigation                                                          |
+| ------------------------------------- | ------------------------------------------------------------------- |
+| localStorage quota exceeded           | Implement cleanup strategy; only store essential data               |
+| Offline state conflicts               | Clear localStorage on workout completion; server is source of truth |
+| Race conditions in optimistic updates | Use React Query or similar for cache management                     |
+| Large workout data                    | Paginate or lazy-load if >50 sets (unlikely)                        |
+| Mobile keyboard UX                    | Use `inputmode="numeric"` for number inputs                         |
 
 ---
 

@@ -395,7 +395,10 @@ describe('audio utilities', () => {
   };
   let mockGainNode: {
     connect: jest.Mock;
-    gain: { setValueAtTime: jest.Mock; exponentialRampToValueAtTime: jest.Mock };
+    gain: {
+      setValueAtTime: jest.Mock;
+      exponentialRampToValueAtTime: jest.Mock;
+    };
   };
 
   beforeEach(() => {
@@ -423,8 +426,12 @@ describe('audio utilities', () => {
     };
 
     // Mock the AudioContext constructor
-    global.AudioContext = jest.fn(() => mockAudioContext) as unknown as typeof AudioContext;
-    global.webkitAudioContext = jest.fn(() => mockAudioContext) as unknown as typeof AudioContext;
+    global.AudioContext = jest.fn(
+      () => mockAudioContext
+    ) as unknown as typeof AudioContext;
+    global.webkitAudioContext = jest.fn(
+      () => mockAudioContext
+    ) as unknown as typeof AudioContext;
   });
 
   afterEach(() => {
@@ -439,12 +446,18 @@ describe('audio utilities', () => {
 
     it('should create an oscillator with correct frequency', () => {
       createBeepSound({ frequency: 880 });
-      expect(mockOscillator.frequency.setValueAtTime).toHaveBeenCalledWith(880, 0);
+      expect(mockOscillator.frequency.setValueAtTime).toHaveBeenCalledWith(
+        880,
+        0
+      );
     });
 
     it('should use default frequency of 440Hz', () => {
       createBeepSound();
-      expect(mockOscillator.frequency.setValueAtTime).toHaveBeenCalledWith(440, 0);
+      expect(mockOscillator.frequency.setValueAtTime).toHaveBeenCalledWith(
+        440,
+        0
+      );
     });
 
     it('should set oscillator type to sine by default', () => {
@@ -467,7 +480,9 @@ describe('audio utilities', () => {
 
     it('should connect gain node to destination', async () => {
       await playBeep();
-      expect(mockGainNode.connect).toHaveBeenCalledWith(mockAudioContext.destination);
+      expect(mockGainNode.connect).toHaveBeenCalledWith(
+        mockAudioContext.destination
+      );
     });
 
     it('should handle missing AudioContext gracefully', async () => {
@@ -502,7 +517,9 @@ const DEFAULT_OPTIONS: Required<BeepOptions> = {
   type: 'sine',
 };
 
-export function createBeepSound(options: BeepOptions = {}): AudioContext | null {
+export function createBeepSound(
+  options: BeepOptions = {}
+): AudioContext | null {
   const AudioContextClass =
     typeof AudioContext !== 'undefined'
       ? AudioContext
@@ -538,7 +555,10 @@ export async function playBeep(options: BeepOptions = {}): Promise<void> {
     return;
   }
 
-  const { frequency, duration, volume, type } = { ...DEFAULT_OPTIONS, ...options };
+  const { frequency, duration, volume, type } = {
+    ...DEFAULT_OPTIONS,
+    ...options,
+  };
 
   const audioContext = new AudioContextClass();
 
@@ -1034,19 +1054,17 @@ describe('timerStorage', () => {
   beforeEach(() => {
     Object.keys(mockStorage).forEach((key) => delete mockStorage[key]);
 
-    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(
-      (key) => mockStorage[key] || null
-    );
-    jest.spyOn(Storage.prototype, 'setItem').mockImplementation(
-      (key, value) => {
+    jest
+      .spyOn(Storage.prototype, 'getItem')
+      .mockImplementation((key) => mockStorage[key] || null);
+    jest
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation((key, value) => {
         mockStorage[key] = value;
-      }
-    );
-    jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(
-      (key) => {
-        delete mockStorage[key];
-      }
-    );
+      });
+    jest.spyOn(Storage.prototype, 'removeItem').mockImplementation((key) => {
+      delete mockStorage[key];
+    });
   });
 
   afterEach(() => {
@@ -1399,7 +1417,9 @@ test.describe('Rest Timer', () => {
     await expect(page.getByText('00:03')).toBeVisible();
   });
 
-  test('should show completion state when timer reaches target', async ({ page }) => {
+  test('should show completion state when timer reaches target', async ({
+    page,
+  }) => {
     // Use a short rest time for faster test
     await setupWorkoutInProgress(page, {
       exercises: [
@@ -1425,7 +1445,9 @@ test.describe('Rest Timer', () => {
     await expect(page.getByText(/rest complete/i)).toBeVisible();
   });
 
-  test('should dismiss timer when dismiss button is clicked', async ({ page }) => {
+  test('should dismiss timer when dismiss button is clicked', async ({
+    page,
+  }) => {
     const logSetButton = page.getByRole('button', { name: /log set/i }).first();
     await logSetButton.click();
 
@@ -1457,7 +1479,9 @@ test.describe('Rest Timer', () => {
     await expect(timerText).toBeVisible();
   });
 
-  test('should use rest_seconds from exercise configuration', async ({ page }) => {
+  test('should use rest_seconds from exercise configuration', async ({
+    page,
+  }) => {
     await setupWorkoutInProgress(page, {
       exercises: [
         {
@@ -1478,7 +1502,9 @@ test.describe('Rest Timer', () => {
     await expect(page.getByText(/3:00/)).toBeVisible();
   });
 
-  test('should play audio on timer completion (verify no errors)', async ({ page }) => {
+  test('should play audio on timer completion (verify no errors)', async ({
+    page,
+  }) => {
     // Note: We can't easily verify audio played, but we can verify no errors occur
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
@@ -1540,6 +1566,7 @@ e2e/
 ## Success Criteria
 
 ### Unit Tests (must pass before integration)
+
 - [ ] `useRestTimer` hook starts at 0 elapsed seconds
 - [ ] `useRestTimer` hook counts up correctly (1 second per second)
 - [ ] `useRestTimer` hook fires `onComplete` callback exactly once when target is reached
@@ -1562,6 +1589,7 @@ e2e/
 - [ ] `RestTimer` component shows progress bar with correct percentage
 
 ### Integration Tests
+
 - [ ] Timer starts automatically after logging a set
 - [ ] Timer uses `rest_seconds` from exercise configuration
 - [ ] Timer state persists to localStorage
@@ -1569,6 +1597,7 @@ e2e/
 - [ ] Timer clears when dismissed
 
 ### E2E Tests
+
 - [ ] Log a set and verify timer appears
 - [ ] Timer counts up correctly over time
 - [ ] Timer shows completion state when target reached
@@ -1578,6 +1607,7 @@ e2e/
 - [ ] No audio-related JavaScript errors on completion
 
 ### Functional Requirements
+
 - [ ] Timer is visible during workout (positioned appropriately in UI)
 - [ ] Timer counts UP (not down)
 - [ ] Beep plays exactly once when timer reaches target

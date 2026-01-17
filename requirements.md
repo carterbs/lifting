@@ -1,58 +1,59 @@
-I want to make a tiny web app that tracks my weight training workouts. I want it to run on my home server. 
+I want to make a tiny web app that tracks my weight training workouts. I want it to run on my home server.
 
 Requirements:
-* Plan creator
-    * A plan consists of 6 weeks of progressive overload. An instance of a plan (a 6 week duration where one exercises following the plan) is called a mesocycle. After 6 weeks, the app should provide a deload week, and the user should have the option to move on to another mesocycle of the same plan.
-    * Each week consists of 7 POSSIBLE days to workout. User has to decide how many days a week they want to workout. User also has to choose the days of the week that they wish to work out. There are no two-a-days.
-    * When creating the plan, the user will have to decide which exercises are to be done on which day. Exercises are selected via a dropdown. The number of exercises for a given day is uncapped.
-    * Adding a new exercise to a day should be trivial.
-    * A day in a plan consists of 1 to N exercises
-        * Each exercise will need weight (in lbs), sets, reps, and rest time (in seconds) as configurable options. Dropdowns are fine for sets, reps, and weight.
-        * Default to 2 sets, 8 reps, and 30 lbs for weight.
-        * Default to 1 minute for rest time
-    * Initial set of exercises:
-        * Dumbell Press (flat)
-        * Seated Cable Row
-        * Leg Extension
-        * Machine Triceps extension
-        * Seated Dumbell lateral raises
-        * Pulldowns (narrow grip)
-        * Pec dec flye
-        * Machine Reverse fly
-        * Cable Triceps pushdown    
-        * Cable Curl
-        * Single leg curl
-        * Machine Preacher curl 
-    * Plan duration should be configurable when creating the plan; dewfault to 6 weeks.
-* Workout tracker
-    * Users may have N plans, but only one plan may be active at a given time. Having 0 active plans is also fine. Once activated, a plan stays active until it is completed by the user (all workouts are either skipped or completed, or the plan is cancelled). 
-    * The app should guide the user through the mesocycle. Each meso should break down to weeks. and weeks have plan days. The user should specify a starting weight and rep range and weight. In week 0, we use what the user provided. In week 1, we add one rep to each exercise. In week 2, we add weight. In week 3, we add a rep. And so on.
-    * When tracking a specific workout, the app should prefill weights, reps, and sets. The user should be able to remove sets, modify reps, and modify weight.
-    * There should be a mechanism to log a set. This should persist to the next time that the plan asks the user to do a specific workout.
-    * There should be a rest tracker. After the set is logged, a timer should count up to the configured rest period, then play a noise.
-    * Sets may be skipped
-    * A workout can be completed regardless of whether all sets were logged by the user
-    * If the user does not log all sets, the app should NOT progress sets/weight in the following week. Just give them the same sets/reps.
-* Tech choices
-    * Monorepo
-    * React for the UI (Radix for components: https://www.radix-ui.com/primitives/docs/overview/introduction)
-    * SSR is unnecessary
-    * Sqlite for storage
-    * 100% unit test coverage for every feature.
-    * E2E test coverage with puppeteer
-        * This will require some kind of setup where we can start in the middle of arbitrary user flows. E.g., mid workout, starting a workout, creating a plan, etc. 
-        * Flows I care about for the e2e test:
-            * Workout tracking
-                * Logging a set
-                * Removing a set from a workout
-                * Changing weight and reps
-                * Automated progression
-                    * Track a workout, see what the app plans the following week.
-    * Incredibly opinionated linting and type checking.
-    * Backend language: Node-ts is fine.
-    * IMPORTANT: No use of `any` throughout the codebase. Everything should be strongly typed.
 
-    ## Clarifying Questions
+- Plan creator
+  - A plan consists of 6 weeks of progressive overload. An instance of a plan (a 6 week duration where one exercises following the plan) is called a mesocycle. After 6 weeks, the app should provide a deload week, and the user should have the option to move on to another mesocycle of the same plan.
+  - Each week consists of 7 POSSIBLE days to workout. User has to decide how many days a week they want to workout. User also has to choose the days of the week that they wish to work out. There are no two-a-days.
+  - When creating the plan, the user will have to decide which exercises are to be done on which day. Exercises are selected via a dropdown. The number of exercises for a given day is uncapped.
+  - Adding a new exercise to a day should be trivial.
+  - A day in a plan consists of 1 to N exercises
+    - Each exercise will need weight (in lbs), sets, reps, and rest time (in seconds) as configurable options. Dropdowns are fine for sets, reps, and weight.
+    - Default to 2 sets, 8 reps, and 30 lbs for weight.
+    - Default to 1 minute for rest time
+  - Initial set of exercises:
+    - Dumbell Press (flat)
+    - Seated Cable Row
+    - Leg Extension
+    - Machine Triceps extension
+    - Seated Dumbell lateral raises
+    - Pulldowns (narrow grip)
+    - Pec dec flye
+    - Machine Reverse fly
+    - Cable Triceps pushdown
+    - Cable Curl
+    - Single leg curl
+    - Machine Preacher curl
+  - Plan duration should be configurable when creating the plan; dewfault to 6 weeks.
+- Workout tracker
+  - Users may have N plans, but only one plan may be active at a given time. Having 0 active plans is also fine. Once activated, a plan stays active until it is completed by the user (all workouts are either skipped or completed, or the plan is cancelled).
+  - The app should guide the user through the mesocycle. Each meso should break down to weeks. and weeks have plan days. The user should specify a starting weight and rep range and weight. In week 0, we use what the user provided. In week 1, we add one rep to each exercise. In week 2, we add weight. In week 3, we add a rep. And so on.
+  - When tracking a specific workout, the app should prefill weights, reps, and sets. The user should be able to remove sets, modify reps, and modify weight.
+  - There should be a mechanism to log a set. This should persist to the next time that the plan asks the user to do a specific workout.
+  - There should be a rest tracker. After the set is logged, a timer should count up to the configured rest period, then play a noise.
+  - Sets may be skipped
+  - A workout can be completed regardless of whether all sets were logged by the user
+  - If the user does not log all sets, the app should NOT progress sets/weight in the following week. Just give them the same sets/reps.
+- Tech choices
+  - Monorepo
+  - React for the UI (Radix for components: https://www.radix-ui.com/primitives/docs/overview/introduction)
+  - SSR is unnecessary
+  - Sqlite for storage
+  - 100% unit test coverage for every feature.
+  - E2E test coverage with puppeteer
+    - This will require some kind of setup where we can start in the middle of arbitrary user flows. E.g., mid workout, starting a workout, creating a plan, etc.
+    - Flows I care about for the e2e test:
+      - Workout tracking
+        - Logging a set
+        - Removing a set from a workout
+        - Changing weight and reps
+        - Automated progression
+          - Track a workout, see what the app plans the following week.
+  - Incredibly opinionated linting and type checking.
+  - Backend language: Node-ts is fine.
+  - IMPORTANT: No use of `any` throughout the codebase. Everything should be strongly typed.
+
+  ## Clarifying Questions
 
 1. **User authentication**: Is this a single-user application, or should it support multiple users with login functionality? A: Single-user
 

@@ -54,20 +54,20 @@ interface Exercise {
 
 Create seed file with the following built-in exercises:
 
-| Exercise Name | Weight Increment |
-|---------------|------------------|
-| Dumbbell Press (flat) | 5 lbs |
-| Seated Cable Row | 5 lbs |
-| Leg Extension | 5 lbs |
-| Machine Triceps Extension | 5 lbs |
-| Seated Dumbbell Lateral Raises | 5 lbs |
-| Pulldowns (narrow grip) | 5 lbs |
-| Pec Dec Flye | 5 lbs |
-| Machine Reverse Fly | 5 lbs |
-| Cable Triceps Pushdown | 5 lbs |
-| Cable Curl | 5 lbs |
-| Single Leg Curl | 5 lbs |
-| Machine Preacher Curl | 5 lbs |
+| Exercise Name                  | Weight Increment |
+| ------------------------------ | ---------------- |
+| Dumbbell Press (flat)          | 5 lbs            |
+| Seated Cable Row               | 5 lbs            |
+| Leg Extension                  | 5 lbs            |
+| Machine Triceps Extension      | 5 lbs            |
+| Seated Dumbbell Lateral Raises | 5 lbs            |
+| Pulldowns (narrow grip)        | 5 lbs            |
+| Pec Dec Flye                   | 5 lbs            |
+| Machine Reverse Fly            | 5 lbs            |
+| Cable Triceps Pushdown         | 5 lbs            |
+| Cable Curl                     | 5 lbs            |
+| Single Leg Curl                | 5 lbs            |
+| Machine Preacher Curl          | 5 lbs            |
 
 ---
 
@@ -192,7 +192,10 @@ export class ExerciseService {
   async getAllExercises(): Promise<Exercise[]> {}
   async getExerciseById(id: number): Promise<Exercise> {}
   async createExercise(input: CreateExerciseInput): Promise<Exercise> {}
-  async updateExercise(id: number, input: UpdateExerciseInput): Promise<Exercise> {}
+  async updateExercise(
+    id: number,
+    input: UpdateExerciseInput
+  ): Promise<Exercise> {}
   async deleteExercise(id: number): Promise<void> {}
 }
 ```
@@ -397,7 +400,10 @@ export const exerciseApi = {
   getExercises: async (): Promise<Exercise[]> => {},
   getExercise: async (id: number): Promise<Exercise> => {},
   createExercise: async (data: CreateExerciseInput): Promise<Exercise> => {},
-  updateExercise: async (id: number, data: UpdateExerciseInput): Promise<Exercise> => {},
+  updateExercise: async (
+    id: number,
+    data: UpdateExerciseInput
+  ): Promise<Exercise> => {},
   deleteExercise: async (id: number): Promise<void> => {},
 };
 ```
@@ -532,6 +538,7 @@ describe('ExerciseListItem', () => {
 **File:** `packages/frontend/src/components/ExerciseLibrary/ExerciseListItem.tsx`
 
 Use Radix UI:
+
 - `Card` for container
 - `Badge` for built-in/custom indicator
 - `IconButton` for edit/delete actions
@@ -558,6 +565,7 @@ describe('AddExerciseForm', () => {
 **File:** `packages/frontend/src/components/ExerciseLibrary/AddExerciseForm.tsx`
 
 Use Radix UI:
+
 - `TextField` for name input
 - `TextField` with type="number" for weight increment
 - `Button` for submit
@@ -580,6 +588,7 @@ describe('EditExerciseDialog', () => {
 **File:** `packages/frontend/src/components/ExerciseLibrary/EditExerciseDialog.tsx`
 
 Use Radix UI:
+
 - `Dialog` for modal
 - `TextField` for inputs
 - `Button` for actions
@@ -600,6 +609,7 @@ describe('DeleteExerciseDialog', () => {
 **File:** `packages/frontend/src/components/ExerciseLibrary/DeleteExerciseDialog.tsx`
 
 Use Radix UI:
+
 - `AlertDialog` for confirmation dialog
 - `Button` with destructive variant for delete action
 
@@ -920,6 +930,7 @@ Follow this sequence to maintain TDD discipline:
 ## Success Criteria
 
 ### Backend
+
 - [ ] All 12 built-in exercises are seeded in the database
 - [ ] `GET /api/exercises` returns all exercises sorted alphabetically
 - [ ] `GET /api/exercises/:id` returns single exercise or 404
@@ -930,6 +941,7 @@ Follow this sequence to maintain TDD discipline:
 - [ ] All backend unit tests pass (100% coverage for new code)
 
 ### Frontend
+
 - [ ] Exercise Library tab appears in bottom navigation
 - [ ] Exercise list displays all exercises alphabetically
 - [ ] Built-in exercises show "Built-in" badge (e.g., gray)
@@ -942,6 +954,7 @@ Follow this sequence to maintain TDD discipline:
 - [ ] All frontend unit tests pass (100% coverage for new code)
 
 ### E2E
+
 - [ ] Can view full exercise list with proper badges
 - [ ] Can add new custom exercise
 - [ ] Can edit custom exercise
@@ -950,6 +963,7 @@ Follow this sequence to maintain TDD discipline:
 - [ ] All E2E tests pass
 
 ### Code Quality
+
 - [ ] No TypeScript errors
 - [ ] No ESLint warnings
 - [ ] No use of `any` type

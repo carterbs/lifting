@@ -5,6 +5,7 @@
 A single-user weight training workout tracker web app. Users create workout plans, run 6-week mesocycles with progressive overload, and track workouts with automatic weight/rep progression.
 
 **Key concepts:**
+
 - **Plan**: A workout template with configured days/exercises
 - **Mesocycle**: A 6-week instance of running a plan (+ 1 deload week)
 - **Progressive overload**: Odd weeks add 1 rep, even weeks add weight (default 5 lbs)
@@ -65,6 +66,7 @@ DELETE /api/exercises/:id      # Delete
 ```
 
 Action endpoints use verb suffixes:
+
 ```
 PUT    /api/workouts/:id/start
 PUT    /api/workouts/:id/complete
@@ -131,6 +133,7 @@ describe('WorkoutService', () => {
 ### E2E Tests
 
 Puppeteer tests for critical user flows:
+
 - Workout tracking (logging sets, modifying weight/reps)
 - Automated progression verification
 - Plan creation flow
@@ -177,5 +180,5 @@ useWorkout.test.ts
 1. Read the relevant plan in `plans/phase-XX-*.md` first
 2. Write tests BEFORE implementation (TDD)
 3. Start with types/schemas in `packages/shared/`
-6. Run full test suite before considering complete
-7. Never use `any` - find or create proper types
+4. Run full test suite before considering complete
+5. Never use `any` - find or create proper types

@@ -57,7 +57,9 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
     it('should remove exercise from future workouts only');
     it('should preserve logged sets for removed exercise in current workout');
     it('should not affect past workouts with that exercise');
-    it('should handle exercise that exists in current workout with logged sets');
+    it(
+      'should handle exercise that exists in current workout with logged sets'
+    );
   });
 
   describe('updating exercise parameters', () => {
@@ -129,7 +131,7 @@ router.put('/:id', async (req, res) => {
   return res.json({
     plan: result.plan,
     affectedWorkouts: result.affectedWorkoutCount,
-    warnings: result.warnings
+    warnings: result.warnings,
   });
 });
 ```
@@ -205,7 +207,14 @@ describe('PlanModificationService', () => {
 #### Implementation: `server/src/services/planModificationService.ts`
 
 ```typescript
-import { Plan, Mesocycle, Workout, WorkoutSet, PlanDay, Exercise } from '../types';
+import {
+  Plan,
+  Mesocycle,
+  Workout,
+  WorkoutSet,
+  PlanDay,
+  Exercise,
+} from '../types';
 import { workoutRepository } from '../repositories/workoutRepository';
 import { workoutSetRepository } from '../repositories/workoutSetRepository';
 import { planRepository } from '../repositories/planRepository';
@@ -213,7 +222,11 @@ import { planRepository } from '../repositories/planRepository';
 interface PlanDiff {
   addedExercises: Array<{ dayIndex: number; exercise: Exercise }>;
   removedExercises: Array<{ dayIndex: number; exerciseId: string }>;
-  modifiedExercises: Array<{ dayIndex: number; exerciseId: string; changes: Partial<Exercise> }>;
+  modifiedExercises: Array<{
+    dayIndex: number;
+    exerciseId: string;
+    changes: Partial<Exercise>;
+  }>;
   addedDays: PlanDay[];
   removedDays: number[]; // day indices
 }
@@ -234,7 +247,7 @@ export const planModificationService = {
       removedExercises: [],
       modifiedExercises: [],
       addedDays: [],
-      removedDays: []
+      removedDays: [],
     };
 
     // Compare days
@@ -261,8 +274,8 @@ export const planModificationService = {
       const oldDay = oldPlan.days[dayIndex];
       const newDay = newPlan.days[dayIndex];
 
-      const oldExerciseIds = new Set(oldDay.exercises.map(e => e.id));
-      const newExerciseIds = new Set(newDay.exercises.map(e => e.id));
+      const oldExerciseIds = new Set(oldDay.exercises.map((e) => e.id));
+      const newExerciseIds = new Set(newDay.exercises.map((e) => e.id));
 
       // Added exercises
       for (const exercise of newDay.exercises) {
@@ -281,10 +294,16 @@ export const planModificationService = {
       // Modified exercises
       for (const newExercise of newDay.exercises) {
         if (oldExerciseIds.has(newExercise.id)) {
-          const oldExercise = oldDay.exercises.find(e => e.id === newExercise.id)!;
+          const oldExercise = oldDay.exercises.find(
+            (e) => e.id === newExercise.id
+          )!;
           const changes = this.getExerciseChanges(oldExercise, newExercise);
           if (Object.keys(changes).length > 0) {
-            diff.modifiedExercises.push({ dayIndex, exerciseId: newExercise.id, changes });
+            diff.modifiedExercises.push({
+              dayIndex,
+              exerciseId: newExercise.id,
+              changes,
+            });
           }
         }
       }
@@ -296,13 +315,18 @@ export const planModificationService = {
   /**
    * Get changed fields between two exercise configurations
    */
-  getExerciseChanges(oldExercise: Exercise, newExercise: Exercise): Partial<Exercise> {
+  getExerciseChanges(
+    oldExercise: Exercise,
+    newExercise: Exercise
+  ): Partial<Exercise> {
     const changes: Partial<Exercise> = {};
 
     if (oldExercise.sets !== newExercise.sets) changes.sets = newExercise.sets;
     if (oldExercise.reps !== newExercise.reps) changes.reps = newExercise.reps;
-    if (oldExercise.weight !== newExercise.weight) changes.weight = newExercise.weight;
-    if (oldExercise.restSeconds !== newExercise.restSeconds) changes.restSeconds = newExercise.restSeconds;
+    if (oldExercise.weight !== newExercise.weight)
+      changes.weight = newExercise.weight;
+    if (oldExercise.restSeconds !== newExercise.restSeconds)
+      changes.restSeconds = newExercise.restSeconds;
 
     return changes;
   },
@@ -314,7 +338,7 @@ export const planModificationService = {
     const allWorkouts = await workoutRepository.getByMesocycleId(mesocycleId);
     const now = new Date();
 
-    return allWorkouts.filter(workout => {
+    return allWorkouts.filter((workout) => {
       // Exclude completed workouts
       if (workout.status === 'completed' || workout.status === 'skipped') {
         return false;
@@ -327,8 +351,11 @@ export const planModificationService = {
 
       // Include if scheduled for future
       const workoutDate = new Date(workout.scheduledDate);
-      return workoutDate > now ||
-        (workoutDate.toDateString() === now.toDateString() && workout.status === 'not_started');
+      return (
+        workoutDate > now ||
+        (workoutDate.toDateString() === now.toDateString() &&
+          workout.status === 'not_started')
+      );
     });
   },
 
@@ -342,7 +369,9 @@ export const planModificationService = {
     mesocycle: Mesocycle
   ): Promise<number> {
     const futureWorkouts = await this.getFutureWorkouts(mesocycleId);
-    const matchingWorkouts = futureWorkouts.filter(w => w.planDayIndex === dayIndex);
+    const matchingWorkouts = futureWorkouts.filter(
+      (w) => w.planDayIndex === dayIndex
+    );
 
     let affectedCount = 0;
 
@@ -364,7 +393,7 @@ export const planModificationService = {
           targetReps,
           targetWeight,
           restSeconds: exercise.restSeconds,
-          status: 'pending'
+          status: 'pending',
         });
       }
 
@@ -383,23 +412,33 @@ export const planModificationService = {
     exerciseId: string
   ): Promise<{ removed: number; preserved: number }> {
     const futureWorkouts = await this.getFutureWorkouts(mesocycleId);
-    const matchingWorkouts = futureWorkouts.filter(w => w.planDayIndex === dayIndex);
+    const matchingWorkouts = futureWorkouts.filter(
+      (w) => w.planDayIndex === dayIndex
+    );
 
     let removed = 0;
     let preserved = 0;
 
     for (const workout of matchingWorkouts) {
-      const sets = await workoutSetRepository.getByWorkoutAndExercise(workout.id, exerciseId);
+      const sets = await workoutSetRepository.getByWorkoutAndExercise(
+        workout.id,
+        exerciseId
+      );
 
       // Check if any sets have logged data
-      const hasLoggedData = sets.some(s => s.status === 'completed' || s.actualReps !== null);
+      const hasLoggedData = sets.some(
+        (s) => s.status === 'completed' || s.actualReps !== null
+      );
 
       if (hasLoggedData) {
         // Preserve sets with logged data
         preserved++;
       } else {
         // Delete all sets for this exercise in this workout
-        await workoutSetRepository.deleteByWorkoutAndExercise(workout.id, exerciseId);
+        await workoutSetRepository.deleteByWorkoutAndExercise(
+          workout.id,
+          exerciseId
+        );
         removed++;
       }
     }
@@ -418,12 +457,17 @@ export const planModificationService = {
     mesocycle: Mesocycle
   ): Promise<number> {
     const futureWorkouts = await this.getFutureWorkouts(mesocycleId);
-    const matchingWorkouts = futureWorkouts.filter(w => w.planDayIndex === dayIndex);
+    const matchingWorkouts = futureWorkouts.filter(
+      (w) => w.planDayIndex === dayIndex
+    );
 
     let affectedCount = 0;
 
     for (const workout of matchingWorkouts) {
-      const existingSets = await workoutSetRepository.getByWorkoutAndExercise(workout.id, exerciseId);
+      const existingSets = await workoutSetRepository.getByWorkoutAndExercise(
+        workout.id,
+        exerciseId
+      );
 
       if (existingSets.length === 0) continue;
 
@@ -442,14 +486,14 @@ export const planModificationService = {
               targetReps: baseSet.targetReps,
               targetWeight: baseSet.targetWeight,
               restSeconds: changes.restSeconds ?? baseSet.restSeconds,
-              status: 'pending'
+              status: 'pending',
             });
           }
         } else if (changes.sets < currentSetCount) {
           // Remove sets (from the end, only pending ones)
           const setsToRemove = existingSets
-            .filter(s => s.setNumber > changes.sets && s.status === 'pending')
-            .map(s => s.id);
+            .filter((s) => s.setNumber > changes.sets && s.status === 'pending')
+            .map((s) => s.id);
 
           for (const setId of setsToRemove) {
             await workoutSetRepository.delete(setId);
@@ -458,7 +502,10 @@ export const planModificationService = {
       }
 
       // Update targets for remaining sets
-      const updatedSets = await workoutSetRepository.getByWorkoutAndExercise(workout.id, exerciseId);
+      const updatedSets = await workoutSetRepository.getByWorkoutAndExercise(
+        workout.id,
+        exerciseId
+      );
 
       for (const set of updatedSets) {
         if (set.status !== 'pending') continue; // Don't modify logged sets
@@ -515,7 +562,11 @@ export const planModificationService = {
 
     for (let week = currentWeek; week <= totalWeeks; week++) {
       // Calculate the date for this day in this week
-      const workoutDate = this.calculateWorkoutDate(mesocycle.startDate, week, planDay.dayOfWeek);
+      const workoutDate = this.calculateWorkoutDate(
+        mesocycle.startDate,
+        week,
+        planDay.dayOfWeek
+      );
 
       // Skip if date is in the past
       if (workoutDate < new Date()) continue;
@@ -527,7 +578,7 @@ export const planModificationService = {
         weekNumber: week,
         scheduledDate: workoutDate,
         dayOfWeek: planDay.dayOfWeek,
-        status: 'not_started'
+        status: 'not_started',
       });
 
       // Create workout_sets for each exercise
@@ -546,7 +597,7 @@ export const planModificationService = {
             targetReps,
             targetWeight,
             restSeconds: exercise.restSeconds,
-            status: 'pending'
+            status: 'pending',
           });
         }
       }
@@ -565,7 +616,9 @@ export const planModificationService = {
     dayIndex: number
   ): Promise<{ removed: number; preserved: number; warnings: string[] }> {
     const futureWorkouts = await this.getFutureWorkouts(mesocycleId);
-    const matchingWorkouts = futureWorkouts.filter(w => w.planDayIndex === dayIndex);
+    const matchingWorkouts = futureWorkouts.filter(
+      (w) => w.planDayIndex === dayIndex
+    );
 
     let removed = 0;
     let preserved = 0;
@@ -573,11 +626,15 @@ export const planModificationService = {
 
     for (const workout of matchingWorkouts) {
       const sets = await workoutSetRepository.getByWorkoutId(workout.id);
-      const hasLoggedData = sets.some(s => s.status === 'completed' || s.actualReps !== null);
+      const hasLoggedData = sets.some(
+        (s) => s.status === 'completed' || s.actualReps !== null
+      );
 
       if (hasLoggedData) {
         preserved++;
-        warnings.push(`Workout on ${workout.scheduledDate} preserved due to logged data`);
+        warnings.push(
+          `Workout on ${workout.scheduledDate} preserved due to logged data`
+        );
       } else {
         // Delete all sets then the workout
         await workoutSetRepository.deleteByWorkoutId(workout.id);
@@ -625,19 +682,25 @@ export const planModificationService = {
   getCurrentWeek(mesocycle: Mesocycle): number {
     const start = new Date(mesocycle.startDate);
     const now = new Date();
-    const diffDays = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor(
+      (now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+    );
     return Math.floor(diffDays / 7);
   },
 
   /**
    * Calculate workout date for a given week and day of week
    */
-  calculateWorkoutDate(startDate: Date | string, weekNumber: number, dayOfWeek: number): Date {
+  calculateWorkoutDate(
+    startDate: Date | string,
+    weekNumber: number,
+    dayOfWeek: number
+  ): Date {
     const start = new Date(startDate);
     const startDayOfWeek = start.getDay();
 
     // Calculate days to add
-    let daysToAdd = (weekNumber * 7) + (dayOfWeek - startDayOfWeek);
+    let daysToAdd = weekNumber * 7 + (dayOfWeek - startDayOfWeek);
     if (dayOfWeek < startDayOfWeek) {
       daysToAdd += 7;
     }
@@ -665,7 +728,10 @@ export const planModificationService = {
 
       // Process removed days first
       for (const dayIndex of diff.removedDays) {
-        const result = await this.removeWorkoutDayFromFutureWeeks(mesocycle.id, dayIndex);
+        const result = await this.removeWorkoutDayFromFutureWeeks(
+          mesocycle.id,
+          dayIndex
+        );
         totalAffected += result.removed;
         warnings.push(...result.warnings);
       }
@@ -679,7 +745,9 @@ export const planModificationService = {
         );
         totalAffected += result.removed;
         if (result.preserved > 0) {
-          warnings.push(`${result.preserved} workout(s) preserved logged data for removed exercise`);
+          warnings.push(
+            `${result.preserved} workout(s) preserved logged data for removed exercise`
+          );
         }
       }
 
@@ -725,9 +793,9 @@ export const planModificationService = {
     return {
       plan: newPlan,
       affectedWorkoutCount: totalAffected,
-      warnings
+      warnings,
     };
-  }
+  },
 };
 ```
 
@@ -778,7 +846,9 @@ export function MesoHeader({ mesocycle, plan, onEditPlan }: MesoHeaderProps) {
   return (
     <div className="meso-header">
       <h2>{plan.name}</h2>
-      <p>Week {mesocycle.currentWeek} of {mesocycle.durationWeeks}</p>
+      <p>
+        Week {mesocycle.currentWeek} of {mesocycle.durationWeeks}
+      </p>
       {mesocycle.status === 'active' && (
         <Button variant="outline" onClick={onEditPlan}>
           Edit Plan
@@ -807,7 +877,7 @@ export function ActivePlanWarningDialog({
   open,
   onConfirm,
   onCancel,
-  affectedWorkoutCount
+  affectedWorkoutCount,
 }: ActivePlanWarningDialogProps) {
   return (
     <Dialog.Root open={open}>
@@ -960,7 +1030,7 @@ export const planApi = {
     const response = await fetch(`/api/plans/${planId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(plan)
+      body: JSON.stringify(plan),
     });
 
     if (!response.ok) {
@@ -969,7 +1039,7 @@ export const planApi = {
     }
 
     return response.json();
-  }
+  },
 };
 ```
 
@@ -1023,16 +1093,22 @@ test.describe('Plan Modification During Active Mesocycle', () => {
         {
           dayOfWeek: 1, // Monday
           exercises: [
-            { exerciseId: 'bench-press', sets: 3, reps: 8, weight: 100, restSeconds: 60 }
-          ]
-        }
-      ]
+            {
+              exerciseId: 'bench-press',
+              sets: 3,
+              reps: 8,
+              weight: 100,
+              restSeconds: 60,
+            },
+          ],
+        },
+      ],
     });
 
     await seedActiveMesocycle({
       planId: 'test-plan',
       currentWeek: 2,
-      durationWeeks: 6
+      durationWeeks: 6,
     });
   });
 
@@ -1041,10 +1117,14 @@ test.describe('Plan Modification During Active Mesocycle', () => {
     await page.click('button:has-text("Edit Plan")');
 
     await expect(page.locator('.dialog-content')).toBeVisible();
-    await expect(page.locator('.dialog-content')).toContainText('future workouts');
+    await expect(page.locator('.dialog-content')).toContainText(
+      'future workouts'
+    );
   });
 
-  test('should add exercise and verify in future workouts', async ({ page }) => {
+  test('should add exercise and verify in future workouts', async ({
+    page,
+  }) => {
     await page.goto('/meso');
     await page.click('button:has-text("Edit Plan")');
     await page.click('button:has-text("Continue Editing")');
@@ -1062,13 +1142,17 @@ test.describe('Plan Modification During Active Mesocycle', () => {
 
     // Verify new exercise appears
     await expect(page.locator('[data-exercise="cable-curl"]')).toBeVisible();
-    await expect(page.locator('[data-exercise="cable-curl"] .sets')).toContainText('3 sets');
+    await expect(
+      page.locator('[data-exercise="cable-curl"] .sets')
+    ).toContainText('3 sets');
   });
 
   test('should verify past workouts remain unchanged', async ({ page }) => {
     // First, check what week 1 Monday looks like
     await page.goto('/meso');
-    const week1Monday = await page.locator('[data-week="1"] [data-day="monday"]');
+    const week1Monday = await page.locator(
+      '[data-week="1"] [data-day="monday"]'
+    );
     await week1Monday.click();
 
     const originalExercises = await page.locator('[data-exercise]').count();
@@ -1092,7 +1176,9 @@ test.describe('Plan Modification During Active Mesocycle', () => {
     expect(exercisesAfterEdit).toBe(1); // Still only bench press
   });
 
-  test('should change rest time and verify future workouts updated', async ({ page }) => {
+  test('should change rest time and verify future workouts updated', async ({
+    page,
+  }) => {
     await page.goto('/meso');
     await page.click('button:has-text("Edit Plan")');
     await page.click('button:has-text("Continue Editing")');
@@ -1108,7 +1194,9 @@ test.describe('Plan Modification During Active Mesocycle', () => {
 
     // Start the exercise to see rest timer configuration
     await page.click('[data-exercise="bench-press"]');
-    await expect(page.locator('[data-testid="rest-timer"]')).toContainText('90');
+    await expect(page.locator('[data-testid="rest-timer"]')).toContainText(
+      '90'
+    );
   });
 
   test('should add new workout day', async ({ page }) => {
@@ -1125,14 +1213,22 @@ test.describe('Plan Modification During Active Mesocycle', () => {
 
     // Verify Wednesday appears in future weeks
     await page.goto('/meso');
-    await expect(page.locator('[data-week="3"] [data-day="wednesday"]')).toBeVisible();
-    await expect(page.locator('[data-week="4"] [data-day="wednesday"]')).toBeVisible();
+    await expect(
+      page.locator('[data-week="3"] [data-day="wednesday"]')
+    ).toBeVisible();
+    await expect(
+      page.locator('[data-week="4"] [data-day="wednesday"]')
+    ).toBeVisible();
 
     // Past weeks should not have Wednesday
-    await expect(page.locator('[data-week="1"] [data-day="wednesday"]')).not.toBeVisible();
+    await expect(
+      page.locator('[data-week="1"] [data-day="wednesday"]')
+    ).not.toBeVisible();
   });
 
-  test('should remove exercise with logged sets in current workout', async ({ page }) => {
+  test('should remove exercise with logged sets in current workout', async ({
+    page,
+  }) => {
     // First log a set in current workout
     await page.goto('/today');
     await page.click('[data-exercise="bench-press"] [data-set="1"]');
@@ -1143,7 +1239,9 @@ test.describe('Plan Modification During Active Mesocycle', () => {
     await page.click('button:has-text("Edit Plan")');
     await page.click('button:has-text("Continue Editing")');
 
-    await page.click('[data-day="monday"] [data-exercise="bench-press"] button:has-text("Remove")');
+    await page.click(
+      '[data-day="monday"] [data-exercise="bench-press"] button:has-text("Remove")'
+    );
     await page.click('button:has-text("Save")');
 
     // Current workout should still have bench press (preserved logged data)
@@ -1153,7 +1251,9 @@ test.describe('Plan Modification During Active Mesocycle', () => {
     // Future workouts should not have bench press
     await page.goto('/meso');
     await page.click('[data-week="4"] [data-day="monday"]');
-    await expect(page.locator('[data-exercise="bench-press"]')).not.toBeVisible();
+    await expect(
+      page.locator('[data-exercise="bench-press"]')
+    ).not.toBeVisible();
   });
 });
 ```
@@ -1167,6 +1267,7 @@ test.describe('Plan Modification During Active Mesocycle', () => {
 **Scenario:** User adds exercise on Wednesday. Monday's workout (past) and Tuesday's (current) should not be affected.
 
 **Handling:**
+
 - `getFutureWorkouts()` filters by date and status
 - Only workouts that are `not_started` and scheduled for the future receive new exercises
 
@@ -1175,6 +1276,7 @@ test.describe('Plan Modification During Active Mesocycle', () => {
 **Scenario:** User removes an exercise, but some sets for that exercise have already been logged in the current workout.
 
 **Handling:**
+
 - `removeExerciseFromFutureWorkouts()` checks for logged data before deletion
 - Sets with `status === 'completed'` or `actualReps !== null` are preserved
 - Returns count of preserved workouts for warning message
@@ -1184,6 +1286,7 @@ test.describe('Plan Modification During Active Mesocycle', () => {
 **Scenario:** User changes rest time from 60s to 90s.
 
 **Handling:**
+
 - `updateExerciseTargetsForFutureWorkouts()` updates `restSeconds` on all future `workout_sets`
 - Past and current workouts retain original rest time
 
@@ -1192,6 +1295,7 @@ test.describe('Plan Modification During Active Mesocycle', () => {
 **Scenario:** User adds a new Wednesday workout to a 3-day plan.
 
 **Handling:**
+
 - `addWorkoutDayToFutureWeeks()` creates workouts for all remaining weeks
 - Calculates correct dates based on mesocycle start and week number
 - Creates all `workout_sets` with progressive overload calculated
@@ -1201,6 +1305,7 @@ test.describe('Plan Modification During Active Mesocycle', () => {
 **Scenario:** User opens edit page, another process modifies data.
 
 **Handling:**
+
 - Use database transactions for atomicity
 - Consider adding optimistic locking (version field) if needed
 
@@ -1209,6 +1314,7 @@ test.describe('Plan Modification During Active Mesocycle', () => {
 **Scenario:** Server and user in different timezones; "today" differs.
 
 **Handling:**
+
 - Store dates in UTC
 - Use user's timezone when determining "current" workout
 - Consider adding `timezone` field to mesocycle
@@ -1320,6 +1426,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ## Files to Create/Modify
 
 ### New Files
+
 - `server/src/services/planModificationService.ts`
 - `server/src/services/__tests__/planModificationService.test.ts`
 - `server/src/routes/__tests__/plans.update-active.test.ts`
@@ -1328,6 +1435,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 - `e2e/tests/plan-modification-active-meso.spec.ts`
 
 ### Modified Files
+
 - `server/src/routes/plans.ts` - Add PUT handler with active mesocycle logic
 - `server/src/repositories/workoutSetRepository.ts` - Add new query methods
 - `client/src/components/MesoTab/MesoHeader.tsx` - Add edit button

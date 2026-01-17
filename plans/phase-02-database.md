@@ -36,16 +36,17 @@ plans ──┬── plan_days ──┬──┴── plan_day_exercises
 ### 1.2 Table Definitions
 
 #### `exercises`
+
 Stores all available exercises (both default and custom).
 
-| Column | Type | Constraints | Default | Description |
-|--------|------|-------------|---------|-------------|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT | - | Unique identifier |
-| name | TEXT | NOT NULL UNIQUE | - | Exercise name |
-| weight_increment | REAL | NOT NULL | 5.0 | Weight to add during progression (lbs) |
-| is_custom | INTEGER | NOT NULL | 0 | 0=default, 1=user-created |
-| created_at | TEXT | NOT NULL | CURRENT_TIMESTAMP | ISO 8601 timestamp |
-| updated_at | TEXT | NOT NULL | CURRENT_TIMESTAMP | ISO 8601 timestamp |
+| Column           | Type    | Constraints               | Default           | Description                            |
+| ---------------- | ------- | ------------------------- | ----------------- | -------------------------------------- |
+| id               | INTEGER | PRIMARY KEY AUTOINCREMENT | -                 | Unique identifier                      |
+| name             | TEXT    | NOT NULL UNIQUE           | -                 | Exercise name                          |
+| weight_increment | REAL    | NOT NULL                  | 5.0               | Weight to add during progression (lbs) |
+| is_custom        | INTEGER | NOT NULL                  | 0                 | 0=default, 1=user-created              |
+| created_at       | TEXT    | NOT NULL                  | CURRENT_TIMESTAMP | ISO 8601 timestamp                     |
+| updated_at       | TEXT    | NOT NULL                  | CURRENT_TIMESTAMP | ISO 8601 timestamp                     |
 
 ```sql
 CREATE TABLE exercises (
@@ -61,15 +62,16 @@ CREATE INDEX idx_exercises_is_custom ON exercises(is_custom);
 ```
 
 #### `plans`
+
 User-created workout plans (templates).
 
-| Column | Type | Constraints | Default | Description |
-|--------|------|-------------|---------|-------------|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT | - | Unique identifier |
-| name | TEXT | NOT NULL | - | Plan name |
-| duration_weeks | INTEGER | NOT NULL | 6 | Number of weeks in mesocycle |
-| created_at | TEXT | NOT NULL | CURRENT_TIMESTAMP | ISO 8601 timestamp |
-| updated_at | TEXT | NOT NULL | CURRENT_TIMESTAMP | ISO 8601 timestamp |
+| Column         | Type    | Constraints               | Default           | Description                  |
+| -------------- | ------- | ------------------------- | ----------------- | ---------------------------- |
+| id             | INTEGER | PRIMARY KEY AUTOINCREMENT | -                 | Unique identifier            |
+| name           | TEXT    | NOT NULL                  | -                 | Plan name                    |
+| duration_weeks | INTEGER | NOT NULL                  | 6                 | Number of weeks in mesocycle |
+| created_at     | TEXT    | NOT NULL                  | CURRENT_TIMESTAMP | ISO 8601 timestamp           |
+| updated_at     | TEXT    | NOT NULL                  | CURRENT_TIMESTAMP | ISO 8601 timestamp           |
 
 ```sql
 CREATE TABLE plans (
@@ -82,15 +84,16 @@ CREATE TABLE plans (
 ```
 
 #### `plan_days`
+
 Days within a plan (e.g., "Push Day", "Pull Day").
 
-| Column | Type | Constraints | Default | Description |
-|--------|------|-------------|---------|-------------|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT | - | Unique identifier |
-| plan_id | INTEGER | NOT NULL, FK plans(id) | - | Parent plan |
-| day_of_week | INTEGER | NOT NULL, CHECK 0-6 | - | 0=Sunday, 6=Saturday |
-| name | TEXT | NOT NULL | - | Display name (e.g., "Push Day") |
-| sort_order | INTEGER | NOT NULL | - | Order within the week |
+| Column      | Type    | Constraints               | Default | Description                     |
+| ----------- | ------- | ------------------------- | ------- | ------------------------------- |
+| id          | INTEGER | PRIMARY KEY AUTOINCREMENT | -       | Unique identifier               |
+| plan_id     | INTEGER | NOT NULL, FK plans(id)    | -       | Parent plan                     |
+| day_of_week | INTEGER | NOT NULL, CHECK 0-6       | -       | 0=Sunday, 6=Saturday            |
+| name        | TEXT    | NOT NULL                  | -       | Display name (e.g., "Push Day") |
+| sort_order  | INTEGER | NOT NULL                  | -       | Order within the week           |
 
 ```sql
 CREATE TABLE plan_days (
@@ -107,18 +110,19 @@ CREATE INDEX idx_plan_days_plan_id ON plan_days(plan_id);
 ```
 
 #### `plan_day_exercises`
+
 Exercises assigned to specific days with their default parameters.
 
-| Column | Type | Constraints | Default | Description |
-|--------|------|-------------|---------|-------------|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT | - | Unique identifier |
-| plan_day_id | INTEGER | NOT NULL, FK plan_days(id) | - | Parent plan day |
-| exercise_id | INTEGER | NOT NULL, FK exercises(id) | - | Exercise reference |
-| sets | INTEGER | NOT NULL | 2 | Number of sets |
-| reps | INTEGER | NOT NULL | 8 | Target reps per set |
-| weight | REAL | NOT NULL | 30.0 | Starting weight (lbs) |
-| rest_seconds | INTEGER | NOT NULL | 60 | Rest between sets (seconds) |
-| sort_order | INTEGER | NOT NULL | - | Order within the day |
+| Column       | Type    | Constraints                | Default | Description                 |
+| ------------ | ------- | -------------------------- | ------- | --------------------------- |
+| id           | INTEGER | PRIMARY KEY AUTOINCREMENT  | -       | Unique identifier           |
+| plan_day_id  | INTEGER | NOT NULL, FK plan_days(id) | -       | Parent plan day             |
+| exercise_id  | INTEGER | NOT NULL, FK exercises(id) | -       | Exercise reference          |
+| sets         | INTEGER | NOT NULL                   | 2       | Number of sets              |
+| reps         | INTEGER | NOT NULL                   | 8       | Target reps per set         |
+| weight       | REAL    | NOT NULL                   | 30.0    | Starting weight (lbs)       |
+| rest_seconds | INTEGER | NOT NULL                   | 60      | Rest between sets (seconds) |
+| sort_order   | INTEGER | NOT NULL                   | -       | Order within the day        |
 
 ```sql
 CREATE TABLE plan_day_exercises (
@@ -139,17 +143,18 @@ CREATE INDEX idx_plan_day_exercises_exercise_id ON plan_day_exercises(exercise_i
 ```
 
 #### `mesocycles`
+
 Active instances of plans being executed.
 
-| Column | Type | Constraints | Default | Description |
-|--------|------|-------------|---------|-------------|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT | - | Unique identifier |
-| plan_id | INTEGER | NOT NULL, FK plans(id) | - | Plan being executed |
-| start_date | TEXT | NOT NULL | - | ISO 8601 date (YYYY-MM-DD) |
-| current_week | INTEGER | NOT NULL | 1 | Current week number (1-based) |
-| status | TEXT | NOT NULL | 'active' | active/completed/cancelled |
-| created_at | TEXT | NOT NULL | CURRENT_TIMESTAMP | ISO 8601 timestamp |
-| updated_at | TEXT | NOT NULL | CURRENT_TIMESTAMP | ISO 8601 timestamp |
+| Column       | Type    | Constraints               | Default           | Description                   |
+| ------------ | ------- | ------------------------- | ----------------- | ----------------------------- |
+| id           | INTEGER | PRIMARY KEY AUTOINCREMENT | -                 | Unique identifier             |
+| plan_id      | INTEGER | NOT NULL, FK plans(id)    | -                 | Plan being executed           |
+| start_date   | TEXT    | NOT NULL                  | -                 | ISO 8601 date (YYYY-MM-DD)    |
+| current_week | INTEGER | NOT NULL                  | 1                 | Current week number (1-based) |
+| status       | TEXT    | NOT NULL                  | 'active'          | active/completed/cancelled    |
+| created_at   | TEXT    | NOT NULL                  | CURRENT_TIMESTAMP | ISO 8601 timestamp            |
+| updated_at   | TEXT    | NOT NULL                  | CURRENT_TIMESTAMP | ISO 8601 timestamp            |
 
 ```sql
 CREATE TABLE mesocycles (
@@ -168,18 +173,19 @@ CREATE INDEX idx_mesocycles_status ON mesocycles(status);
 ```
 
 #### `workouts`
+
 Individual workout sessions within a mesocycle.
 
-| Column | Type | Constraints | Default | Description |
-|--------|------|-------------|---------|-------------|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT | - | Unique identifier |
-| mesocycle_id | INTEGER | NOT NULL, FK mesocycles(id) | - | Parent mesocycle |
-| plan_day_id | INTEGER | NOT NULL, FK plan_days(id) | - | Which day template |
-| week_number | INTEGER | NOT NULL | - | Week within mesocycle (1-based) |
-| scheduled_date | TEXT | NOT NULL | - | ISO 8601 date (YYYY-MM-DD) |
-| status | TEXT | NOT NULL | 'pending' | pending/in_progress/completed/skipped |
-| started_at | TEXT | NULL | - | ISO 8601 timestamp |
-| completed_at | TEXT | NULL | - | ISO 8601 timestamp |
+| Column         | Type    | Constraints                 | Default   | Description                           |
+| -------------- | ------- | --------------------------- | --------- | ------------------------------------- |
+| id             | INTEGER | PRIMARY KEY AUTOINCREMENT   | -         | Unique identifier                     |
+| mesocycle_id   | INTEGER | NOT NULL, FK mesocycles(id) | -         | Parent mesocycle                      |
+| plan_day_id    | INTEGER | NOT NULL, FK plan_days(id)  | -         | Which day template                    |
+| week_number    | INTEGER | NOT NULL                    | -         | Week within mesocycle (1-based)       |
+| scheduled_date | TEXT    | NOT NULL                    | -         | ISO 8601 date (YYYY-MM-DD)            |
+| status         | TEXT    | NOT NULL                    | 'pending' | pending/in_progress/completed/skipped |
+| started_at     | TEXT    | NULL                        | -         | ISO 8601 timestamp                    |
+| completed_at   | TEXT    | NULL                        | -         | ISO 8601 timestamp                    |
 
 ```sql
 CREATE TABLE workouts (
@@ -202,19 +208,20 @@ CREATE INDEX idx_workouts_scheduled_date ON workouts(scheduled_date);
 ```
 
 #### `workout_sets`
+
 Individual sets within a workout, tracking both targets and actuals.
 
-| Column | Type | Constraints | Default | Description |
-|--------|------|-------------|---------|-------------|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT | - | Unique identifier |
-| workout_id | INTEGER | NOT NULL, FK workouts(id) | - | Parent workout |
-| exercise_id | INTEGER | NOT NULL, FK exercises(id) | - | Exercise performed |
-| set_number | INTEGER | NOT NULL | - | Set number (1-based) |
-| target_reps | INTEGER | NOT NULL | - | Expected reps |
-| target_weight | REAL | NOT NULL | - | Expected weight (lbs) |
-| actual_reps | INTEGER | NULL | - | Actually performed reps |
-| actual_weight | REAL | NULL | - | Actually used weight (lbs) |
-| status | TEXT | NOT NULL | 'pending' | pending/completed/skipped |
+| Column        | Type    | Constraints                | Default   | Description                |
+| ------------- | ------- | -------------------------- | --------- | -------------------------- |
+| id            | INTEGER | PRIMARY KEY AUTOINCREMENT  | -         | Unique identifier          |
+| workout_id    | INTEGER | NOT NULL, FK workouts(id)  | -         | Parent workout             |
+| exercise_id   | INTEGER | NOT NULL, FK exercises(id) | -         | Exercise performed         |
+| set_number    | INTEGER | NOT NULL                   | -         | Set number (1-based)       |
+| target_reps   | INTEGER | NOT NULL                   | -         | Expected reps              |
+| target_weight | REAL    | NOT NULL                   | -         | Expected weight (lbs)      |
+| actual_reps   | INTEGER | NULL                       | -         | Actually performed reps    |
+| actual_weight | REAL    | NULL                       | -         | Actually used weight (lbs) |
+| status        | TEXT    | NOT NULL                   | 'pending' | pending/completed/skipped  |
 
 ```sql
 CREATE TABLE workout_sets (
@@ -500,15 +507,15 @@ For each repository, follow this exact sequence:
 
 The order is determined by dependencies (entities that don't depend on others come first):
 
-| Order | Entity | Depends On | Estimated Tests |
-|-------|--------|------------|-----------------|
-| 1 | Exercise | None | 12 tests |
-| 2 | Plan | None | 10 tests |
-| 3 | PlanDay | Plan | 14 tests |
-| 4 | PlanDayExercise | PlanDay, Exercise | 16 tests |
-| 5 | Mesocycle | Plan | 12 tests |
-| 6 | Workout | Mesocycle, PlanDay | 18 tests |
-| 7 | WorkoutSet | Workout, Exercise | 20 tests |
+| Order | Entity          | Depends On         | Estimated Tests |
+| ----- | --------------- | ------------------ | --------------- |
+| 1     | Exercise        | None               | 12 tests        |
+| 2     | Plan            | None               | 10 tests        |
+| 3     | PlanDay         | Plan               | 14 tests        |
+| 4     | PlanDayExercise | PlanDay, Exercise  | 16 tests        |
+| 5     | Mesocycle       | Plan               | 12 tests        |
+| 6     | Workout         | Mesocycle, PlanDay | 18 tests        |
+| 7     | WorkoutSet      | Workout, Exercise  | 20 tests        |
 
 **Total estimated tests: ~102 repository tests**
 
@@ -616,9 +623,9 @@ export class Migrator {
    */
   getCurrentVersion(): number {
     this.ensureMigrationsTable();
-    const result = this.db.prepare(
-      'SELECT MAX(version) as version FROM _migrations'
-    ).get() as { version: number | null };
+    const result = this.db
+      .prepare('SELECT MAX(version) as version FROM _migrations')
+      .get() as { version: number | null };
     return result?.version ?? 0;
   }
 
@@ -633,11 +640,13 @@ export class Migrator {
       if (migration.version > currentVersion) {
         this.db.transaction(() => {
           migration.up(this.db);
-          this.db.prepare(
-            'INSERT INTO _migrations (version, name) VALUES (?, ?)'
-          ).run(migration.version, migration.name);
+          this.db
+            .prepare('INSERT INTO _migrations (version, name) VALUES (?, ?)')
+            .run(migration.version, migration.name);
         })();
-        console.log(`Applied migration ${migration.version}: ${migration.name}`);
+        console.log(
+          `Applied migration ${migration.version}: ${migration.name}`
+        );
       }
     }
   }
@@ -647,16 +656,18 @@ export class Migrator {
    */
   down(): void {
     const currentVersion = this.getCurrentVersion();
-    const migration = this.migrations.find(m => m.version === currentVersion);
+    const migration = this.migrations.find((m) => m.version === currentVersion);
 
     if (migration) {
       this.db.transaction(() => {
         migration.down(this.db);
-        this.db.prepare(
-          'DELETE FROM _migrations WHERE version = ?'
-        ).run(migration.version);
+        this.db
+          .prepare('DELETE FROM _migrations WHERE version = ?')
+          .run(migration.version);
       })();
-      console.log(`Rolled back migration ${migration.version}: ${migration.name}`);
+      console.log(
+        `Rolled back migration ${migration.version}: ${migration.name}`
+      );
     }
   }
 
@@ -816,7 +827,7 @@ export class ExerciseRepository extends BaseRepository<
     const result = stmt.run(
       data.name,
       data.weight_increment ?? 5.0,
-      data.is_custom ?? false ? 1 : 0
+      (data.is_custom ?? false) ? 1 : 0
     );
 
     return this.findById(result.lastInsertRowid as number)!;
@@ -837,7 +848,7 @@ export class ExerciseRepository extends BaseRepository<
   findAll(): Exercise[] {
     const stmt = this.db.prepare('SELECT * FROM exercises ORDER BY name');
     const rows = stmt.all() as ExerciseRow[];
-    return rows.map(row => this.rowToExercise(row));
+    return rows.map((row) => this.rowToExercise(row));
   }
 
   findDefaultExercises(): Exercise[] {
@@ -845,7 +856,7 @@ export class ExerciseRepository extends BaseRepository<
       'SELECT * FROM exercises WHERE is_custom = 0 ORDER BY name'
     );
     const rows = stmt.all() as ExerciseRow[];
-    return rows.map(row => this.rowToExercise(row));
+    return rows.map((row) => this.rowToExercise(row));
   }
 
   findCustomExercises(): Exercise[] {
@@ -853,7 +864,7 @@ export class ExerciseRepository extends BaseRepository<
       'SELECT * FROM exercises WHERE is_custom = 1 ORDER BY name'
     );
     const rows = stmt.all() as ExerciseRow[];
-    return rows.map(row => this.rowToExercise(row));
+    return rows.map((row) => this.rowToExercise(row));
   }
 
   update(id: number, data: UpdateExerciseDTO): Exercise | null {
@@ -1016,7 +1027,9 @@ describe('ExerciseRepository', () => {
   describe('update', () => {
     it('should update exercise name', () => {
       const created = repository.create({ name: 'Bench Press' });
-      const updated = repository.update(created.id, { name: 'Incline Bench Press' });
+      const updated = repository.update(created.id, {
+        name: 'Incline Bench Press',
+      });
 
       expect(updated?.name).toBe('Incline Bench Press');
       expect(updated?.updated_at).not.toBe(created.updated_at);
@@ -1065,6 +1078,7 @@ Following the same pattern, implement:
 7. **WorkoutSetRepository**
 
 Each repository should include:
+
 - Type-safe row-to-entity conversion
 - All CRUD operations
 - Custom query methods as needed
@@ -1395,9 +1409,7 @@ export function requestLogger(
 
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(
-      `${req.method} ${req.path} ${res.statusCode} - ${duration}ms`
-    );
+    console.log(`${req.method} ${req.path} ${res.statusCode} - ${duration}ms`);
   });
 
   next();

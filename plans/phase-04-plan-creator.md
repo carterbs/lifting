@@ -11,6 +11,7 @@ This phase implements the Plan Creator feature, which allows users to create, vi
 ## Prerequisites
 
 Before starting Phase 4, ensure the following are complete:
+
 - Phase 1: Project setup (monorepo structure, TypeScript, linting, testing infrastructure)
 - Phase 2: Database setup (SQLite, migrations, models for exercises)
 - Phase 3: Exercise library (GET /api/exercises endpoint, seeded exercise data)
@@ -181,6 +182,7 @@ packages/server/src/
 **File**: `packages/server/src/repositories/planRepository.test.ts`
 
 Write tests for:
+
 1. `findAll()` - returns empty array when no plans exist
 2. `findAll()` - returns all plans ordered by createdAt desc
 3. `findById(id)` - returns null when plan doesn't exist
@@ -203,16 +205,20 @@ Write tests for:
 **File**: `packages/server/src/repositories/planRepository.ts`
 
 Implement:
+
 ```typescript
 export class PlanRepository {
   constructor(private db: Database) {}
 
-  async findAll(): Promise<Plan[]>
-  async findById(id: number): Promise<PlanWithDays | null>
-  async create(data: CreatePlanRequest): Promise<PlanWithDays>
-  async update(id: number, data: UpdatePlanRequest): Promise<PlanWithDays | null>
-  async delete(id: number): Promise<boolean>
-  async hasActiveMesocycle(planId: number): Promise<boolean>
+  async findAll(): Promise<Plan[]>;
+  async findById(id: number): Promise<PlanWithDays | null>;
+  async create(data: CreatePlanRequest): Promise<PlanWithDays>;
+  async update(
+    id: number,
+    data: UpdatePlanRequest
+  ): Promise<PlanWithDays | null>;
+  async delete(id: number): Promise<boolean>;
+  async hasActiveMesocycle(planId: number): Promise<boolean>;
 }
 ```
 
@@ -221,6 +227,7 @@ export class PlanRepository {
 **File**: `packages/server/src/services/planService.test.ts`
 
 Write tests for:
+
 1. `listPlans()` - returns all plans from repository
 2. `getPlan(id)` - returns plan when found
 3. `getPlan(id)` - throws NotFoundError when plan doesn't exist
@@ -244,6 +251,7 @@ Write tests for:
 **File**: `packages/server/src/services/planService.ts`
 
 Implement:
+
 ```typescript
 export class PlanService {
   constructor(
@@ -251,11 +259,11 @@ export class PlanService {
     private exerciseRepository: ExerciseRepository
   ) {}
 
-  async listPlans(): Promise<Plan[]>
-  async getPlan(id: number): Promise<PlanWithDays>
-  async createPlan(data: CreatePlanRequest): Promise<PlanWithDays>
-  async updatePlan(id: number, data: UpdatePlanRequest): Promise<PlanWithDays>
-  async deletePlan(id: number): Promise<void>
+  async listPlans(): Promise<Plan[]>;
+  async getPlan(id: number): Promise<PlanWithDays>;
+  async createPlan(data: CreatePlanRequest): Promise<PlanWithDays>;
+  async updatePlan(id: number, data: UpdatePlanRequest): Promise<PlanWithDays>;
+  async deletePlan(id: number): Promise<void>;
 }
 ```
 
@@ -266,16 +274,19 @@ export class PlanService {
 Write integration tests for:
 
 #### GET /api/plans
+
 1. Returns 200 with empty array when no plans
 2. Returns 200 with list of plans (name, durationWeeks, id, timestamps)
 3. Plans are ordered by createdAt descending
 
 #### GET /api/plans/:id
+
 1. Returns 200 with full plan including days and exercises
 2. Returns 404 when plan doesn't exist
 3. Exercises include exercise name from exercises table
 
 #### POST /api/plans
+
 1. Returns 201 with created plan on valid data
 2. Returns 400 when name is empty
 3. Returns 400 when name is missing
@@ -291,6 +302,7 @@ Write integration tests for:
 13. Creates plan with multiple days and exercises
 
 #### PUT /api/plans/:id
+
 1. Returns 200 with updated plan on valid data
 2. Returns 404 when plan doesn't exist
 3. Returns 400 on validation errors (same as POST)
@@ -298,6 +310,7 @@ Write integration tests for:
 5. Can add/remove/modify days and exercises
 
 #### DELETE /api/plans/:id
+
 1. Returns 204 on successful deletion
 2. Returns 404 when plan doesn't exist
 3. Returns 409 when plan has active mesocycle
@@ -305,6 +318,7 @@ Write integration tests for:
 **File**: `packages/server/src/routes/plans.ts`
 
 Implement Express router:
+
 ```typescript
 import { Router } from 'express';
 import { PlanService } from '../services/planService';
@@ -312,11 +326,21 @@ import { PlanService } from '../services/planService';
 export function createPlanRouter(planService: PlanService): Router {
   const router = Router();
 
-  router.get('/', async (req, res, next) => { /* ... */ });
-  router.get('/:id', async (req, res, next) => { /* ... */ });
-  router.post('/', async (req, res, next) => { /* ... */ });
-  router.put('/:id', async (req, res, next) => { /* ... */ });
-  router.delete('/:id', async (req, res, next) => { /* ... */ });
+  router.get('/', async (req, res, next) => {
+    /* ... */
+  });
+  router.get('/:id', async (req, res, next) => {
+    /* ... */
+  });
+  router.post('/', async (req, res, next) => {
+    /* ... */
+  });
+  router.put('/:id', async (req, res, next) => {
+    /* ... */
+  });
+  router.delete('/:id', async (req, res, next) => {
+    /* ... */
+  });
 
   return router;
 }
@@ -333,18 +357,33 @@ const exerciseConfigSchema = z.object({
   exerciseId: z.number().int().positive(),
   sets: z.number().int().min(1).max(10).default(2),
   reps: z.number().int().min(1).max(20).default(8),
-  weight: z.number().int().min(5).max(300).refine(
-    (val) => val % 5 === 0,
-    { message: 'Weight must be divisible by 5' }
-  ).default(30),
-  restSeconds: z.number().int().min(30).max(300).refine(
-    (val) => val % 30 === 0,
-    { message: 'Rest time must be divisible by 30' }
-  ).default(60),
-  weightIncrement: z.number().int().min(5).max(20).refine(
-    (val) => val % 5 === 0,
-    { message: 'Weight increment must be divisible by 5' }
-  ).default(5),
+  weight: z
+    .number()
+    .int()
+    .min(5)
+    .max(300)
+    .refine((val) => val % 5 === 0, {
+      message: 'Weight must be divisible by 5',
+    })
+    .default(30),
+  restSeconds: z
+    .number()
+    .int()
+    .min(30)
+    .max(300)
+    .refine((val) => val % 30 === 0, {
+      message: 'Rest time must be divisible by 30',
+    })
+    .default(60),
+  weightIncrement: z
+    .number()
+    .int()
+    .min(5)
+    .max(20)
+    .refine((val) => val % 5 === 0, {
+      message: 'Weight increment must be divisible by 5',
+    })
+    .default(5),
 });
 
 const planDaySchema = z.object({
@@ -367,15 +406,20 @@ export const createPlanSchema = z.object({
 export const updatePlanSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   durationWeeks: z.number().int().min(1).max(52).optional(),
-  days: z.array(planDaySchema.extend({
-    id: z.number().int().positive().optional(),
-  })).refine(
-    (days) => {
-      const dayNumbers = days.map((d) => d.dayOfWeek);
-      return new Set(dayNumbers).size === dayNumbers.length;
-    },
-    { message: 'Duplicate days are not allowed' }
-  ).optional(),
+  days: z
+    .array(
+      planDaySchema.extend({
+        id: z.number().int().positive().optional(),
+      })
+    )
+    .refine(
+      (days) => {
+        const dayNumbers = days.map((d) => d.dayOfWeek);
+        return new Set(dayNumbers).size === dayNumbers.length;
+      },
+      { message: 'Duplicate days are not allowed' }
+    )
+    .optional(),
 });
 ```
 
@@ -439,7 +483,12 @@ export const DEFAULT_EXERCISE_CONFIG = {
 
 ```typescript
 import { api } from './client';
-import type { Plan, PlanWithDays, CreatePlanRequest, UpdatePlanRequest } from '../types/plan';
+import type {
+  Plan,
+  PlanWithDays,
+  CreatePlanRequest,
+  UpdatePlanRequest,
+} from '../types/plan';
 
 export async function fetchPlans(): Promise<Plan[]> {
   const response = await api.get('/plans');
@@ -451,12 +500,17 @@ export async function fetchPlan(id: number): Promise<PlanWithDays> {
   return response.data;
 }
 
-export async function createPlan(data: CreatePlanRequest): Promise<PlanWithDays> {
+export async function createPlan(
+  data: CreatePlanRequest
+): Promise<PlanWithDays> {
   const response = await api.post('/plans', data);
   return response.data;
 }
 
-export async function updatePlan(id: number, data: UpdatePlanRequest): Promise<PlanWithDays> {
+export async function updatePlan(
+  id: number,
+  data: UpdatePlanRequest
+): Promise<PlanWithDays> {
   const response = await api.put(`/plans/${id}`, data);
   return response.data;
 }
@@ -785,18 +839,21 @@ Add to router configuration:
 ### 2.8 Frontend Unit Tests
 
 **Test files to create**:
+
 - `packages/client/src/components/plans/DaySelector.test.tsx`
 - `packages/client/src/components/plans/ExerciseConfigRow.test.tsx`
 - `packages/client/src/components/plans/PlanForm.test.tsx`
 - `packages/client/src/hooks/usePlans.test.ts`
 
 **DaySelector tests**:
+
 1. Renders all 7 days
 2. Shows correct days as checked based on selectedDays prop
 3. Calls onChange with updated array when checkbox toggled
 4. Respects disabled prop
 
 **ExerciseConfigRow tests**:
+
 1. Renders exercise dropdown with available exercises
 2. Renders sets dropdown with correct default
 3. Renders reps dropdown with correct default
@@ -806,6 +863,7 @@ Add to router configuration:
 7. Calls onRemove when remove button clicked
 
 **PlanForm tests**:
+
 1. Shows step 1 (name/duration) initially
 2. Validates name is not empty before proceeding
 3. Shows step 2 (day selection) after step 1
@@ -898,8 +956,12 @@ test('should create a new plan with multiple days and exercises', async () => {
 
   // Verify redirect to plan detail page
   await page.waitForSelector('[data-testid="plan-detail"]');
-  expect(await page.textContent('[data-testid="plan-name"]')).toBe('Push Pull Legs');
-  expect(await page.textContent('[data-testid="plan-duration"]')).toBe('8 weeks');
+  expect(await page.textContent('[data-testid="plan-name"]')).toBe(
+    'Push Pull Legs'
+  );
+  expect(await page.textContent('[data-testid="plan-duration"]')).toBe(
+    '8 weeks'
+  );
 
   // Verify exercises are shown
   expect(await page.$$('[data-testid^="day-section"]')).toHaveLength(3);
@@ -915,8 +977,13 @@ test('should edit an existing plan', async () => {
     name: 'Original Plan',
     durationWeeks: 6,
     days: [
-      { dayOfWeek: 1, exercises: [{ exerciseId: 1, sets: 2, reps: 8, weight: 30, restSeconds: 60 }] }
-    ]
+      {
+        dayOfWeek: 1,
+        exercises: [
+          { exerciseId: 1, sets: 2, reps: 8, weight: 30, restSeconds: 60 },
+        ],
+      },
+    ],
   });
 
   // Navigate to plan detail
@@ -944,7 +1011,9 @@ test('should edit an existing plan', async () => {
 
   // Verify changes persisted
   await page.waitForSelector('[data-testid="plan-detail"]');
-  expect(await page.textContent('[data-testid="plan-name"]')).toBe('Updated Plan Name');
+  expect(await page.textContent('[data-testid="plan-name"]')).toBe(
+    'Updated Plan Name'
+  );
 });
 ```
 
@@ -956,14 +1025,16 @@ test('should delete a plan', async () => {
   await seedPlan({
     name: 'Plan to Delete',
     durationWeeks: 6,
-    days: []
+    days: [],
   });
 
   // Navigate to plans page
   await page.goto('http://localhost:3000/plans');
 
   // Verify plan exists
-  expect(await page.textContent('[data-testid="plan-card-1"]')).toContain('Plan to Delete');
+  expect(await page.textContent('[data-testid="plan-card-1"]')).toContain(
+    'Plan to Delete'
+  );
 
   // Open plan menu and click delete
   await page.click('[data-testid="plan-menu-1"]');
@@ -987,7 +1058,7 @@ test('should prevent deleting plan with active mesocycle', async () => {
   await seedPlanWithActiveMesocycle({
     name: 'Active Plan',
     durationWeeks: 6,
-    days: [{ dayOfWeek: 1, exercises: [] }]
+    days: [{ dayOfWeek: 1, exercises: [] }],
   });
 
   // Navigate to plans page
@@ -999,10 +1070,14 @@ test('should prevent deleting plan with active mesocycle', async () => {
 
   // Verify error message in dialog
   await page.waitForSelector('[data-testid="delete-confirm-dialog"]');
-  expect(await page.textContent('[data-testid="delete-error"]')).toContain('active mesocycle');
+  expect(await page.textContent('[data-testid="delete-error"]')).toContain(
+    'active mesocycle'
+  );
 
   // Confirm button should be disabled
-  expect(await page.isDisabled('[data-testid="confirm-delete-button"]')).toBe(true);
+  expect(await page.isDisabled('[data-testid="confirm-delete-button"]')).toBe(
+    true
+  );
 });
 ```
 
@@ -1040,6 +1115,7 @@ test('should prevent deleting plan with active mesocycle', async () => {
 ## Success Criteria
 
 ### Backend
+
 - [ ] All 18 repository tests pass
 - [ ] All 19 service tests pass
 - [ ] All route integration tests pass (approximately 20 tests)
@@ -1048,6 +1124,7 @@ test('should prevent deleting plan with active mesocycle', async () => {
 - [ ] All linting rules pass
 
 ### Frontend
+
 - [ ] DaySelector component tests pass
 - [ ] ExerciseConfigRow component tests pass
 - [ ] PlanForm component tests pass
@@ -1056,12 +1133,14 @@ test('should prevent deleting plan with active mesocycle', async () => {
 - [ ] All Radix UI components properly accessible
 
 ### E2E
+
 - [ ] Create new plan test passes
 - [ ] Edit existing plan test passes
 - [ ] Delete plan test passes
 - [ ] Delete prevention (active mesocycle) test passes
 
 ### Functionality
+
 - [ ] Can list all plans on /plans page
 - [ ] Can create a new plan with:
   - Name (required)
@@ -1122,6 +1201,7 @@ Closes #[issue-number]
 ## Notes
 
 ### Constraints Reference
+
 - **Sets**: 1-10, default 2
 - **Reps**: 1-20, default 8
 - **Weight**: 5-300 lbs in 5lb steps, default 30
@@ -1130,12 +1210,14 @@ Closes #[issue-number]
 - **Days of week**: 0 (Sunday) through 6 (Saturday)
 
 ### Radix UI Components to Use
+
 - `@radix-ui/react-checkbox` - Day selection
 - `@radix-ui/react-select` - All dropdowns (exercise, sets, reps, weight, rest)
 - `@radix-ui/react-dialog` - Delete confirmation, potentially form steps
 - `@radix-ui/react-separator` - Visual separation between days/exercises
 
 ### Data Flow
+
 1. User creates plan via multi-step form
 2. Form state managed with useState/useReducer
 3. On submit, data transformed to CreatePlanRequest
@@ -1145,6 +1227,7 @@ Closes #[issue-number]
 7. Client redirects to plan detail page
 
 ### Future Considerations
+
 - Drag-and-drop reordering of exercises (not in MVP)
 - Plan templates/duplication
 - Import/export plans

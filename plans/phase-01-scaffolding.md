@@ -72,10 +72,7 @@ Create the root `package.json` with npm workspaces configuration.
   "name": "lifting",
   "version": "0.0.1",
   "private": true,
-  "workspaces": [
-    "packages/*",
-    "e2e"
-  ],
+  "workspaces": ["packages/*", "e2e"],
   "scripts": {
     "dev": "concurrently -n client,server -c blue,green \"npm run dev -w @lifting/client\" \"npm run dev -w @lifting/server\"",
     "build": "npm run build -w @lifting/shared && npm run build -w @lifting/server && npm run build -w @lifting/client",
@@ -448,9 +445,7 @@ export function createErrorResponse(error: string): ApiResponse<never> {
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
-  "references": [
-    { "path": "../shared" }
-  ]
+  "references": [{ "path": "../shared" }]
 }
 ```
 
@@ -502,13 +497,16 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = process.env['DB_PATH'] ?? path.join(__dirname, '../../data/lifting.db');
+const DB_PATH =
+  process.env['DB_PATH'] ?? path.join(__dirname, '../../data/lifting.db');
 
 let db: Database.Database | null = null;
 
 export function getDatabase(): Database.Database {
   if (db === null) {
-    throw new Error('Database not initialized. Call initializeDatabase() first.');
+    throw new Error(
+      'Database not initialized. Call initializeDatabase() first.'
+    );
   }
   return db;
 }
@@ -550,13 +548,16 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = process.env['DB_PATH'] ?? path.join(__dirname, '../../data/lifting.db');
+const DB_PATH =
+  process.env['DB_PATH'] ?? path.join(__dirname, '../../data/lifting.db');
 
 let db: Database.Database | null = null;
 
 export function getDatabase(): Database.Database {
   if (db === null) {
-    throw new Error('Database not initialized. Call initializeDatabase() first.');
+    throw new Error(
+      'Database not initialized. Call initializeDatabase() first.'
+    );
   }
   return db;
 }
@@ -660,9 +661,7 @@ healthRouter.get('/', (_req: Request, res: Response): void => {
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
-  "references": [
-    { "path": "../shared" }
-  ]
+  "references": [{ "path": "../shared" }]
 }
 ```
 
@@ -1053,8 +1052,8 @@ services:
       context: .
       dockerfile: docker/Dockerfile.dev
     ports:
-      - "3000:3000"
-      - "3001:3001"
+      - '3000:3000'
+      - '3001:3001'
     volumes:
       - .:/app
       - /app/node_modules
@@ -1082,7 +1081,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.prod
     ports:
-      - "3001:3001"
+      - '3001:3001'
     volumes:
       - lifting-data:/app/data
     environment:
@@ -1307,6 +1306,7 @@ vitest: ^1.3.0
 ### @lifting/server
 
 **dependencies:**
+
 ```
 @lifting/shared: *
 better-sqlite3: ^9.4.3
@@ -1315,6 +1315,7 @@ express: ^4.18.3
 ```
 
 **devDependencies:**
+
 ```
 @types/better-sqlite3: ^7.6.9
 @types/cors: ^2.8.17
@@ -1328,6 +1329,7 @@ vitest: ^1.3.0
 ### @lifting/client
 
 **dependencies:**
+
 ```
 @lifting/shared: *
 @radix-ui/react-slot: ^1.0.2
@@ -1337,6 +1339,7 @@ react-dom: ^18.2.0
 ```
 
 **devDependencies:**
+
 ```
 @testing-library/jest-dom: ^6.4.2
 @testing-library/react: ^14.2.1
@@ -1365,6 +1368,7 @@ vitest: ^1.3.0
 Execute these steps in order:
 
 1. Create directory structure:
+
    ```bash
    mkdir -p packages/shared/src
    mkdir -p packages/server/src/db
@@ -1421,11 +1425,13 @@ Execute these steps in order:
    - `docker-compose.prod.yml`
 
 8. Install dependencies:
+
    ```bash
    npm install
    ```
 
 9. Build shared package:
+
    ```bash
    npm run build -w @lifting/shared
    ```
@@ -1466,18 +1472,23 @@ docker-compose build
 ### Manual Verification
 
 1. **Development servers start correctly:**
+
    ```bash
    npm run dev
    ```
+
    - Client accessible at http://localhost:3000
    - Server accessible at http://localhost:3001
    - Client displays "Lifting" heading and shows server status as "ok"
 
 2. **Health check endpoint works:**
+
    ```bash
    curl http://localhost:3001/api/health
    ```
+
    Expected response:
+
    ```json
    {
      "success": true,
@@ -1490,16 +1501,20 @@ docker-compose build
    ```
 
 3. **Docker development environment works:**
+
    ```bash
    npm run docker:dev
    ```
+
    - App accessible at http://localhost:3000
    - API accessible at http://localhost:3001
 
 4. **No `any` types in codebase:**
+
    ```bash
    grep -r "any" packages/*/src --include="*.ts" --include="*.tsx" | grep -v "node_modules" | grep -v ".test."
    ```
+
    Should return no results (except in type definitions from dependencies)
 
 5. **Database file created:**

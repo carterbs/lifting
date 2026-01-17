@@ -8,15 +8,15 @@ This phase implements the core progression system that drives the 6-week mesocyc
 
 ### Weekly Progression Pattern
 
-| Week | Weight Change | Rep Change | Notes |
-|------|---------------|------------|-------|
-| 0 | Starting weight | Starting reps | User-defined baseline |
-| 1 | Same | +1 rep | First progression |
-| 2 | +weightIncrement (default 5lbs) | Reset to base | Weight increase |
-| 3 | Same | +1 rep | Rep progression |
-| 4 | +weightIncrement | Reset to base | Second weight increase |
-| 5 | Same | +1 rep | Final rep progression |
-| 6 | 85% of week 5 weight | Same reps, 50% sets | Deload week |
+| Week | Weight Change                   | Rep Change          | Notes                  |
+| ---- | ------------------------------- | ------------------- | ---------------------- |
+| 0    | Starting weight                 | Starting reps       | User-defined baseline  |
+| 1    | Same                            | +1 rep              | First progression      |
+| 2    | +weightIncrement (default 5lbs) | Reset to base       | Weight increase        |
+| 3    | Same                            | +1 rep              | Rep progression        |
+| 4    | +weightIncrement                | Reset to base       | Second weight increase |
+| 5    | Same                            | +1 rep              | Final rep progression  |
+| 6    | 85% of week 5 weight            | Same reps, 50% sets | Deload week            |
 
 ### Incomplete Set Rule
 
@@ -55,10 +55,10 @@ packages/backend/src/
 export interface ExerciseProgression {
   exerciseId: string;
   planExerciseId: string;
-  baseWeight: number;        // Starting weight from plan
-  baseReps: number;          // Starting reps from plan
-  baseSets: number;          // Starting sets from plan
-  weightIncrement: number;   // Weight to add each progression (default 5)
+  baseWeight: number; // Starting weight from plan
+  baseReps: number; // Starting reps from plan
+  baseSets: number; // Starting sets from plan
+  weightIncrement: number; // Weight to add each progression (default 5)
 }
 
 export interface WeekTargets {
@@ -147,7 +147,7 @@ describe('ProgressionService', () => {
         const result = service.calculateTargetsForWeek(baseExercise, 2, true);
 
         expect(result.targetWeight).toBe(35); // 30 + 5
-        expect(result.targetReps).toBe(8);    // Reset to base
+        expect(result.targetReps).toBe(8); // Reset to base
         expect(result.targetSets).toBe(3);
       });
 
@@ -220,8 +220,8 @@ describe('ProgressionService', () => {
         const result = service.calculateTargetsForWeek(baseExercise, 6, true);
 
         expect(result.targetWeight).toBe(34); // 40 * 0.85 = 34
-        expect(result.targetReps).toBe(9);    // Same as week 5
-        expect(result.targetSets).toBe(2);    // 3 * 0.5 = 1.5, round up = 2
+        expect(result.targetReps).toBe(9); // Same as week 5
+        expect(result.targetSets).toBe(2); // 3 * 0.5 = 1.5, round up = 2
         expect(result.isDeload).toBe(true);
       });
 
@@ -246,7 +246,7 @@ describe('ProgressionService', () => {
 
         // Deload is based on week 4 targets since week 5 wasn't completed
         expect(result.targetWeight).toBe(34); // 40 * 0.85 = 34
-        expect(result.targetReps).toBe(8);    // Week 4 reps
+        expect(result.targetReps).toBe(8); // Week 4 reps
         expect(result.isDeload).toBe(true);
       });
     });
@@ -255,18 +255,39 @@ describe('ProgressionService', () => {
   describe('calculateProgressionHistory', () => {
     it('should calculate all weeks based on completion history', () => {
       const completionHistory: CompletionStatus[] = [
-        { exerciseId: 'exercise-1', weekNumber: 0, allSetsCompleted: true, completedSets: 3, prescribedSets: 3 },
-        { exerciseId: 'exercise-1', weekNumber: 1, allSetsCompleted: true, completedSets: 3, prescribedSets: 3 },
-        { exerciseId: 'exercise-1', weekNumber: 2, allSetsCompleted: false, completedSets: 2, prescribedSets: 3 }, // Incomplete!
+        {
+          exerciseId: 'exercise-1',
+          weekNumber: 0,
+          allSetsCompleted: true,
+          completedSets: 3,
+          prescribedSets: 3,
+        },
+        {
+          exerciseId: 'exercise-1',
+          weekNumber: 1,
+          allSetsCompleted: true,
+          completedSets: 3,
+          prescribedSets: 3,
+        },
+        {
+          exerciseId: 'exercise-1',
+          weekNumber: 2,
+          allSetsCompleted: false,
+          completedSets: 2,
+          prescribedSets: 3,
+        }, // Incomplete!
       ];
 
-      const result = service.calculateProgressionHistory(baseExercise, completionHistory);
+      const result = service.calculateProgressionHistory(
+        baseExercise,
+        completionHistory
+      );
 
       expect(result[0].targetWeight).toBe(30);
       expect(result[1].targetWeight).toBe(30);
       expect(result[2].targetWeight).toBe(35);
       expect(result[3].targetWeight).toBe(35); // No progression - week 2 incomplete
-      expect(result[3].targetReps).toBe(8);    // Stays at week 2 values
+      expect(result[3].targetReps).toBe(8); // Stays at week 2 values
     });
   });
 
@@ -301,7 +322,11 @@ describe('ProgressionService', () => {
 **File**: `packages/backend/src/services/progression/progression.service.ts`
 
 ```typescript
-import { ExerciseProgression, WeekTargets, CompletionStatus } from '../../types/progression';
+import {
+  ExerciseProgression,
+  WeekTargets,
+  CompletionStatus,
+} from '../../types/progression';
 
 export class ProgressionService {
   private readonly DELOAD_WEIGHT_FACTOR = 0.85;
@@ -323,15 +348,28 @@ export class ProgressionService {
   ): WeekTargets {
     // Week 0 is always the baseline
     if (weekNumber === 0) {
-      return this.createWeekTargets(exercise, exercise.baseWeight, exercise.baseReps, exercise.baseSets, 0, false);
+      return this.createWeekTargets(
+        exercise,
+        exercise.baseWeight,
+        exercise.baseReps,
+        exercise.baseSets,
+        0,
+        false
+      );
     }
 
     // Calculate what the targets WOULD be if all previous weeks were completed
-    const idealTargets = this.calculateIdealTargetsForWeek(exercise, weekNumber);
+    const idealTargets = this.calculateIdealTargetsForWeek(
+      exercise,
+      weekNumber
+    );
 
     // If previous week was not completed, don't progress
     if (!previousWeekCompleted && weekNumber !== 6) {
-      const previousIdealTargets = this.calculateIdealTargetsForWeek(exercise, weekNumber - 1);
+      const previousIdealTargets = this.calculateIdealTargetsForWeek(
+        exercise,
+        weekNumber - 1
+      );
       return this.createWeekTargets(
         exercise,
         previousIdealTargets.weight,
@@ -352,12 +390,17 @@ export class ProgressionService {
         week5Targets.weight * this.DELOAD_WEIGHT_FACTOR,
         this.WEIGHT_ROUNDING_INCREMENT
       );
-      const deloadSets = Math.max(1, Math.ceil(exercise.baseSets * this.DELOAD_VOLUME_FACTOR));
+      const deloadSets = Math.max(
+        1,
+        Math.ceil(exercise.baseSets * this.DELOAD_VOLUME_FACTOR)
+      );
 
       return this.createWeekTargets(
         exercise,
         deloadWeight,
-        previousWeekCompleted ? week5Targets.reps : this.calculateIdealTargetsForWeek(exercise, 4).reps,
+        previousWeekCompleted
+          ? week5Targets.reps
+          : this.calculateIdealTargetsForWeek(exercise, 4).reps,
         deloadSets,
         weekNumber,
         true
@@ -384,10 +427,15 @@ export class ProgressionService {
     const targets: WeekTargets[] = [];
 
     for (let week = 0; week <= 6; week++) {
-      const previousWeek = completionHistory.find(c => c.weekNumber === week - 1);
-      const previousCompleted = week === 0 ? true : (previousWeek?.allSetsCompleted ?? true);
+      const previousWeek = completionHistory.find(
+        (c) => c.weekNumber === week - 1
+      );
+      const previousCompleted =
+        week === 0 ? true : (previousWeek?.allSetsCompleted ?? true);
 
-      targets.push(this.calculateTargetsForWeek(exercise, week, previousCompleted));
+      targets.push(
+        this.calculateTargetsForWeek(exercise, week, previousCompleted)
+      );
     }
 
     return targets;
@@ -408,16 +456,36 @@ export class ProgressionService {
       case 1:
         return { weight: baseWeight, reps: baseReps + 1, sets: baseSets };
       case 2:
-        return { weight: baseWeight + weightIncrement, reps: baseReps, sets: baseSets };
+        return {
+          weight: baseWeight + weightIncrement,
+          reps: baseReps,
+          sets: baseSets,
+        };
       case 3:
-        return { weight: baseWeight + weightIncrement, reps: baseReps + 1, sets: baseSets };
+        return {
+          weight: baseWeight + weightIncrement,
+          reps: baseReps + 1,
+          sets: baseSets,
+        };
       case 4:
-        return { weight: baseWeight + (weightIncrement * 2), reps: baseReps, sets: baseSets };
+        return {
+          weight: baseWeight + weightIncrement * 2,
+          reps: baseReps,
+          sets: baseSets,
+        };
       case 5:
-        return { weight: baseWeight + (weightIncrement * 2), reps: baseReps + 1, sets: baseSets };
+        return {
+          weight: baseWeight + weightIncrement * 2,
+          reps: baseReps + 1,
+          sets: baseSets,
+        };
       default:
         // Week 6+ returns week 5 values (deload is calculated separately)
-        return { weight: baseWeight + (weightIncrement * 2), reps: baseReps + 1, sets: baseSets };
+        return {
+          weight: baseWeight + weightIncrement * 2,
+          reps: baseReps + 1,
+          sets: baseSets,
+        };
     }
   }
 
@@ -564,7 +632,10 @@ export class DeloadService {
       this.WEIGHT_ROUNDING_INCREMENT
     );
 
-    const deloadSets = Math.max(1, Math.ceil(exercise.baseSets * this.DELOAD_VOLUME_FACTOR));
+    const deloadSets = Math.max(
+      1,
+      Math.ceil(exercise.baseSets * this.DELOAD_VOLUME_FACTOR)
+    );
 
     return {
       exerciseId: exercise.exerciseId,
@@ -599,7 +670,11 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import { app } from '../../app';
 import { db } from '../../db';
-import { setupTestDatabase, teardownTestDatabase, seedMesocycleWithWorkouts } from '../../test/helpers';
+import {
+  setupTestDatabase,
+  teardownTestDatabase,
+  seedMesocycleWithWorkouts,
+} from '../../test/helpers';
 
 describe('GET /api/mesocycles/:id/next-week', () => {
   beforeEach(async () => {
@@ -614,7 +689,14 @@ describe('GET /api/mesocycles/:id/next-week', () => {
     const mesocycleId = await seedMesocycleWithWorkouts({
       currentWeek: 1,
       exercises: [
-        { id: 'ex1', name: 'Bench Press', weight: 100, reps: 8, sets: 3, completed: true },
+        {
+          id: 'ex1',
+          name: 'Bench Press',
+          weight: 100,
+          reps: 8,
+          sets: 3,
+          completed: true,
+        },
       ],
     });
 
@@ -625,14 +707,21 @@ describe('GET /api/mesocycles/:id/next-week', () => {
     expect(response.body.weekNumber).toBe(2);
     expect(response.body.exercises).toHaveLength(1);
     expect(response.body.exercises[0].targetWeight).toBe(105); // +5lbs
-    expect(response.body.exercises[0].targetReps).toBe(8);     // Reset to base
+    expect(response.body.exercises[0].targetReps).toBe(8); // Reset to base
   });
 
   it('should not progress incomplete exercises', async () => {
     const mesocycleId = await seedMesocycleWithWorkouts({
       currentWeek: 1,
       exercises: [
-        { id: 'ex1', name: 'Bench Press', weight: 100, reps: 9, sets: 3, completedSets: 2 }, // Incomplete
+        {
+          id: 'ex1',
+          name: 'Bench Press',
+          weight: 100,
+          reps: 9,
+          sets: 3,
+          completedSets: 2,
+        }, // Incomplete
       ],
     });
 
@@ -641,7 +730,7 @@ describe('GET /api/mesocycles/:id/next-week', () => {
       .expect(200);
 
     expect(response.body.exercises[0].targetWeight).toBe(100); // No change
-    expect(response.body.exercises[0].targetReps).toBe(9);     // No change
+    expect(response.body.exercises[0].targetReps).toBe(9); // No change
     expect(response.body.exercises[0].willProgress).toBe(false);
   });
 
@@ -649,7 +738,14 @@ describe('GET /api/mesocycles/:id/next-week', () => {
     const mesocycleId = await seedMesocycleWithWorkouts({
       currentWeek: 5,
       exercises: [
-        { id: 'ex1', name: 'Bench Press', weight: 110, reps: 9, sets: 3, completed: true },
+        {
+          id: 'ex1',
+          name: 'Bench Press',
+          weight: 110,
+          reps: 9,
+          sets: 3,
+          completed: true,
+        },
       ],
     });
 
@@ -660,7 +756,7 @@ describe('GET /api/mesocycles/:id/next-week', () => {
     expect(response.body.weekNumber).toBe(6);
     expect(response.body.isDeload).toBe(true);
     expect(response.body.exercises[0].targetWeight).toBe(93.5); // 110 * 0.85 = 93.5
-    expect(response.body.exercises[0].targetSets).toBe(2);      // 3 * 0.5 = 1.5 -> 2
+    expect(response.body.exercises[0].targetSets).toBe(2); // 3 * 0.5 = 1.5 -> 2
   });
 
   it('should return 404 for non-existent mesocycle', async () => {
@@ -739,10 +835,15 @@ router.get('/:id/next-week', async (req: Request, res: Response) => {
     const isDeload = deloadService.isDeloadWeek(nextWeek);
 
     // Get all exercises for this mesocycle's plan
-    const planExercises = await mesocycleRepo.getPlanExercises(mesocycle.planId);
+    const planExercises = await mesocycleRepo.getPlanExercises(
+      mesocycle.planId
+    );
 
     // Get completion status for current week
-    const currentWeekWorkouts = await workoutRepo.getWeekWorkouts(id, currentWeek);
+    const currentWeekWorkouts = await workoutRepo.getWeekWorkouts(
+      id,
+      currentWeek
+    );
     const completionStatuses = calculateCompletionStatuses(currentWeekWorkouts);
 
     const exercises: NextWeekExercise[] = planExercises.map((planExercise) => {
@@ -793,11 +894,17 @@ router.get('/:id/next-week', async (req: Request, res: Response) => {
 
 function calculateCompletionStatuses(workouts: Workout[]): CompletionStatus[] {
   // Group sets by exercise and check completion
-  const exerciseMap = new Map<string, { completed: number; prescribed: number }>();
+  const exerciseMap = new Map<
+    string,
+    { completed: number; prescribed: number }
+  >();
 
   workouts.forEach((workout) => {
     workout.sets.forEach((set) => {
-      const current = exerciseMap.get(set.exerciseId) ?? { completed: 0, prescribed: 0 };
+      const current = exerciseMap.get(set.exerciseId) ?? {
+        completed: 0,
+        prescribed: 0,
+      };
       current.prescribed += 1;
       if (set.completed) {
         current.completed += 1;
@@ -844,8 +951,14 @@ export class WorkoutGeneratorService {
     weekNumber: number
   ): Promise<GeneratedWorkout> {
     const mesocycle = await this.mesocycleRepo.findById(mesocycleId);
-    const planDay = await this.planRepo.getDayExercises(mesocycle.planId, dayOfWeek);
-    const completionHistory = await this.getCompletionHistory(mesocycleId, weekNumber - 1);
+    const planDay = await this.planRepo.getDayExercises(
+      mesocycle.planId,
+      dayOfWeek
+    );
+    const completionHistory = await this.getCompletionHistory(
+      mesocycleId,
+      weekNumber - 1
+    );
 
     const exercises = planDay.exercises.map((planExercise) => {
       const exerciseProgression: ExerciseProgression = {
@@ -893,7 +1006,10 @@ export class WorkoutGeneratorService {
     upToWeek: number
   ): Promise<CompletionStatus[]> {
     // Query completed workouts and calculate completion status
-    const workouts = await this.workoutRepo.getWorkoutsUpToWeek(mesocycleId, upToWeek);
+    const workouts = await this.workoutRepo.getWorkoutsUpToWeek(
+      mesocycleId,
+      upToWeek
+    );
     return this.calculateCompletionStatuses(workouts);
   }
 }
@@ -1320,7 +1436,9 @@ test.describe('Progressive Overload', () => {
     await clearDatabase();
   });
 
-  test('should show correct progression after completing a workout', async ({ page }) => {
+  test('should show correct progression after completing a workout', async ({
+    page,
+  }) => {
     // Seed a mesocycle in week 0 with exercises
     await seedDatabase({
       mesocycle: {
@@ -1359,7 +1477,9 @@ test.describe('Progressive Overload', () => {
     await expect(nextWeekPreview).toContainText('100 lbs'); // Same weight
 
     // Should show progression indicator
-    await expect(page.locator('[data-testid="progression-will-progress"]')).toBeVisible();
+    await expect(
+      page.locator('[data-testid="progression-will-progress"]')
+    ).toBeVisible();
   });
 
   test('should not progress when workout is incomplete', async ({ page }) => {
@@ -1400,7 +1520,9 @@ test.describe('Progressive Overload', () => {
     await expect(nextWeekPreview).toContainText('100 lbs');
 
     // Should show no-progression indicator
-    await expect(page.locator('[data-testid="progression-will-not-progress"]')).toBeVisible();
+    await expect(
+      page.locator('[data-testid="progression-will-not-progress"]')
+    ).toBeVisible();
     await expect(nextWeekPreview).toContainText('Incomplete - no progression');
   });
 
@@ -1443,7 +1565,14 @@ test.describe('Progressive Overload', () => {
         currentWeek: 0,
         plan: {
           exercises: [
-            { id: 'ex-1', name: 'Squat', weight: 135, reps: 8, sets: 3, weightIncrement: 10 },
+            {
+              id: 'ex-1',
+              name: 'Squat',
+              weight: 135,
+              reps: 8,
+              sets: 3,
+              weightIncrement: 10,
+            },
           ],
         },
       },

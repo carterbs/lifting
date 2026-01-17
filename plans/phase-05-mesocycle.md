@@ -9,13 +9,16 @@ Build the Mesocycle feature with a full Test-Driven Development approach. A meso
 ## Key Concepts
 
 ### Mesocycle Definition
+
 - **Duration**: Configurable, defaults to 6 weeks of progressive overload + 1 deload week (7 weeks total)
 - **Constraint**: Only ONE mesocycle can be active at a time
 - **Workout Generation**: Starting a mesocycle pre-generates all workout records for the entire duration
 - **States**: `active`, `completed`, `cancelled`
 
 ### Progressive Overload Schedule
+
 Based on requirements:
+
 - **Week 0**: User-specified starting weight and reps
 - **Week 1**: +1 rep to each exercise
 - **Week 2**: +5 lbs weight (reset reps to starting)
@@ -25,6 +28,7 @@ Based on requirements:
 - **Week 6 (Deload)**: 50% volume reduction (same weight, half the sets)
 
 ### Workout Status
+
 - `pending` - Not yet started
 - `in_progress` - Started but not completed
 - `completed` - All sets logged or manually completed
@@ -41,12 +45,16 @@ Based on requirements:
 
 export const mesocycles = sqliteTable('mesocycles', {
   id: text('id').primaryKey(), // UUID
-  planId: text('plan_id').notNull().references(() => plans.id),
+  planId: text('plan_id')
+    .notNull()
+    .references(() => plans.id),
   startDate: text('start_date').notNull(), // ISO date string (YYYY-MM-DD)
   endDate: text('end_date').notNull(), // Calculated from startDate + duration
   durationWeeks: integer('duration_weeks').notNull().default(6),
   deloadWeek: integer('deload_week').notNull().default(1), // 1 = yes, 0 = no
-  status: text('status', { enum: ['active', 'completed', 'cancelled'] }).notNull().default('active'),
+  status: text('status', { enum: ['active', 'completed', 'cancelled'] })
+    .notNull()
+    .default('active'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
   completedAt: text('completed_at'), // When status changed to completed/cancelled
@@ -54,11 +62,19 @@ export const mesocycles = sqliteTable('mesocycles', {
 
 export const scheduledWorkouts = sqliteTable('scheduled_workouts', {
   id: text('id').primaryKey(), // UUID
-  mesocycleId: text('mesocycle_id').notNull().references(() => mesocycles.id),
-  planDayId: text('plan_day_id').notNull().references(() => planDays.id),
+  mesocycleId: text('mesocycle_id')
+    .notNull()
+    .references(() => mesocycles.id),
+  planDayId: text('plan_day_id')
+    .notNull()
+    .references(() => planDays.id),
   weekNumber: integer('week_number').notNull(), // 0-indexed (0-6 for 7 weeks)
   scheduledDate: text('scheduled_date').notNull(), // ISO date string
-  status: text('status', { enum: ['pending', 'in_progress', 'completed', 'skipped'] }).notNull().default('pending'),
+  status: text('status', {
+    enum: ['pending', 'in_progress', 'completed', 'skipped'],
+  })
+    .notNull()
+    .default('pending'),
   startedAt: text('started_at'),
   completedAt: text('completed_at'),
   createdAt: text('created_at').notNull(),
@@ -67,9 +83,15 @@ export const scheduledWorkouts = sqliteTable('scheduled_workouts', {
 
 export const scheduledExercises = sqliteTable('scheduled_exercises', {
   id: text('id').primaryKey(), // UUID
-  scheduledWorkoutId: text('scheduled_workout_id').notNull().references(() => scheduledWorkouts.id),
-  planExerciseId: text('plan_exercise_id').notNull().references(() => planExercises.id),
-  exerciseId: text('exercise_id').notNull().references(() => exercises.id),
+  scheduledWorkoutId: text('scheduled_workout_id')
+    .notNull()
+    .references(() => scheduledWorkouts.id),
+  planExerciseId: text('plan_exercise_id')
+    .notNull()
+    .references(() => planExercises.id),
+  exerciseId: text('exercise_id')
+    .notNull()
+    .references(() => exercises.id),
   targetWeight: integer('target_weight').notNull(), // Calculated based on week
   targetSets: integer('target_sets').notNull(),
   targetReps: integer('target_reps').notNull(), // Calculated based on week
@@ -80,7 +102,9 @@ export const scheduledExercises = sqliteTable('scheduled_exercises', {
 
 export const completedSets = sqliteTable('completed_sets', {
   id: text('id').primaryKey(), // UUID
-  scheduledExerciseId: text('scheduled_exercise_id').notNull().references(() => scheduledExercises.id),
+  scheduledExerciseId: text('scheduled_exercise_id')
+    .notNull()
+    .references(() => scheduledExercises.id),
   setNumber: integer('set_number').notNull(),
   actualWeight: integer('actual_weight').notNull(),
   actualReps: integer('actual_reps').notNull(),
@@ -96,6 +120,7 @@ export const completedSets = sqliteTable('completed_sets', {
 ### Phase 5.1: Backend Test Infrastructure & Schema
 
 #### Task 5.1.1: Database Migration
+
 **File**: `packages/backend/src/db/migrations/005_mesocycles.ts`
 
 ```typescript
@@ -164,7 +189,9 @@ export async function up() {
   await db.run(sql`CREATE INDEX idx_mesocycles_status ON mesocycles(status)`);
 
   // Index for finding workouts by mesocycle and date
-  await db.run(sql`CREATE INDEX idx_scheduled_workouts_mesocycle ON scheduled_workouts(mesocycle_id, scheduled_date)`);
+  await db.run(
+    sql`CREATE INDEX idx_scheduled_workouts_mesocycle ON scheduled_workouts(mesocycle_id, scheduled_date)`
+  );
 }
 
 export async function down() {
@@ -177,6 +204,7 @@ export async function down() {
 ```
 
 #### Task 5.1.2: Type Definitions
+
 **File**: `packages/shared/src/types/mesocycle.ts`
 
 ```typescript
@@ -267,6 +295,7 @@ export interface WeekSummary {
 ### Phase 5.2: Backend Service Layer (TDD)
 
 #### Task 5.2.1: Mesocycle Service Tests
+
 **File**: `packages/backend/src/services/__tests__/mesocycle.service.test.ts`
 
 Write tests FIRST for each method:
@@ -275,7 +304,11 @@ Write tests FIRST for each method:
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MesocycleService } from '../mesocycle.service';
 import { db } from '../../db';
-import { createTestPlan, createTestExercises, cleanupTestData } from '../../test/helpers';
+import {
+  createTestPlan,
+  createTestExercises,
+  cleanupTestData,
+} from '../../test/helpers';
 
 describe('MesocycleService', () => {
   let service: MesocycleService;
@@ -336,15 +369,18 @@ describe('MesocycleService', () => {
       const workouts = await service.getWorkoutsByMesocycle(result.id);
 
       // Get same exercise across different weeks
-      const week0Exercise = workouts
-        .find(w => w.weekNumber === 0)
+      const week0Exercise = workouts.find((w) => w.weekNumber === 0)
         ?.exercises?.[0];
       const week1Exercise = workouts
-        .find(w => w.weekNumber === 1)
-        ?.exercises?.find(e => e.planExerciseId === week0Exercise?.planExerciseId);
+        .find((w) => w.weekNumber === 1)
+        ?.exercises?.find(
+          (e) => e.planExerciseId === week0Exercise?.planExerciseId
+        );
       const week2Exercise = workouts
-        .find(w => w.weekNumber === 2)
-        ?.exercises?.find(e => e.planExerciseId === week0Exercise?.planExerciseId);
+        .find((w) => w.weekNumber === 2)
+        ?.exercises?.find(
+          (e) => e.planExerciseId === week0Exercise?.planExerciseId
+        );
 
       // Week 1: +1 rep
       expect(week1Exercise!.targetReps).toBe(week0Exercise!.targetReps + 1);
@@ -363,16 +399,21 @@ describe('MesocycleService', () => {
 
       const workouts = await service.getWorkoutsByMesocycle(result.id);
 
-      const week0Exercise = workouts
-        .find(w => w.weekNumber === 0)
+      const week0Exercise = workouts.find((w) => w.weekNumber === 0)
         ?.exercises?.[0];
       const deloadExercise = workouts
-        .find(w => w.weekNumber === 6)
-        ?.exercises?.find(e => e.planExerciseId === week0Exercise?.planExerciseId);
+        .find((w) => w.weekNumber === 6)
+        ?.exercises?.find(
+          (e) => e.planExerciseId === week0Exercise?.planExerciseId
+        );
 
       // Deload: same weight, half sets (rounded up)
-      expect(deloadExercise!.targetWeight).toBe(week0Exercise!.targetWeight + 10); // After 3 weight increases
-      expect(deloadExercise!.targetSets).toBe(Math.ceil(week0Exercise!.targetSets / 2));
+      expect(deloadExercise!.targetWeight).toBe(
+        week0Exercise!.targetWeight + 10
+      ); // After 3 weight increases
+      expect(deloadExercise!.targetSets).toBe(
+        Math.ceil(week0Exercise!.targetSets / 2)
+      );
     });
 
     it('should fail if another mesocycle is active', async () => {
@@ -381,26 +422,32 @@ describe('MesocycleService', () => {
         startDate: '2024-01-01',
       });
 
-      await expect(service.create({
-        planId: testPlanId,
-        startDate: '2024-03-01',
-      })).rejects.toThrow('Another mesocycle is already active');
+      await expect(
+        service.create({
+          planId: testPlanId,
+          startDate: '2024-03-01',
+        })
+      ).rejects.toThrow('Another mesocycle is already active');
     });
 
     it('should fail if plan does not exist', async () => {
-      await expect(service.create({
-        planId: 'non-existent-plan-id',
-        startDate: '2024-01-01',
-      })).rejects.toThrow('Plan not found');
+      await expect(
+        service.create({
+          planId: 'non-existent-plan-id',
+          startDate: '2024-01-01',
+        })
+      ).rejects.toThrow('Plan not found');
     });
 
     it('should fail if plan has no workout days', async () => {
       const emptyPlanId = await createEmptyPlan();
 
-      await expect(service.create({
-        planId: emptyPlanId,
-        startDate: '2024-01-01',
-      })).rejects.toThrow('Plan has no workout days');
+      await expect(
+        service.create({
+          planId: emptyPlanId,
+          startDate: '2024-01-01',
+        })
+      ).rejects.toThrow('Plan has no workout days');
     });
   });
 
@@ -497,8 +544,9 @@ describe('MesocycleService', () => {
     });
 
     it('should fail for non-existent mesocycle', async () => {
-      await expect(service.complete('non-existent-id'))
-        .rejects.toThrow('Mesocycle not found');
+      await expect(service.complete('non-existent-id')).rejects.toThrow(
+        'Mesocycle not found'
+      );
     });
 
     it('should fail if already completed', async () => {
@@ -508,8 +556,9 @@ describe('MesocycleService', () => {
       });
       await service.complete(created.id);
 
-      await expect(service.complete(created.id))
-        .rejects.toThrow('Mesocycle is not active');
+      await expect(service.complete(created.id)).rejects.toThrow(
+        'Mesocycle is not active'
+      );
     });
   });
 
@@ -559,6 +608,7 @@ describe('MesocycleService', () => {
 ```
 
 #### Task 5.2.2: Mesocycle Service Implementation
+
 **File**: `packages/backend/src/services/mesocycle.service.ts`
 
 ```typescript
@@ -572,20 +622,25 @@ import {
   plans,
   planDays,
   planExercises,
-  exercises
+  exercises,
 } from '../db/schema';
 import type {
   Mesocycle,
   CreateMesocycleRequest,
   MesocycleWithWorkouts,
   ScheduledWorkout,
-  WeekSummary
+  WeekSummary,
 } from '@lifting/shared';
 import { addDays, addWeeks, format, parseISO } from 'date-fns';
 
 export class MesocycleService {
   async create(request: CreateMesocycleRequest): Promise<Mesocycle> {
-    const { planId, startDate, durationWeeks = 6, includeDeload = true } = request;
+    const {
+      planId,
+      startDate,
+      durationWeeks = 6,
+      includeDeload = true,
+    } = request;
 
     // Check for existing active mesocycle
     const active = await this.getActive();
@@ -640,7 +695,13 @@ export class MesocycleService {
     });
 
     // Generate workouts for each week
-    await this.generateWorkouts(mesocycleId, days, startDate, durationWeeks, includeDeload);
+    await this.generateWorkouts(
+      mesocycleId,
+      days,
+      startDate,
+      durationWeeks,
+      includeDeload
+    );
 
     return this.getById(mesocycleId) as Promise<Mesocycle>;
   }
@@ -663,7 +724,10 @@ export class MesocycleService {
       for (const day of planDays) {
         // Calculate the actual date based on day of week
         const dayOffset = this.getDayOffset(day.dayOfWeek);
-        const scheduledDate = format(addDays(weekStart, dayOffset), 'yyyy-MM-dd');
+        const scheduledDate = format(
+          addDays(weekStart, dayOffset),
+          'yyyy-MM-dd'
+        );
 
         const workoutId = uuid();
 
@@ -680,11 +744,8 @@ export class MesocycleService {
 
         // Generate exercises with progressive overload
         for (const planExercise of day.exercises) {
-          const { targetWeight, targetReps, targetSets } = this.calculateProgressiveOverload(
-            planExercise,
-            week,
-            isDeload
-          );
+          const { targetWeight, targetReps, targetSets } =
+            this.calculateProgressiveOverload(planExercise, week, isDeload);
 
           await db.insert(scheduledExercises).values({
             id: uuid(),
@@ -717,7 +778,7 @@ export class MesocycleService {
       // Deload: use final week's weight, 50% volume (half sets, rounded up)
       const weightIncrements = Math.floor(weekNumber / 2);
       return {
-        targetWeight: baseWeight + (weightIncrements * weightIncrement),
+        targetWeight: baseWeight + weightIncrements * weightIncrement,
         targetReps: baseReps,
         targetSets: Math.ceil(baseSets / 2),
       };
@@ -735,7 +796,7 @@ export class MesocycleService {
     const repIncrements = weekNumber % 2 === 1 ? 1 : 0;
 
     return {
-      targetWeight: baseWeight + (weightIncrements * weightIncrement),
+      targetWeight: baseWeight + weightIncrements * weightIncrement,
       targetReps: baseReps + repIncrements,
       targetSets: baseSets,
     };
@@ -784,7 +845,9 @@ export class MesocycleService {
     };
   }
 
-  async getWorkoutsByMesocycle(mesocycleId: string): Promise<ScheduledWorkout[]> {
+  async getWorkoutsByMesocycle(
+    mesocycleId: string
+  ): Promise<ScheduledWorkout[]> {
     const results = await db.query.scheduledWorkouts.findMany({
       where: eq(scheduledWorkouts.mesocycleId, mesocycleId),
       with: {
@@ -799,7 +862,7 @@ export class MesocycleService {
       orderBy: [scheduledWorkouts.scheduledDate, scheduledWorkouts.id],
     });
 
-    return results.map(w => this.mapToScheduledWorkout(w));
+    return results.map((w) => this.mapToScheduledWorkout(w));
   }
 
   private buildWeeksSummary(
@@ -811,21 +874,22 @@ export class MesocycleService {
     const summaries: WeekSummary[] = [];
 
     for (let week = 0; week < totalWeeks; week++) {
-      const weekWorkouts = workouts.filter(w => w.weekNumber === week);
-      const dates = weekWorkouts.map(w => w.scheduledDate).sort();
+      const weekWorkouts = workouts.filter((w) => w.weekNumber === week);
+      const dates = weekWorkouts.map((w) => w.scheduledDate).sort();
 
       summaries.push({
         weekNumber: week,
         startDate: dates[0] ?? '',
         endDate: dates[dates.length - 1] ?? '',
         isDeload: hasDeload && week === totalWeeks - 1,
-        workouts: weekWorkouts.map(w => ({
+        workouts: weekWorkouts.map((w) => ({
           id: w.id,
           dayName: w.dayName ?? `Day ${w.planDayId}`,
           scheduledDate: w.scheduledDate,
           status: w.status,
         })),
-        completedCount: weekWorkouts.filter(w => w.status === 'completed').length,
+        completedCount: weekWorkouts.filter((w) => w.status === 'completed')
+          .length,
         totalCount: weekWorkouts.length,
       });
     }
@@ -841,7 +905,7 @@ export class MesocycleService {
       orderBy: desc(mesocycles.createdAt),
     });
 
-    return results.map(m => this.mapToMesocycle(m));
+    return results.map((m) => this.mapToMesocycle(m));
   }
 
   async complete(id: string): Promise<Mesocycle> {
@@ -859,7 +923,8 @@ export class MesocycleService {
 
     const now = new Date().toISOString();
 
-    await db.update(mesocycles)
+    await db
+      .update(mesocycles)
       .set({
         status: 'completed',
         completedAt: now,
@@ -885,7 +950,8 @@ export class MesocycleService {
 
     const now = new Date().toISOString();
 
-    await db.update(mesocycles)
+    await db
+      .update(mesocycles)
       .set({
         status: 'cancelled',
         completedAt: now,
@@ -925,7 +991,7 @@ export class MesocycleService {
       status: row.status,
       startedAt: row.startedAt,
       completedAt: row.completedAt,
-      exercises: row.exercises?.map(e => ({
+      exercises: row.exercises?.map((e) => ({
         id: e.id,
         scheduledWorkoutId: e.scheduledWorkoutId,
         planExerciseId: e.planExerciseId,
@@ -936,7 +1002,7 @@ export class MesocycleService {
         targetReps: e.targetReps,
         restSeconds: e.restSeconds,
         order: e.order,
-        completedSets: e.completedSets?.map(s => ({
+        completedSets: e.completedSets?.map((s) => ({
           id: s.id,
           scheduledExerciseId: s.scheduledExerciseId,
           setNumber: s.setNumber,
@@ -956,6 +1022,7 @@ export class MesocycleService {
 ### Phase 5.3: Backend API Routes (TDD)
 
 #### Task 5.3.1: Route Tests
+
 **File**: `packages/backend/src/routes/__tests__/mesocycles.routes.test.ts`
 
 ```typescript
@@ -992,8 +1059,7 @@ describe('Mesocycles API Routes', () => {
 
       // Complete first to create second
       const listRes = await request(app).get('/api/mesocycles');
-      await request(app)
-        .put(`/api/mesocycles/${listRes.body[0].id}/complete`);
+      await request(app).put(`/api/mesocycles/${listRes.body[0].id}/complete`);
 
       await request(app)
         .post('/api/mesocycles')
@@ -1003,7 +1069,10 @@ describe('Mesocycles API Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.length).toBe(2);
-      expect(new Date(response.body[0].startDate) > new Date(response.body[1].startDate)).toBe(true);
+      expect(
+        new Date(response.body[0].startDate) >
+          new Date(response.body[1].startDate)
+      ).toBe(true);
     });
   });
 
@@ -1030,7 +1099,9 @@ describe('Mesocycles API Routes', () => {
 
   describe('GET /api/mesocycles/:id', () => {
     it('should return 404 for non-existent mesocycle', async () => {
-      const response = await request(app).get('/api/mesocycles/non-existent-id');
+      const response = await request(app).get(
+        '/api/mesocycles/non-existent-id'
+      );
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Mesocycle not found');
@@ -1041,8 +1112,9 @@ describe('Mesocycles API Routes', () => {
         .post('/api/mesocycles')
         .send({ planId: testPlanId, startDate: '2024-01-01' });
 
-      const response = await request(app)
-        .get(`/api/mesocycles/${createRes.body.id}`);
+      const response = await request(app).get(
+        `/api/mesocycles/${createRes.body.id}`
+      );
 
       expect(response.status).toBe(200);
       expect(response.body.id).toBe(createRes.body.id);
@@ -1054,12 +1126,10 @@ describe('Mesocycles API Routes', () => {
 
   describe('POST /api/mesocycles', () => {
     it('should create a new mesocycle', async () => {
-      const response = await request(app)
-        .post('/api/mesocycles')
-        .send({
-          planId: testPlanId,
-          startDate: '2024-01-01',
-        });
+      const response = await request(app).post('/api/mesocycles').send({
+        planId: testPlanId,
+        startDate: '2024-01-01',
+      });
 
       expect(response.status).toBe(201);
       expect(response.body.id).toBeDefined();
@@ -1117,26 +1187,22 @@ describe('Mesocycles API Routes', () => {
     });
 
     it('should accept custom durationWeeks', async () => {
-      const response = await request(app)
-        .post('/api/mesocycles')
-        .send({
-          planId: testPlanId,
-          startDate: '2024-01-01',
-          durationWeeks: 4,
-        });
+      const response = await request(app).post('/api/mesocycles').send({
+        planId: testPlanId,
+        startDate: '2024-01-01',
+        durationWeeks: 4,
+      });
 
       expect(response.status).toBe(201);
       expect(response.body.durationWeeks).toBe(4);
     });
 
     it('should accept includeDeload option', async () => {
-      const response = await request(app)
-        .post('/api/mesocycles')
-        .send({
-          planId: testPlanId,
-          startDate: '2024-01-01',
-          includeDeload: false,
-        });
+      const response = await request(app).post('/api/mesocycles').send({
+        planId: testPlanId,
+        startDate: '2024-01-01',
+        includeDeload: false,
+      });
 
       expect(response.status).toBe(201);
       expect(response.body.deloadWeek).toBe(false);
@@ -1149,8 +1215,9 @@ describe('Mesocycles API Routes', () => {
         .post('/api/mesocycles')
         .send({ planId: testPlanId, startDate: '2024-01-01' });
 
-      const response = await request(app)
-        .put(`/api/mesocycles/${createRes.body.id}/complete`);
+      const response = await request(app).put(
+        `/api/mesocycles/${createRes.body.id}/complete`
+      );
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('completed');
@@ -1158,8 +1225,9 @@ describe('Mesocycles API Routes', () => {
     });
 
     it('should return 404 for non-existent mesocycle', async () => {
-      const response = await request(app)
-        .put('/api/mesocycles/non-existent-id/complete');
+      const response = await request(app).put(
+        '/api/mesocycles/non-existent-id/complete'
+      );
 
       expect(response.status).toBe(404);
     });
@@ -1169,11 +1237,11 @@ describe('Mesocycles API Routes', () => {
         .post('/api/mesocycles')
         .send({ planId: testPlanId, startDate: '2024-01-01' });
 
-      await request(app)
-        .put(`/api/mesocycles/${createRes.body.id}/complete`);
+      await request(app).put(`/api/mesocycles/${createRes.body.id}/complete`);
 
-      const response = await request(app)
-        .put(`/api/mesocycles/${createRes.body.id}/complete`);
+      const response = await request(app).put(
+        `/api/mesocycles/${createRes.body.id}/complete`
+      );
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Mesocycle is not active');
@@ -1186,8 +1254,9 @@ describe('Mesocycles API Routes', () => {
         .post('/api/mesocycles')
         .send({ planId: testPlanId, startDate: '2024-01-01' });
 
-      const response = await request(app)
-        .put(`/api/mesocycles/${createRes.body.id}/cancel`);
+      const response = await request(app).put(
+        `/api/mesocycles/${createRes.body.id}/cancel`
+      );
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('cancelled');
@@ -1198,18 +1267,19 @@ describe('Mesocycles API Routes', () => {
         .post('/api/mesocycles')
         .send({ planId: testPlanId, startDate: '2024-01-01' });
 
-      await request(app)
-        .put(`/api/mesocycles/${createRes.body.id}/cancel`);
+      await request(app).put(`/api/mesocycles/${createRes.body.id}/cancel`);
 
-      const getRes = await request(app)
-        .get(`/api/mesocycles/${createRes.body.id}`);
+      const getRes = await request(app).get(
+        `/api/mesocycles/${createRes.body.id}`
+      );
 
       expect(getRes.body.workouts.length).toBeGreaterThan(0);
     });
 
     it('should return 404 for non-existent mesocycle', async () => {
-      const response = await request(app)
-        .put('/api/mesocycles/non-existent-id/cancel');
+      const response = await request(app).put(
+        '/api/mesocycles/non-existent-id/cancel'
+      );
 
       expect(response.status).toBe(404);
     });
@@ -1218,6 +1288,7 @@ describe('Mesocycles API Routes', () => {
 ```
 
 #### Task 5.3.2: Route Implementation
+
 **File**: `packages/backend/src/routes/mesocycles.routes.ts`
 
 ```typescript
@@ -1230,7 +1301,9 @@ const service = new MesocycleService();
 
 const createMesocycleSchema = z.object({
   planId: z.string().min(1, 'planId is required'),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'startDate must be in YYYY-MM-DD format'),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'startDate must be in YYYY-MM-DD format'),
   durationWeeks: z.number().int().min(1).max(12).optional(),
   includeDeload: z.boolean().optional(),
 });
@@ -1274,7 +1347,9 @@ router.post('/', async (req: Request, res: Response) => {
     const parsed = createMesocycleSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
-        error: parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+        error: parsed.error.errors
+          .map((e) => `${e.path.join('.')}: ${e.message}`)
+          .join(', '),
       });
     }
 
@@ -1336,6 +1411,7 @@ export { router as mesocyclesRouter };
 ```
 
 #### Task 5.3.3: Register Routes
+
 **File**: `packages/backend/src/app.ts` (update)
 
 ```typescript
@@ -1351,13 +1427,14 @@ app.use('/api/mesocycles', mesocyclesRouter);
 ### Phase 5.4: Frontend Components (TDD)
 
 #### Task 5.4.1: Mesocycle Types & API Client
+
 **File**: `packages/frontend/src/api/mesocycles.ts`
 
 ```typescript
 import type {
   Mesocycle,
   MesocycleWithWorkouts,
-  CreateMesocycleRequest
+  CreateMesocycleRequest,
 } from '@lifting/shared';
 
 const API_BASE = '/api/mesocycles';
@@ -1413,6 +1490,7 @@ export const mesocyclesApi = {
 ```
 
 #### Task 5.4.2: Mesocycle Hook Tests
+
 **File**: `packages/frontend/src/hooks/__tests__/useMesocycle.test.ts`
 
 ```typescript
@@ -1527,6 +1605,7 @@ describe('useMesocycle', () => {
 ```
 
 #### Task 5.4.3: Mesocycle Hook Implementation
+
 **File**: `packages/frontend/src/hooks/useMesocycle.ts`
 
 ```typescript
@@ -1592,6 +1671,7 @@ export function useMesocycle(id?: string) {
 ```
 
 #### Task 5.4.4: MesoTab Component Tests
+
 **File**: `packages/frontend/src/components/__tests__/MesoTab.test.tsx`
 
 ```typescript
@@ -1816,6 +1896,7 @@ describe('MesoTab', () => {
 ```
 
 #### Task 5.4.5: MesoTab Component Implementation
+
 **File**: `packages/frontend/src/components/MesoTab.tsx`
 
 ```typescript
@@ -2118,12 +2199,17 @@ export function MesocycleStatusCard({ mesocycle }: Props) {
 ### Phase 5.5: E2E Tests
 
 #### Task 5.5.1: E2E Test Setup
+
 **File**: `packages/e2e/tests/mesocycle.e2e.test.ts`
 
 ```typescript
 import puppeteer, { Browser, Page } from 'puppeteer';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { setupTestDatabase, seedTestPlan, cleanupTestData } from '../helpers/db';
+import {
+  setupTestDatabase,
+  seedTestPlan,
+  cleanupTestData,
+} from '../helpers/db';
 import { startTestServer, stopTestServer } from '../helpers/server';
 
 describe('Mesocycle E2E', () => {
@@ -2223,7 +2309,9 @@ describe('Mesocycle E2E', () => {
       }
 
       // Check deload week is marked
-      const deloadWeek = await page.$('[data-testid="week-card-6"][data-deload="true"]');
+      const deloadWeek = await page.$(
+        '[data-testid="week-card-6"][data-deload="true"]'
+      );
       expect(deloadWeek).not.toBeNull();
     });
 
