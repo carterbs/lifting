@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Box, Container, Heading, Text, Flex } from '@radix-ui/themes';
+import { Box, Container, Heading, Flex } from '@radix-ui/themes';
 import { BottomNav } from './Navigation';
 import { MesoTab } from './Mesocycle';
 import {
@@ -8,6 +8,7 @@ import {
   PlansPage,
   CreatePlanPage,
   PlanDetailPage,
+  TodayPage,
 } from '../pages';
 import { usePlans } from '../hooks/usePlans';
 import {
@@ -25,25 +26,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-function TodayPage(): JSX.Element {
-  return (
-    <Container size="2" p="4">
-      <Flex direction="column" gap="4">
-        <Heading size="6">Today</Heading>
-        <Box
-          p="4"
-          style={{
-            backgroundColor: 'var(--gray-2)',
-            borderRadius: 'var(--radius-3)',
-          }}
-        >
-          <Text color="gray">No workout scheduled for today.</Text>
-        </Box>
-      </Flex>
-    </Container>
-  );
-}
 
 function MesoPage(): JSX.Element {
   const { data: activeMesocycle, isLoading: isLoadingMesocycle } =

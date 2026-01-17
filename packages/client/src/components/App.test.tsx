@@ -25,6 +25,14 @@ const handlers = [
     };
     return HttpResponse.json(response);
   }),
+  http.get('/api/workouts/today', () => {
+    // Return null/no workout scheduled for today
+    const response: ApiResponse<null> = {
+      success: true,
+      data: null,
+    };
+    return HttpResponse.json(response);
+  }),
 ];
 
 const server = setupServer(...handlers);
@@ -48,13 +56,15 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: /Exercises/i })).toBeInTheDocument();
   });
 
-  it('should show Today page by default', () => {
+  it('should show Today page by default', async () => {
     render(
       <Theme>
         <App />
       </Theme>
     );
 
-    expect(screen.getByRole('heading', { name: 'Today' })).toBeInTheDocument();
+    // Wait for the heading to appear after query completes
+    const heading = await screen.findByRole('heading', { name: 'Today' });
+    expect(heading).toBeInTheDocument();
   });
 });

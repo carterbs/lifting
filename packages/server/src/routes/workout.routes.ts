@@ -8,17 +8,55 @@ import {
   type ApiResponse,
   type Workout,
   type WorkoutSet,
+  type CreateWorkoutInput,
+  type UpdateWorkoutInput,
+  type CreateWorkoutSetInput,
+  type UpdateWorkoutSetInput,
+  type LogWorkoutSetInput,
 } from '@lifting/shared';
 import { validate } from '../middleware/validate.js';
-import { NotFoundError } from '../middleware/error-handler.js';
+import { NotFoundError, ValidationError } from '../middleware/error-handler.js';
 import {
   getWorkoutRepository,
   getWorkoutSetRepository,
 } from '../repositories/index.js';
+import {
+  getWorkoutService,
+  getWorkoutSetService,
+  type WorkoutWithExercises,
+} from '../services/index.js';
 
 export const workoutRouter = Router();
 
-// ============ Workouts ============
+// ============ Workout Routes ============
+
+// GET /api/workouts/today - Get today's workout
+workoutRouter.get(
+  '/today',
+  (_req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const service = getWorkoutService();
+      const workout = service.getTodaysWorkout();
+
+      if (!workout) {
+        const response: ApiResponse<null> = {
+          success: true,
+          data: null,
+        };
+        res.json(response);
+        return;
+      }
+
+      const response: ApiResponse<WorkoutWithExercises> = {
+        success: true,
+        data: workout,
+      };
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 // GET /api/workouts
 workoutRouter.get(
@@ -39,25 +77,25 @@ workoutRouter.get(
   }
 );
 
-// GET /api/workouts/:id
+// GET /api/workouts/:id - Get workout with all sets grouped by exercise
 workoutRouter.get(
   '/:id',
   (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const repository = getWorkoutRepository();
+      const service = getWorkoutService();
       const id = parseInt(req.params['id'] ?? '', 10);
 
       if (isNaN(id)) {
         throw new NotFoundError('Workout', req.params['id'] ?? 'unknown');
       }
 
-      const workout = repository.findById(id);
+      const workout = service.getById(id);
 
       if (!workout) {
         throw new NotFoundError('Workout', id);
       }
 
-      const response: ApiResponse<Workout> = {
+      const response: ApiResponse<WorkoutWithExercises> = {
         success: true,
         data: workout,
       };
@@ -75,7 +113,8 @@ workoutRouter.post(
   (req: Request, res: Response, next: NextFunction): void => {
     try {
       const repository = getWorkoutRepository();
-      const workout = repository.create(req.body);
+      const body = req.body as CreateWorkoutInput;
+      const workout = repository.create(body);
 
       const response: ApiResponse<Workout> = {
         success: true,
@@ -101,7 +140,8 @@ workoutRouter.put(
         throw new NotFoundError('Workout', req.params['id'] ?? 'unknown');
       }
 
-      const workout = repository.update(id, req.body);
+      const body = req.body as UpdateWorkoutInput;
+      const workout = repository.update(id, body);
 
       if (!workout) {
         throw new NotFoundError('Workout', id);
@@ -123,21 +163,14 @@ workoutRouter.put(
   '/:id/start',
   (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const repository = getWorkoutRepository();
+      const service = getWorkoutService();
       const id = parseInt(req.params['id'] ?? '', 10);
 
       if (isNaN(id)) {
         throw new NotFoundError('Workout', req.params['id'] ?? 'unknown');
       }
 
-      const workout = repository.update(id, {
-        status: 'in_progress',
-        started_at: new Date().toISOString(),
-      });
-
-      if (!workout) {
-        throw new NotFoundError('Workout', id);
-      }
+      const workout = service.start(id);
 
       const response: ApiResponse<Workout> = {
         success: true,
@@ -145,6 +178,17 @@ workoutRouter.put(
       };
       res.json(response);
     } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          return next(new NotFoundError('Workout', req.params['id'] ?? 'unknown'));
+        }
+        if (
+          error.message.includes('Cannot') ||
+          error.message.includes('already')
+        ) {
+          return next(new ValidationError(error.message));
+        }
+      }
       next(error);
     }
   }
@@ -155,21 +199,14 @@ workoutRouter.put(
   '/:id/complete',
   (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const repository = getWorkoutRepository();
+      const service = getWorkoutService();
       const id = parseInt(req.params['id'] ?? '', 10);
 
       if (isNaN(id)) {
         throw new NotFoundError('Workout', req.params['id'] ?? 'unknown');
       }
 
-      const workout = repository.update(id, {
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-      });
-
-      if (!workout) {
-        throw new NotFoundError('Workout', id);
-      }
+      const workout = service.complete(id);
 
       const response: ApiResponse<Workout> = {
         success: true,
@@ -177,6 +214,53 @@ workoutRouter.put(
       };
       res.json(response);
     } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          return next(new NotFoundError('Workout', req.params['id'] ?? 'unknown'));
+        }
+        if (
+          error.message.includes('Cannot') ||
+          error.message.includes('already')
+        ) {
+          return next(new ValidationError(error.message));
+        }
+      }
+      next(error);
+    }
+  }
+);
+
+// PUT /api/workouts/:id/skip
+workoutRouter.put(
+  '/:id/skip',
+  (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const service = getWorkoutService();
+      const id = parseInt(req.params['id'] ?? '', 10);
+
+      if (isNaN(id)) {
+        throw new NotFoundError('Workout', req.params['id'] ?? 'unknown');
+      }
+
+      const workout = service.skip(id);
+
+      const response: ApiResponse<Workout> = {
+        success: true,
+        data: workout,
+      };
+      res.json(response);
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          return next(new NotFoundError('Workout', req.params['id'] ?? 'unknown'));
+        }
+        if (
+          error.message.includes('Cannot') ||
+          error.message.includes('already')
+        ) {
+          return next(new ValidationError(error.message));
+        }
+      }
       next(error);
     }
   }
@@ -207,7 +291,7 @@ workoutRouter.delete(
   }
 );
 
-// ============ Workout Sets ============
+// ============ Workout Sets (nested under workouts) ============
 
 // GET /api/workouts/:workoutId/sets
 workoutRouter.get(
@@ -265,8 +349,9 @@ workoutRouter.post(
         throw new NotFoundError('Workout', workoutId);
       }
 
+      const body = req.body as Omit<CreateWorkoutSetInput, 'workout_id'>;
       const set = workoutSetRepository.create({
-        ...req.body,
+        ...body,
         workout_id: workoutId,
       });
 
@@ -281,7 +366,7 @@ workoutRouter.post(
   }
 );
 
-// PUT /api/workout-sets/:id
+// PUT /api/workouts/sets/:id (legacy endpoint - use /api/workout-sets/:id instead)
 workoutRouter.put(
   '/sets/:id',
   validate(updateWorkoutSetSchema),
@@ -294,7 +379,8 @@ workoutRouter.put(
         throw new NotFoundError('WorkoutSet', req.params['id'] ?? 'unknown');
       }
 
-      const set = workoutSetRepository.update(id, req.body);
+      const updateBody = req.body as UpdateWorkoutSetInput;
+      const set = workoutSetRepository.update(id, updateBody);
 
       if (!set) {
         throw new NotFoundError('WorkoutSet', id);
@@ -311,28 +397,24 @@ workoutRouter.put(
   }
 );
 
-// PUT /api/workout-sets/:id/log
+// PUT /api/workouts/sets/:id/log (legacy endpoint - use /api/workout-sets/:id/log instead)
 workoutRouter.put(
   '/sets/:id/log',
   validate(logWorkoutSetSchema),
   (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const workoutSetRepository = getWorkoutSetRepository();
+      const service = getWorkoutSetService();
       const id = parseInt(req.params['id'] ?? '', 10);
 
       if (isNaN(id)) {
         throw new NotFoundError('WorkoutSet', req.params['id'] ?? 'unknown');
       }
 
-      const set = workoutSetRepository.update(id, {
-        actual_reps: req.body.actual_reps,
-        actual_weight: req.body.actual_weight,
-        status: 'completed',
+      const logBody = req.body as LogWorkoutSetInput;
+      const set = service.log(id, {
+        actual_reps: logBody.actual_reps,
+        actual_weight: logBody.actual_weight,
       });
-
-      if (!set) {
-        throw new NotFoundError('WorkoutSet', id);
-      }
 
       const response: ApiResponse<WorkoutSet> = {
         success: true,
@@ -340,30 +422,37 @@ workoutRouter.put(
       };
       res.json(response);
     } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          return next(
+            new NotFoundError('WorkoutSet', req.params['id'] ?? 'unknown')
+          );
+        }
+        if (
+          error.message.includes('Cannot') ||
+          error.message.includes('must be')
+        ) {
+          return next(new ValidationError(error.message));
+        }
+      }
       next(error);
     }
   }
 );
 
-// PUT /api/workout-sets/:id/skip
+// PUT /api/workouts/sets/:id/skip (legacy endpoint - use /api/workout-sets/:id/skip instead)
 workoutRouter.put(
   '/sets/:id/skip',
   (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const workoutSetRepository = getWorkoutSetRepository();
+      const service = getWorkoutSetService();
       const id = parseInt(req.params['id'] ?? '', 10);
 
       if (isNaN(id)) {
         throw new NotFoundError('WorkoutSet', req.params['id'] ?? 'unknown');
       }
 
-      const set = workoutSetRepository.update(id, {
-        status: 'skipped',
-      });
-
-      if (!set) {
-        throw new NotFoundError('WorkoutSet', id);
-      }
+      const set = service.skip(id);
 
       const response: ApiResponse<WorkoutSet> = {
         success: true,
@@ -371,12 +460,22 @@ workoutRouter.put(
       };
       res.json(response);
     } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          return next(
+            new NotFoundError('WorkoutSet', req.params['id'] ?? 'unknown')
+          );
+        }
+        if (error.message.includes('Cannot')) {
+          return next(new ValidationError(error.message));
+        }
+      }
       next(error);
     }
   }
 );
 
-// DELETE /api/workout-sets/:id
+// DELETE /api/workouts/sets/:id
 workoutRouter.delete(
   '/sets/:id',
   (req: Request, res: Response, next: NextFunction): void => {

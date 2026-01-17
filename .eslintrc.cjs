@@ -22,6 +22,7 @@ module.exports = {
     project: [
       './tsconfig.json',
       './packages/*/tsconfig.json',
+      './packages/server/tsconfig.test.json',
       './e2e/tsconfig.json',
     ],
     tsconfigRootDir: __dirname,
