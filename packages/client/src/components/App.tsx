@@ -15,6 +15,7 @@ import {
 import { usePlans } from '../hooks/usePlans';
 import {
   useActiveMesocycle,
+  useMesocycles,
   useCreateMesocycle,
   useCompleteMesocycle,
   useCancelMesocycle,
@@ -33,7 +34,14 @@ function MesoPage(): JSX.Element {
   const navigate = useNavigate();
   const { data: activeMesocycle, isLoading: isLoadingMesocycle } =
     useActiveMesocycle();
+  const { data: allMesocycles, isLoading: isLoadingAllMesocycles } =
+    useMesocycles();
   const { data: plans, isLoading: isLoadingPlans } = usePlans();
+
+  // Filter for completed mesocycles (most recent first)
+  const completedMesocycles = (allMesocycles ?? [])
+    .filter((m) => m.status === 'completed')
+    .sort((a, b) => b.id - a.id);
 
   const createMesocycle = useCreateMesocycle();
   const completeMesocycle = useCompleteMesocycle();
@@ -66,8 +74,9 @@ function MesoPage(): JSX.Element {
 
         <MesoTab
           activeMesocycle={activeMesocycle ?? null}
+          completedMesocycles={completedMesocycles}
           plans={plans ?? []}
-          isLoading={isLoadingMesocycle || isLoadingPlans}
+          isLoading={isLoadingMesocycle || isLoadingPlans || isLoadingAllMesocycles}
           isCreating={createMesocycle.isPending}
           isCompleting={completeMesocycle.isPending}
           isCancelling={cancelMesocycle.isPending}

@@ -328,5 +328,16 @@ test.describe('Complete Mesocycle Journey', () => {
 
     // After reload, should still show no active mesocycle
     expect(await mesoPage.hasActiveMesocycle()).toBe(false);
+
+    // ============ Step 7: Verify Completed Mesocycle in History ============
+    // The completed mesocycle should now appear in the History section
+    await expect(page.getByTestId('completed-mesocycles-heading')).toBeVisible();
+    await expect(page.getByTestId('completed-mesocycles-list')).toBeVisible();
+
+    // Verify our completed mesocycle appears with the plan name
+    const completedMesoCard = page.locator('[data-testid^="completed-mesocycle-"]').first();
+    await expect(completedMesoCard).toBeVisible();
+    await expect(completedMesoCard).toContainText('Complete Meso Test Plan');
+    await expect(completedMesoCard).toContainText('Completed');
   });
 });
