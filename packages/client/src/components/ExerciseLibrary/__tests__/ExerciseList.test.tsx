@@ -123,13 +123,13 @@ describe('ExerciseList', () => {
     });
   });
 
-  it('should show delete buttons only for custom exercises', async () => {
+  it('should show delete buttons for all exercises', async () => {
     renderWithProviders(<ExerciseList />);
 
     await waitFor(() => {
-      // Only custom exercises can be deleted
+      // All exercises can be deleted
       const deleteButtons = screen.getAllByLabelText('Delete exercise');
-      expect(deleteButtons).toHaveLength(1);
+      expect(deleteButtons).toHaveLength(2);
     });
   });
 

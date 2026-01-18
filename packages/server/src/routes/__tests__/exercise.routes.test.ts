@@ -328,20 +328,37 @@ describe('Exercise Routes', () => {
   });
 
   describe('DELETE /api/exercises/:id', () => {
-    it('should return 204 on successful deletion of custom exercise', async () => {
-      const customExercise = repository.create({
-        name: 'Custom Exercise',
+    it('should return 204 on successful deletion', async () => {
+      const exercise = repository.create({
+        name: 'Test Exercise',
         is_custom: true,
       });
 
       const response = await request(app).delete(
-        `/api/exercises/${customExercise.id}`
+        `/api/exercises/${exercise.id}`
       );
 
       expect(response.status).toBe(204);
 
       // Verify exercise is deleted
-      const found = repository.findById(customExercise.id);
+      const found = repository.findById(exercise.id);
+      expect(found).toBeNull();
+    });
+
+    it('should allow deleting any exercise regardless of is_custom flag', async () => {
+      const builtIn = repository.findByName('Leg Extension');
+      expect(builtIn).not.toBeNull();
+      if (!builtIn) return;
+      expect(builtIn.is_custom).toBe(false);
+
+      const response = await request(app).delete(
+        `/api/exercises/${builtIn.id}`
+      );
+
+      expect(response.status).toBe(204);
+
+      // Verify exercise is deleted
+      const found = repository.findById(builtIn.id);
       expect(found).toBeNull();
     });
 
@@ -351,29 +368,6 @@ describe('Exercise Routes', () => {
 
       expect(response.status).toBe(404);
       expect(body.success).toBe(false);
-    });
-
-    it('should return 403 when attempting to delete built-in exercise', async () => {
-      const builtIn = repository.findByName('Leg Extension');
-      expect(builtIn).not.toBeNull();
-      if (!builtIn) return;
-      expect(builtIn.is_custom).toBe(false);
-
-      const response = await request(app).delete(
-        `/api/exercises/${builtIn.id}`
-      );
-      const body = response.body as ApiResult<Exercise>;
-
-      expect(response.status).toBe(403);
-      expect(body.success).toBe(false);
-      if (!body.success) {
-        expect(body.error.code).toBe('FORBIDDEN');
-        expect(body.error.message).toBe('Cannot delete built-in exercises');
-      }
-
-      // Verify exercise still exists
-      const stillExists = repository.findById(builtIn.id);
-      expect(stillExists).not.toBeNull();
     });
 
     it('should return 404 for invalid id format', async () => {

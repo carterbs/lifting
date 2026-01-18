@@ -8,11 +8,7 @@ import {
   type UpdateExerciseDTO,
 } from '@lifting/shared';
 import { validate } from '../middleware/validate.js';
-import {
-  NotFoundError,
-  ConflictError,
-  ForbiddenError,
-} from '../middleware/error-handler.js';
+import { NotFoundError, ConflictError } from '../middleware/error-handler.js';
 import { getExerciseRepository } from '../repositories/index.js';
 
 export const exerciseRouter = Router();
@@ -131,10 +127,6 @@ exerciseRouter.delete(
 
       if (!exercise) {
         throw new NotFoundError('Exercise', id);
-      }
-
-      if (!exercise.is_custom) {
-        throw new ForbiddenError('Cannot delete built-in exercises');
       }
 
       if (repository.isInUse(id)) {

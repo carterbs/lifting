@@ -150,11 +150,18 @@ export class ExercisesPage extends BasePage {
   }
 
   /**
-   * Check if an exercise is custom (can be deleted)
+   * Check if an exercise has a delete button
    */
-  async isExerciseCustom(name: string): Promise<boolean> {
+  async hasDeleteButton(name: string): Promise<boolean> {
     const item = this.getExerciseItem(name);
     const deleteButton = item.getByRole('button', { name: /delete/i });
     return deleteButton.isVisible();
+  }
+
+  /**
+   * @deprecated Use hasDeleteButton instead. All exercises are now deletable.
+   */
+  async isExerciseCustom(name: string): Promise<boolean> {
+    return this.hasDeleteButton(name);
   }
 }

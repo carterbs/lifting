@@ -40,17 +40,15 @@ export function ExerciseListItem({
           >
             <EditIcon />
           </IconButton>
-          {exercise.is_custom && (
-            <IconButton
-              size="1"
-              variant="ghost"
-              color="red"
-              aria-label="Delete exercise"
-              onClick={() => onDelete?.(exercise)}
-            >
-              <TrashIcon />
-            </IconButton>
-          )}
+          <IconButton
+            size="1"
+            variant="ghost"
+            color="red"
+            aria-label="Delete exercise"
+            onClick={() => onDelete?.(exercise)}
+          >
+            <TrashIcon />
+          </IconButton>
         </Flex>
       </Flex>
     </Box>

@@ -42,7 +42,7 @@ describe('ExerciseListItem', () => {
     expect(screen.getByLabelText('Edit exercise')).toBeInTheDocument();
   });
 
-  it('should show delete button for custom exercises', () => {
+  it('should show delete button for all exercises', () => {
     renderWithTheme(<ExerciseListItem exercise={customExercise} />);
     expect(screen.getByLabelText('Delete exercise')).toBeInTheDocument();
   });
@@ -52,9 +52,9 @@ describe('ExerciseListItem', () => {
     expect(screen.getByLabelText('Edit exercise')).toBeInTheDocument();
   });
 
-  it('should not show delete button for built-in exercises', () => {
+  it('should show delete button for built-in exercises', () => {
     renderWithTheme(<ExerciseListItem exercise={builtInExercise} />);
-    expect(screen.queryByLabelText('Delete exercise')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Delete exercise')).toBeInTheDocument();
   });
 
   it('should call onEdit when edit button clicked on built-in exercise', () => {

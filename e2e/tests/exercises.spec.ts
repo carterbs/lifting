@@ -42,7 +42,7 @@ test.describe('Exercise Library', () => {
       expect(exists).toBe(true);
     });
 
-    test('should show custom exercise as deletable', async ({
+    test('should show delete button for created exercises', async ({
       exercisesPage,
     }) => {
       await exercisesPage.goto();
@@ -51,8 +51,9 @@ test.describe('Exercise Library', () => {
       const exerciseName = testData.uniqueName('Deletable Exercise');
       await exercisesPage.addExercise(exerciseName, 5);
 
-      const isCustom = await exercisesPage.isExerciseCustom(exerciseName);
-      expect(isCustom).toBe(true);
+      // All exercises should have delete button
+      const hasDeleteButton = await exercisesPage.isExerciseCustom(exerciseName);
+      expect(hasDeleteButton).toBe(true);
     });
   });
 
@@ -109,17 +110,26 @@ test.describe('Exercise Library', () => {
       expect(existsAfter).toBe(false);
     });
 
-    test('should not be able to delete built-in exercise', async ({
+    test('should be able to delete any exercise', async ({
       exercisesPage,
     }) => {
       await exercisesPage.goto();
       await exercisesPage.waitForLoad();
 
-      // Built-in exercises should not have delete button
-      const isCustom = await exercisesPage.isExerciseCustom(
+      // All exercises should have a delete button
+      const hasDeleteButton = await exercisesPage.isExerciseCustom(
         'Dumbbell Press (Flat)'
       );
-      expect(isCustom).toBe(false);
+      expect(hasDeleteButton).toBe(true);
+
+      // Delete the built-in exercise
+      await exercisesPage.deleteExercise('Dumbbell Press (Flat)');
+
+      // Verify it's gone
+      const existsAfter = await exercisesPage.exerciseExists(
+        'Dumbbell Press (Flat)'
+      );
+      expect(existsAfter).toBe(false);
     });
   });
 
