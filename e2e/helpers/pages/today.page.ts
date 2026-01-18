@@ -97,19 +97,21 @@ export class TodayPage extends BasePage {
    * Log a set with specific reps and weight using inline inputs
    */
   async logSet(setId: number, reps: number, weight: number): Promise<void> {
-    // Clear and fill weight
     const weightInput = this.getWeightInput(setId);
-    await weightInput.clear();
-    await weightInput.fill(String(weight));
-
-    // Clear and fill reps
     const repsInput = this.getRepsInput(setId);
-    await repsInput.clear();
-    await repsInput.fill(String(reps));
-
-    // Click the checkbox to log
     const checkbox = this.getLogCheckbox(setId);
+
+    // Fill weight - use fill() which clears first, then wait for value to be set
+    await weightInput.fill(String(weight));
+    await expect(weightInput).toHaveValue(String(weight));
+
+    // Fill reps - use fill() which clears first, then wait for value to be set
+    await repsInput.fill(String(reps));
+    await expect(repsInput).toHaveValue(String(reps));
+
+    // Click the checkbox to log and wait for it to become checked
     await checkbox.click();
+    await expect(checkbox).toBeChecked();
   }
 
   /**
@@ -118,6 +120,7 @@ export class TodayPage extends BasePage {
   async logSetWithTargets(setId: number): Promise<void> {
     const checkbox = this.getLogCheckbox(setId);
     await checkbox.click();
+    await expect(checkbox).toBeChecked();
   }
 
   /**
@@ -126,6 +129,7 @@ export class TodayPage extends BasePage {
   async unlogSet(setId: number): Promise<void> {
     const checkbox = this.getLogCheckbox(setId);
     await checkbox.click();
+    await expect(checkbox).not.toBeChecked();
   }
 
   /**
