@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path' | { read file_path; if echo \"$file_path\" | grep -qE '\\.(ts|tsx|js|jsx)$'; then npx eslint --fix \"$file_path\" 2>&1 || true; fi; }"
+            "command": "jq -r '.tool_input.file_path | select(test(\"\\\\.(ts|tsx|js|jsx)$\"))' | xargs -I {} npx eslint --fix {}"
           }
         ]
       }
