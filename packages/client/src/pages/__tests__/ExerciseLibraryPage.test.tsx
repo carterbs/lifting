@@ -144,8 +144,11 @@ describe('ExerciseLibraryPage', () => {
     });
 
     // Find the edit button within a specific exercise item
-    const customSquatItem = screen.getByText('Custom Squat').closest('[data-testid="exercise-item"]')!;
-    fireEvent.click(customSquatItem.querySelector('[aria-label="Edit exercise"]')!);
+    const customSquatItem = screen.getByText('Custom Squat').closest('[data-testid="exercise-item"]');
+    if (!customSquatItem) throw new Error('Exercise item not found');
+    const editButton = customSquatItem.querySelector('[aria-label="Edit exercise"]');
+    if (!editButton) throw new Error('Edit button not found');
+    fireEvent.click(editButton);
 
     await waitFor(() => {
       expect(screen.getByText('Edit Exercise')).toBeInTheDocument();
@@ -160,8 +163,11 @@ describe('ExerciseLibraryPage', () => {
     });
 
     // Find the delete button within a specific exercise item
-    const customSquatItem = screen.getByText('Custom Squat').closest('[data-testid="exercise-item"]')!;
-    fireEvent.click(customSquatItem.querySelector('[aria-label="Delete exercise"]')!);
+    const customSquatItem = screen.getByText('Custom Squat').closest('[data-testid="exercise-item"]');
+    if (!customSquatItem) throw new Error('Exercise item not found');
+    const deleteButton = customSquatItem.querySelector('[aria-label="Delete exercise"]');
+    if (!deleteButton) throw new Error('Delete button not found');
+    fireEvent.click(deleteButton);
 
     await waitFor(() => {
       expect(screen.getByText('Delete Exercise')).toBeInTheDocument();
@@ -194,8 +200,11 @@ describe('ExerciseLibraryPage', () => {
     });
 
     // Find the edit button within the Custom Squat exercise item
-    const customSquatItem = screen.getByText('Custom Squat').closest('[data-testid="exercise-item"]')!;
-    fireEvent.click(customSquatItem.querySelector('[aria-label="Edit exercise"]')!);
+    const customSquatItem = screen.getByText('Custom Squat').closest('[data-testid="exercise-item"]');
+    if (!customSquatItem) throw new Error('Exercise item not found');
+    const editButton = customSquatItem.querySelector('[aria-label="Edit exercise"]');
+    if (!editButton) throw new Error('Edit button not found');
+    fireEvent.click(editButton);
 
     await waitFor(() => {
       expect(screen.getByText('Edit Exercise')).toBeInTheDocument();
@@ -221,8 +230,11 @@ describe('ExerciseLibraryPage', () => {
     });
 
     // Find the delete button within the Custom Squat exercise item (only custom exercises have delete)
-    const customSquatItem = screen.getByText('Custom Squat').closest('[data-testid="exercise-item"]')!;
-    fireEvent.click(customSquatItem.querySelector('[aria-label="Delete exercise"]')!);
+    const customSquatItem = screen.getByText('Custom Squat').closest('[data-testid="exercise-item"]');
+    if (!customSquatItem) throw new Error('Exercise item not found');
+    const deleteButton = customSquatItem.querySelector('[aria-label="Delete exercise"]');
+    if (!deleteButton) throw new Error('Delete button not found');
+    fireEvent.click(deleteButton);
 
     await waitFor(() => {
       expect(screen.getByText('Delete Exercise')).toBeInTheDocument();
