@@ -9,6 +9,7 @@ interface ExerciseCardProps {
   activeSetId: number | null;
   onSetLogged: (setId: number, data: LogWorkoutSetInput) => void;
   onSetUnlogged: (setId: number) => void;
+  onActivate: () => void;
 }
 
 function formatRestTime(seconds: number): string {
@@ -29,6 +30,7 @@ export function ExerciseCard({
   activeSetId,
   onSetLogged,
   onSetUnlogged,
+  onActivate,
 }: ExerciseCardProps): JSX.Element {
   const completedSets = exercise.sets.filter(
     (s) => s.status === 'completed'
@@ -37,7 +39,11 @@ export function ExerciseCard({
   const allComplete = completedSets === totalSets;
 
   return (
-    <Card data-testid={`exercise-card-${exercise.exercise_id}`}>
+    <Card
+      data-testid={`exercise-card-${exercise.exercise_id}`}
+      onClick={onActivate}
+      style={{ cursor: 'pointer' }}
+    >
       {/* Exercise header */}
       <Flex justify="between" align="center" mb="3">
         <Box>

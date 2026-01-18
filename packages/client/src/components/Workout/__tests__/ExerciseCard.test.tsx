@@ -40,6 +40,7 @@ const renderWithTheme = (ui: React.ReactElement): ReturnType<typeof render> => {
 describe('ExerciseCard', () => {
   const mockOnSetLogged = vi.fn();
   const mockOnSetUnlogged = vi.fn();
+  const mockOnActivate = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,6 +54,7 @@ describe('ExerciseCard', () => {
         activeSetId={null}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -67,6 +69,7 @@ describe('ExerciseCard', () => {
         activeSetId={null}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -86,6 +89,7 @@ describe('ExerciseCard', () => {
         activeSetId={null}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -105,6 +109,7 @@ describe('ExerciseCard', () => {
         activeSetId={null}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -119,6 +124,7 @@ describe('ExerciseCard', () => {
         activeSetId={null}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -135,6 +141,7 @@ describe('ExerciseCard', () => {
         activeSetId={null}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -155,6 +162,7 @@ describe('ExerciseCard', () => {
         activeSetId={null}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -175,6 +183,7 @@ describe('ExerciseCard', () => {
         activeSetId={null}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -195,6 +204,7 @@ describe('ExerciseCard', () => {
         activeSetId={2}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -211,6 +221,7 @@ describe('ExerciseCard', () => {
         activeSetId={null}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -231,6 +242,7 @@ describe('ExerciseCard', () => {
         activeSetId={999}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -249,6 +261,7 @@ describe('ExerciseCard', () => {
         activeSetId={1}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -278,6 +291,7 @@ describe('ExerciseCard', () => {
         activeSetId={2}
         onSetLogged={mockOnSetLogged}
         onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
       />
     );
 
@@ -286,5 +300,25 @@ describe('ExerciseCard', () => {
     await user.click(checkbox);
 
     expect(mockOnSetUnlogged).toHaveBeenCalledWith(1);
+  });
+
+  it('should call onActivate when card is clicked', async () => {
+    const user = userEvent.setup();
+
+    renderWithTheme(
+      <ExerciseCard
+        exercise={mockExercise}
+        workoutStatus="in_progress"
+        activeSetId={null}
+        onSetLogged={mockOnSetLogged}
+        onSetUnlogged={mockOnSetUnlogged}
+        onActivate={mockOnActivate}
+      />
+    );
+
+    const card = screen.getByTestId('exercise-card-1');
+    await user.click(card);
+
+    expect(mockOnActivate).toHaveBeenCalled();
   });
 });

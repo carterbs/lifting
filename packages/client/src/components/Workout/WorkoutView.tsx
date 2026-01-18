@@ -297,6 +297,7 @@ export function WorkoutView({
             activeSetId={activeSetId}
             onSetLogged={handleSetLogged}
             onSetUnlogged={onSetUnlogged}
+            onActivate={() => setActiveExerciseId(exercise.exercise_id)}
           />
         ))}
       </Flex>
