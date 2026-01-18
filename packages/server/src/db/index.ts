@@ -20,10 +20,33 @@ export function setTestDatabase(database: Database.Database | null): void {
   testDb = database;
 }
 
+/**
+ * Get the database filename based on NODE_ENV.
+ * - test: lifting.test.db (isolated for E2E tests)
+ * - production: lifting.prod.db (or DB_PATH env var)
+ * - development (default): lifting.db
+ */
+export function getDatabaseFilename(): string {
+  const env = process.env['NODE_ENV'] ?? 'development';
+
+  switch (env) {
+    case 'test':
+      return 'lifting.test.db';
+    case 'production':
+      return 'lifting.prod.db';
+    default:
+      return 'lifting.db';
+  }
+}
+
 export function getDefaultDatabasePath(): string {
-  return (
-    process.env['DB_PATH'] ?? path.join(__dirname, '../../data/lifting.db')
-  );
+  // Explicit DB_PATH always takes precedence
+  if (process.env['DB_PATH']) {
+    return process.env['DB_PATH'];
+  }
+
+  const filename = getDatabaseFilename();
+  return path.join(__dirname, '../../data', filename);
 }
 
 export function createDatabase(config: DatabaseConfig): Database.Database {

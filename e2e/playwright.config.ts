@@ -28,4 +28,15 @@ export default defineConfig({
   expect: {
     timeout: 5000,
   },
+
+  // Start server with NODE_ENV=test to use isolated test database
+  webServer: {
+    command: 'NODE_ENV=test npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !isCI,
+    cwd: '..',
+    env: {
+      NODE_ENV: 'test',
+    },
+  },
 });
