@@ -1,5 +1,29 @@
 # CLAUDE.md - Lifting Tracker Project
 
+## Git Worktree Workflow (MANDATORY)
+
+**All code changes MUST be made in git worktrees, not directly on main.**
+
+```bash
+# 1. Create a worktree for your change
+mkdir -p ../lifting-worktrees
+git worktree add ../lifting-worktrees/<branch-name> -b <branch-name>
+
+# 2. Make changes in the worktree directory
+cd ../lifting-worktrees/<branch-name>
+# ... make changes, commit ...
+
+# 3. Merge back to main (from main worktree)
+cd /Users/bradcarter/Documents/Dev/lifting
+git merge <branch-name>
+
+# 4. Clean up the worktree
+git worktree remove ../lifting-worktrees/<branch-name>
+git branch -d <branch-name>
+```
+
+This keeps main clean and allows easy rollback of changes.
+
 ## Project Overview
 
 A single-user weight training workout tracker web app. Users create workout plans, run 6-week mesocycles with progressive overload, and track workouts with automatic weight/rep progression.
