@@ -71,7 +71,7 @@ export function WorkoutPage(): JSX.Element {
     return (
       <Container size="2" p="4">
         <Flex direction="column" gap="4">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+          <Button variant="ghost" onClick={() => void navigate(-1)}>
             <ArrowLeftIcon /> Back
           </Button>
           <Box
@@ -92,7 +92,7 @@ export function WorkoutPage(): JSX.Element {
     return (
       <Container size="2" p="4">
         <Flex direction="column" gap="4">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+          <Button variant="ghost" onClick={() => void navigate(-1)}>
             <ArrowLeftIcon /> Back
           </Button>
           <Box
@@ -113,7 +113,7 @@ export function WorkoutPage(): JSX.Element {
     <Container size="2" p="4">
       <Flex direction="column" gap="4">
         <Flex align="center" gap="2">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+          <Button variant="ghost" onClick={() => void navigate(-1)}>
             <ArrowLeftIcon />
           </Button>
           <Heading size="6">{workout.plan_day_name}</Heading>

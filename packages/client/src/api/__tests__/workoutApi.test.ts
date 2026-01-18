@@ -73,7 +73,7 @@ describe('workoutApi', () => {
     it('should return workout when scheduled', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, data: mockWorkoutWithExercises }),
+        json: () => Promise.resolve({ success: true, data: mockWorkoutWithExercises }),
       });
 
       const result = await workoutApi.getTodaysWorkout();
@@ -85,7 +85,7 @@ describe('workoutApi', () => {
     it('should return null when no workout scheduled', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, data: null }),
+        json: () => Promise.resolve({ success: true, data: null }),
       });
 
       const result = await workoutApi.getTodaysWorkout();
@@ -98,7 +98,7 @@ describe('workoutApi', () => {
     it('should return workout by id', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, data: mockWorkoutWithExercises }),
+        json: () => Promise.resolve({ success: true, data: mockWorkoutWithExercises }),
       });
 
       const result = await workoutApi.getWorkout(1);
@@ -111,7 +111,7 @@ describe('workoutApi', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 404,
-        json: async () => ({
+        json: () => Promise.resolve({
           success: false,
           error: { message: 'Workout with id 999 not found', code: 'NOT_FOUND' },
         }),
@@ -125,7 +125,7 @@ describe('workoutApi', () => {
     it('should start workout', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, data: mockWorkout }),
+        json: () => Promise.resolve({ success: true, data: mockWorkout }),
       });
 
       const result = await workoutApi.startWorkout(1);
@@ -140,7 +140,7 @@ describe('workoutApi', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
-        json: async () => ({
+        json: () => Promise.resolve({
           success: false,
           error: { message: 'Workout is already in progress', code: 'VALIDATION_ERROR' },
         }),
@@ -160,7 +160,7 @@ describe('workoutApi', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, data: completedWorkout }),
+        json: () => Promise.resolve({ success: true, data: completedWorkout }),
       });
 
       const result = await workoutApi.completeWorkout(1);
@@ -173,7 +173,7 @@ describe('workoutApi', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
-        json: async () => ({
+        json: () => Promise.resolve({
           success: false,
           error: {
             message: 'Cannot complete a workout that has not been started',
@@ -195,7 +195,7 @@ describe('workoutApi', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, data: skippedWorkout }),
+        json: () => Promise.resolve({ success: true, data: skippedWorkout }),
       });
 
       const result = await workoutApi.skipWorkout(1);
@@ -208,7 +208,7 @@ describe('workoutApi', () => {
     it('should log set with actual values', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, data: mockWorkoutSet }),
+        json: () => Promise.resolve({ success: true, data: mockWorkoutSet }),
       });
 
       const result = await workoutApi.logSet(1, {
@@ -230,7 +230,7 @@ describe('workoutApi', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
-        json: async () => ({
+        json: () => Promise.resolve({
           success: false,
           error: {
             message: 'Cannot log sets for a completed workout',
@@ -256,7 +256,7 @@ describe('workoutApi', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, data: skippedSet }),
+        json: () => Promise.resolve({ success: true, data: skippedSet }),
       });
 
       const result = await workoutApi.skipSet(1);

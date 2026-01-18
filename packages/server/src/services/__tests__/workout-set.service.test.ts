@@ -106,13 +106,14 @@ describe('WorkoutSetService', () => {
       const result = service.getById(workoutSetId);
 
       expect(result).not.toBeNull();
-      expect(result!.id).toBe(workoutSetId);
-      expect(result!.set_number).toBe(1);
-      expect(result!.target_reps).toBe(10);
-      expect(result!.target_weight).toBe(100);
-      expect(result!.actual_reps).toBeNull();
-      expect(result!.actual_weight).toBeNull();
-      expect(result!.status).toBe('pending');
+      if (!result) return;
+      expect(result.id).toBe(workoutSetId);
+      expect(result.set_number).toBe(1);
+      expect(result.target_reps).toBe(10);
+      expect(result.target_weight).toBe(100);
+      expect(result.actual_reps).toBeNull();
+      expect(result.actual_weight).toBeNull();
+      expect(result.status).toBe('pending');
     });
   });
 
@@ -168,8 +169,9 @@ describe('WorkoutSetService', () => {
       service.log(workoutSetId, { actual_reps: 8, actual_weight: 95 });
 
       const workout = repos.workout.findById(workoutId);
-      expect(workout!.status).toBe('in_progress');
-      expect(workout!.started_at).not.toBeNull();
+      if (!workout) throw new Error('Workout not found');
+      expect(workout.status).toBe('in_progress');
+      expect(workout.started_at).not.toBeNull();
     });
 
     it('should throw for completed workout', () => {
@@ -332,8 +334,9 @@ describe('WorkoutSetService', () => {
       service.skip(workoutSetId);
 
       const workout = repos.workout.findById(workoutId);
-      expect(workout!.status).toBe('in_progress');
-      expect(workout!.started_at).not.toBeNull();
+      if (!workout) throw new Error('Workout not found');
+      expect(workout.status).toBe('in_progress');
+      expect(workout.started_at).not.toBeNull();
     });
 
     it('should throw for completed workout', () => {

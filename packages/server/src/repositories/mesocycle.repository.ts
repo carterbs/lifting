@@ -46,7 +46,11 @@ export class MesocycleRepository extends BaseRepository<
 
     const result = stmt.run(data.plan_id, data.start_date);
 
-    return this.findById(result.lastInsertRowid as number)!;
+    const mesocycle = this.findById(result.lastInsertRowid as number);
+    if (!mesocycle) {
+      throw new Error('Failed to retrieve newly created mesocycle');
+    }
+    return mesocycle;
   }
 
   findById(id: number): Mesocycle | null {

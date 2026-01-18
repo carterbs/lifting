@@ -16,12 +16,23 @@ const mockPlans: Plan[] = [
   },
 ];
 
-const mockUsePlans = vi.fn();
+interface MockUsePlansReturn {
+  data: Plan[] | undefined;
+  isLoading: boolean;
+  error: { message: string } | null;
+}
+
+const mockUsePlans = vi.fn<[], MockUsePlansReturn>();
 const mockNavigate = vi.fn();
 
 vi.mock('../../hooks/usePlans', () => ({
-  usePlans: () => mockUsePlans(),
-  useDeletePlan: () => ({
+  usePlans: (): MockUsePlansReturn => mockUsePlans(),
+  useDeletePlan: (): {
+    mutate: ReturnType<typeof vi.fn>;
+    isPending: boolean;
+    isError: boolean;
+    error: null;
+  } => ({
     mutate: vi.fn(),
     isPending: false,
     isError: false,
@@ -33,7 +44,7 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
-    useNavigate: () => mockNavigate,
+    useNavigate: (): typeof mockNavigate => mockNavigate,
   };
 });
 

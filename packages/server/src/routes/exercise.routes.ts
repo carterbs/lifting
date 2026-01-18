@@ -4,6 +4,8 @@ import {
   updateExerciseSchema,
   type ApiResponse,
   type Exercise,
+  type CreateExerciseDTO,
+  type UpdateExerciseDTO,
 } from '@lifting/shared';
 import { validate } from '../middleware/validate.js';
 import {
@@ -70,7 +72,7 @@ exerciseRouter.post(
   (req: Request, res: Response, next: NextFunction): void => {
     try {
       const repository = getExerciseRepository();
-      const exercise = repository.create(req.body);
+      const exercise = repository.create(req.body as CreateExerciseDTO);
 
       const response: ApiResponse<Exercise> = {
         success: true,
@@ -96,7 +98,7 @@ exerciseRouter.put(
         throw new NotFoundError('Exercise', req.params['id'] ?? 'unknown');
       }
 
-      const exercise = repository.update(id, req.body);
+      const exercise = repository.update(id, req.body as UpdateExerciseDTO);
 
       if (!exercise) {
         throw new NotFoundError('Exercise', id);

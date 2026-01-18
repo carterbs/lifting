@@ -130,9 +130,11 @@ function createWrapper(): ({
   children: ReactNode;
 }) => JSX.Element {
   const queryClient = createTestQueryClient();
-  return ({ children }: { children: ReactNode }) => (
+  const TestWrapper = ({ children }: { children: ReactNode }): JSX.Element => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+  TestWrapper.displayName = 'TestWrapper';
+  return TestWrapper;
 }
 
 describe('useMesocycles', () => {
@@ -238,7 +240,7 @@ describe('useMesocycle', () => {
     expect(result.current.data?.plan_name).toBe('Test Plan');
   });
 
-  it('should not fetch when id is 0', async () => {
+  it('should not fetch when id is 0', () => {
     const { result } = renderHook(() => useMesocycle(0), {
       wrapper: createWrapper(),
     });
@@ -265,7 +267,7 @@ describe('useCreateMesocycle', () => {
 
   it('should create mesocycle and invalidate cache', async () => {
     const queryClient = createTestQueryClient();
-    const wrapper = ({ children }: { children: ReactNode }) => (
+    const wrapper = ({ children }: { children: ReactNode }): JSX.Element => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
@@ -297,7 +299,7 @@ describe('useCreateMesocycle', () => {
     );
 
     const queryClient = createTestQueryClient();
-    const wrapper = ({ children }: { children: ReactNode }) => (
+    const wrapper = ({ children }: { children: ReactNode }): JSX.Element => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
@@ -320,7 +322,7 @@ describe('useCompleteMesocycle', () => {
 
   it('should complete mesocycle and invalidate cache', async () => {
     const queryClient = createTestQueryClient();
-    const wrapper = ({ children }: { children: ReactNode }) => (
+    const wrapper = ({ children }: { children: ReactNode }): JSX.Element => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
@@ -341,7 +343,7 @@ describe('useCancelMesocycle', () => {
 
   it('should cancel mesocycle and invalidate cache', async () => {
     const queryClient = createTestQueryClient();
-    const wrapper = ({ children }: { children: ReactNode }) => (
+    const wrapper = ({ children }: { children: ReactNode }): JSX.Element => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 

@@ -10,6 +10,12 @@ import {
   type Plan,
   type PlanDay,
   type PlanDayExercise,
+  type CreatePlanDTO,
+  type UpdatePlanDTO,
+  type CreatePlanDayDTO,
+  type UpdatePlanDayDTO,
+  type CreatePlanDayExerciseDTO,
+  type UpdatePlanDayExerciseDTO,
 } from '@lifting/shared';
 import { validate } from '../middleware/validate.js';
 import { NotFoundError, ConflictError } from '../middleware/error-handler.js';
@@ -81,7 +87,7 @@ planRouter.post(
   (req: Request, res: Response, next: NextFunction): void => {
     try {
       const repository = getPlanRepository();
-      const plan = repository.create(req.body);
+      const plan = repository.create(req.body as CreatePlanDTO);
 
       const response: ApiResponse<Plan> = {
         success: true,
@@ -124,7 +130,7 @@ planRouter.put(
       const activeMesocycle = mesocycles.find((m) => m.status === 'active');
 
       // Update the plan
-      const plan = planRepository.update(id, req.body);
+      const plan = planRepository.update(id, req.body as UpdatePlanDTO);
 
       if (!plan) {
         throw new NotFoundError('Plan', id);
@@ -246,7 +252,7 @@ planRouter.post(
       }
 
       const day = planDayRepository.create({
-        ...req.body,
+        ...(req.body as Omit<CreatePlanDayDTO, 'plan_id'>),
         plan_id: planId,
       });
 
@@ -274,7 +280,7 @@ planRouter.put(
         throw new NotFoundError('PlanDay', req.params['dayId'] ?? 'unknown');
       }
 
-      const day = planDayRepository.update(dayId, req.body);
+      const day = planDayRepository.update(dayId, req.body as UpdatePlanDayDTO);
 
       if (!day) {
         throw new NotFoundError('PlanDay', dayId);
@@ -369,7 +375,7 @@ planRouter.post(
       }
 
       const exercise = planDayExerciseRepository.create({
-        ...req.body,
+        ...(req.body as Omit<CreatePlanDayExerciseDTO, 'plan_day_id'>),
         plan_day_id: dayId,
       });
 
@@ -400,7 +406,7 @@ planRouter.put(
         );
       }
 
-      const exercise = planDayExerciseRepository.update(exerciseId, req.body);
+      const exercise = planDayExerciseRepository.update(exerciseId, req.body as UpdatePlanDayExerciseDTO);
 
       if (!exercise) {
         throw new NotFoundError('PlanDayExercise', exerciseId);

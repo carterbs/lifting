@@ -53,7 +53,11 @@ export class WorkoutRepository extends BaseRepository<
       data.scheduled_date
     );
 
-    return this.findById(result.lastInsertRowid as number)!;
+    const workout = this.findById(result.lastInsertRowid as number);
+    if (!workout) {
+      throw new Error('Failed to retrieve newly created workout');
+    }
+    return workout;
   }
 
   findById(id: number): Workout | null {

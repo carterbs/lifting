@@ -26,7 +26,7 @@ describe('WorkoutService', () => {
     const repos = createRepositories(db);
     const exerciseCount = options?.exerciseCount ?? 1;
     const setsPerExercise = options?.setsPerExercise ?? 3;
-    const scheduledDate = options?.scheduledDate ?? new Date().toISOString().split('T')[0]!;
+    const scheduledDate = options?.scheduledDate ?? (new Date().toISOString().split('T')[0] ?? '');
 
     // Create exercises
     const exerciseIds: number[] = [];
@@ -51,9 +51,11 @@ describe('WorkoutService', () => {
 
     // Add exercises to plan day
     for (let i = 0; i < exerciseIds.length; i++) {
+      const exerciseId = exerciseIds[i];
+      if (exerciseId === undefined) continue;
       repos.planDayExercise.create({
         plan_day_id: day.id,
-        exercise_id: exerciseIds[i]!,
+        exercise_id: exerciseId,
         sets: setsPerExercise,
         reps: 10,
         weight: 100 + i * 10,
@@ -79,10 +81,12 @@ describe('WorkoutService', () => {
     // Create workout sets
     const workoutSetIds: number[] = [];
     for (let exerciseIdx = 0; exerciseIdx < exerciseIds.length; exerciseIdx++) {
+      const exerciseId = exerciseIds[exerciseIdx];
+      if (exerciseId === undefined) continue;
       for (let setNum = 1; setNum <= setsPerExercise; setNum++) {
         const workoutSet = repos.workoutSet.create({
           workout_id: workout.id,
-          exercise_id: exerciseIds[exerciseIdx]!,
+          exercise_id: exerciseId,
           set_number: setNum,
           target_reps: 10,
           target_weight: 100 + exerciseIdx * 10,
@@ -122,7 +126,7 @@ describe('WorkoutService', () => {
     });
 
     it('should return workout with sets grouped by exercise', () => {
-      const { workoutId, exerciseIds } = createTestData({
+      const { workoutId } = createTestData({
         exerciseCount: 2,
         setsPerExercise: 3,
       });
@@ -130,10 +134,11 @@ describe('WorkoutService', () => {
       const result = service.getById(workoutId);
 
       expect(result).not.toBeNull();
-      expect(result!.id).toBe(workoutId);
-      expect(result!.exercises).toHaveLength(2);
-      expect(result!.exercises[0]!.sets).toHaveLength(3);
-      expect(result!.exercises[1]!.sets).toHaveLength(3);
+      if (!result) return;
+      expect(result.id).toBe(workoutId);
+      expect(result.exercises).toHaveLength(2);
+      expect(result.exercises[0]?.sets).toHaveLength(3);
+      expect(result.exercises[1]?.sets).toHaveLength(3);
     });
 
     it('should order exercises by plan order', () => {
@@ -144,10 +149,11 @@ describe('WorkoutService', () => {
 
       const result = service.getById(workoutId);
 
+      if (!result) throw new Error('Result not found');
       // Exercises should be in sort_order
-      expect(result!.exercises[0]!.exercise_name).toBe('Test Exercise 1');
-      expect(result!.exercises[1]!.exercise_name).toBe('Test Exercise 2');
-      expect(result!.exercises[2]!.exercise_name).toBe('Test Exercise 3');
+      expect(result.exercises[0]?.exercise_name).toBe('Test Exercise 1');
+      expect(result.exercises[1]?.exercise_name).toBe('Test Exercise 2');
+      expect(result.exercises[2]?.exercise_name).toBe('Test Exercise 3');
     });
 
     it('should order sets by set number within each exercise', () => {
@@ -158,10 +164,12 @@ describe('WorkoutService', () => {
 
       const result = service.getById(workoutId);
 
-      const sets = result!.exercises[0]!.sets;
-      expect(sets[0]!.set_number).toBe(1);
-      expect(sets[1]!.set_number).toBe(2);
-      expect(sets[2]!.set_number).toBe(3);
+      if (!result) throw new Error('Result not found');
+      const sets = result.exercises[0]?.sets;
+      if (!sets) throw new Error('Sets not found');
+      expect(sets[0]?.set_number).toBe(1);
+      expect(sets[1]?.set_number).toBe(2);
+      expect(sets[2]?.set_number).toBe(3);
     });
 
     it('should include rest_seconds from plan_day_exercises', () => {
@@ -172,7 +180,8 @@ describe('WorkoutService', () => {
 
       const result = service.getById(workoutId);
 
-      expect(result!.exercises[0]!.rest_seconds).toBe(90);
+      if (!result) throw new Error('Result not found');
+      expect(result.exercises[0]?.rest_seconds).toBe(90);
     });
 
     it('should include plan_day_name', () => {
@@ -180,7 +189,8 @@ describe('WorkoutService', () => {
 
       const result = service.getById(workoutId);
 
-      expect(result!.plan_day_name).toBe('Day 1');
+      if (!result) throw new Error('Result not found');
+      expect(result.plan_day_name).toBe('Day 1');
     });
   });
 
@@ -194,17 +204,18 @@ describe('WorkoutService', () => {
     });
 
     it('should return the scheduled workout for today', () => {
-      const today = new Date().toISOString().split('T')[0]!;
+      const today = new Date().toISOString().split('T')[0] ?? '';
       const { workoutId } = createTestData({ scheduledDate: today });
 
       const result = service.getTodaysWorkout();
 
       expect(result).not.toBeNull();
-      expect(result!.id).toBe(workoutId);
+      if (!result) return;
+      expect(result.id).toBe(workoutId);
     });
 
     it('should return in-progress workout if one exists for today', () => {
-      const today = new Date().toISOString().split('T')[0]!;
+      const today = new Date().toISOString().split('T')[0] ?? '';
       const { workoutId } = createTestData({ scheduledDate: today });
       const repos = createRepositories(db);
 
@@ -217,12 +228,13 @@ describe('WorkoutService', () => {
       const result = service.getTodaysWorkout();
 
       expect(result).not.toBeNull();
-      expect(result!.id).toBe(workoutId);
-      expect(result!.status).toBe('in_progress');
+      if (!result) return;
+      expect(result.id).toBe(workoutId);
+      expect(result.status).toBe('in_progress');
     });
 
     it('should not return completed workout for today', () => {
-      const today = new Date().toISOString().split('T')[0]!;
+      const today = new Date().toISOString().split('T')[0] ?? '';
       const { workoutId } = createTestData({ scheduledDate: today });
       const repos = createRepositories(db);
 
@@ -239,7 +251,7 @@ describe('WorkoutService', () => {
     });
 
     it('should not return skipped workout for today', () => {
-      const today = new Date().toISOString().split('T')[0]!;
+      const today = new Date().toISOString().split('T')[0] ?? '';
       const { workoutId } = createTestData({ scheduledDate: today });
       const repos = createRepositories(db);
 
@@ -398,11 +410,14 @@ describe('WorkoutService', () => {
       });
 
       // Log only one set
-      repos.workoutSet.update(workoutSetIds[0]!, {
-        actual_reps: 10,
-        actual_weight: 100,
-        status: 'completed',
-      });
+      const firstSetId = workoutSetIds[0];
+      if (firstSetId !== undefined) {
+        repos.workoutSet.update(firstSetId, {
+          actual_reps: 10,
+          actual_weight: 100,
+          status: 'completed',
+        });
+      }
 
       // Complete workout - should succeed even with pending sets
       const result = service.complete(workoutId);
@@ -436,7 +451,8 @@ describe('WorkoutService', () => {
       // Check all sets are skipped
       for (const setId of workoutSetIds) {
         const set = repos.workoutSet.findById(setId);
-        expect(set!.status).toBe('skipped');
+        if (!set) throw new Error(`Set ${setId} not found`);
+        expect(set.status).toBe('skipped');
       }
     });
 
@@ -453,7 +469,12 @@ describe('WorkoutService', () => {
         started_at: new Date().toISOString(),
       });
 
-      repos.workoutSet.update(workoutSetIds[0]!, {
+      const firstSetId = workoutSetIds[0];
+      const secondSetId = workoutSetIds[1];
+      if (firstSetId === undefined) throw new Error('First set ID not found');
+      if (secondSetId === undefined) throw new Error('Second set ID not found');
+
+      repos.workoutSet.update(firstSetId, {
         actual_reps: 10,
         actual_weight: 100,
         status: 'completed',
@@ -463,14 +484,16 @@ describe('WorkoutService', () => {
       service.skip(workoutId);
 
       // Logged set should still have its data
-      const loggedSet = repos.workoutSet.findById(workoutSetIds[0]!);
-      expect(loggedSet!.actual_reps).toBe(10);
-      expect(loggedSet!.actual_weight).toBe(100);
-      expect(loggedSet!.status).toBe('completed');
+      const loggedSet = repos.workoutSet.findById(firstSetId);
+      if (!loggedSet) throw new Error('Logged set not found');
+      expect(loggedSet.actual_reps).toBe(10);
+      expect(loggedSet.actual_weight).toBe(100);
+      expect(loggedSet.status).toBe('completed');
 
       // Other sets should be skipped
-      const pendingSet = repos.workoutSet.findById(workoutSetIds[1]!);
-      expect(pendingSet!.status).toBe('skipped');
+      const pendingSet = repos.workoutSet.findById(secondSetId);
+      if (!pendingSet) throw new Error('Pending set not found');
+      expect(pendingSet.status).toBe('skipped');
     });
 
     it('should throw when workout completed', () => {

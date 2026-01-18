@@ -46,7 +46,11 @@ export class PlanDayRepository extends BaseRepository<
       data.sort_order
     );
 
-    return this.findById(result.lastInsertRowid as number)!;
+    const planDay = this.findById(result.lastInsertRowid as number);
+    if (!planDay) {
+      throw new Error('Failed to retrieve newly created plan day');
+    }
+    return planDay;
   }
 
   findById(id: number): PlanDay | null {

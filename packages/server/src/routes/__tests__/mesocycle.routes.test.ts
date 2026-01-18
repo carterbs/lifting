@@ -15,7 +15,7 @@ import {
   MesocycleRepository,
   WorkoutRepository,
 } from '../../repositories/index.js';
-import type { DayOfWeek } from '@lifting/shared';
+import type { DayOfWeek, Mesocycle, MesocycleWithDetails, ApiResult } from '@lifting/shared';
 
 describe('Mesocycle Routes', () => {
   let ctx: TestContext;
@@ -36,7 +36,9 @@ describe('Mesocycle Routes', () => {
   } {
     // Use existing exercise from seeds
     const exercise = exerciseRepo.findByName('Leg Extension');
-    expect(exercise).not.toBeNull();
+    if (!exercise) {
+      throw new Error('Leg Extension exercise not found in seeds');
+    }
 
     const plan = planRepo.create({ name: 'Test Plan', duration_weeks: 6 });
 
@@ -52,7 +54,7 @@ describe('Mesocycle Routes', () => {
 
       planDayExerciseRepo.create({
         plan_day_id: day.id,
-        exercise_id: exercise!.id,
+        exercise_id: exercise.id,
         sets: 3,
         reps: 10,
         weight: 100,
@@ -61,7 +63,7 @@ describe('Mesocycle Routes', () => {
       });
     }
 
-    return { planId: plan.id, dayIds, exerciseId: exercise!.id };
+    return { planId: plan.id, dayIds, exerciseId: exercise.id };
   }
 
   beforeEach(() => {
@@ -83,10 +85,13 @@ describe('Mesocycle Routes', () => {
   describe('GET /api/mesocycles', () => {
     it('should return 200 with empty array when no mesocycles exist', async () => {
       const response = await request(app).get('/api/mesocycles');
+      const body = response.body as ApiResult<Mesocycle[]>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual([]);
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data).toEqual([]);
+      }
     });
 
     it('should return all mesocycles', async () => {
@@ -99,11 +104,14 @@ describe('Mesocycle Routes', () => {
       });
 
       const response = await request(app).get('/api/mesocycles');
+      const body = response.body as ApiResult<Mesocycle[]>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveLength(1);
-      expect(response.body.data[0].plan_id).toBe(planId);
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data).toHaveLength(1);
+        expect(body.data[0]?.plan_id).toBe(planId);
+      }
     });
 
     it('should return mesocycles ordered by start_date descending', async () => {
@@ -126,22 +134,28 @@ describe('Mesocycle Routes', () => {
       });
 
       const response = await request(app).get('/api/mesocycles');
+      const body = response.body as ApiResult<Mesocycle[]>;
 
       expect(response.status).toBe(200);
-      expect(response.body.data).toHaveLength(2);
-      // Most recent first
-      expect(response.body.data[0].start_date).toBe('2024-03-01');
-      expect(response.body.data[1].start_date).toBe('2024-01-01');
+      if (body.success) {
+        expect(body.data).toHaveLength(2);
+        // Most recent first
+        expect(body.data[0]?.start_date).toBe('2024-03-01');
+        expect(body.data[1]?.start_date).toBe('2024-01-01');
+      }
     });
   });
 
   describe('GET /api/mesocycles/active', () => {
     it('should return 200 with null when no active mesocycle', async () => {
       const response = await request(app).get('/api/mesocycles/active');
+      const body = response.body as ApiResult<MesocycleWithDetails | null>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toBeNull();
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data).toBeNull();
+      }
     });
 
     it('should return active mesocycle with details', async () => {
@@ -153,13 +167,15 @@ describe('Mesocycle Routes', () => {
       });
 
       const response = await request(app).get('/api/mesocycles/active');
+      const body = response.body as ApiResult<MesocycleWithDetails | null>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).not.toBeNull();
-      expect(response.body.data.status).toBe('active');
-      expect(response.body.data.plan_name).toBe('Test Plan');
-      expect(response.body.data.weeks).toHaveLength(7);
+      expect(body.success).toBe(true);
+      if (body.success && body.data) {
+        expect(body.data.status).toBe('active');
+        expect(body.data.plan_name).toBe('Test Plan');
+        expect(body.data.weeks).toHaveLength(7);
+      }
     });
 
     it('should not return completed mesocycles', async () => {
@@ -174,9 +190,12 @@ describe('Mesocycle Routes', () => {
       mesocycleRepo.update(mesocycles[0].id, { status: 'completed' });
 
       const response = await request(app).get('/api/mesocycles/active');
+      const body = response.body as ApiResult<MesocycleWithDetails | null>;
 
       expect(response.status).toBe(200);
-      expect(response.body.data).toBeNull();
+      if (body.success) {
+        expect(body.data).toBeNull();
+      }
     });
   });
 
@@ -188,17 +207,22 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const createBody = createResponse.body as ApiResult<Mesocycle>;
+      if (!createBody.success) throw new Error('Failed to create mesocycle');
 
-      const mesocycleId = createResponse.body.data.id;
+      const mesocycleId = createBody.data.id;
 
       const response = await request(app).get(`/api/mesocycles/${mesocycleId}`);
+      const body = response.body as ApiResult<MesocycleWithDetails>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.id).toBe(mesocycleId);
-      expect(response.body.data.plan_name).toBe('Test Plan');
-      expect(response.body.data.weeks).toHaveLength(7);
-      expect(response.body.data.total_workouts).toBe(14); // 7 weeks * 2 days
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data.id).toBe(mesocycleId);
+        expect(body.data.plan_name).toBe('Test Plan');
+        expect(body.data.weeks).toHaveLength(7);
+        expect(body.data.total_workouts).toBe(14); // 7 weeks * 2 days
+      }
     });
 
     it('should include workout summaries in weeks', async () => {
@@ -208,17 +232,20 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const createBody = createResponse.body as ApiResult<Mesocycle>;
+      if (!createBody.success) throw new Error('Failed to create mesocycle');
 
-      const mesocycleId = createResponse.body.data.id;
+      const mesocycleId = createBody.data.id;
 
       const response = await request(app).get(`/api/mesocycles/${mesocycleId}`);
+      const body = response.body as ApiResult<MesocycleWithDetails>;
 
       expect(response.status).toBe(200);
-      expect(response.body.data.weeks[0].workouts).toHaveLength(1);
-      expect(response.body.data.weeks[0].workouts[0].plan_day_name).toBe(
-        'Day 1'
-      );
-      expect(response.body.data.weeks[0].workouts[0].status).toBe('pending');
+      if (body.success) {
+        expect(body.data.weeks[0]?.workouts).toHaveLength(1);
+        expect(body.data.weeks[0]?.workouts[0]?.plan_day_name).toBe('Day 1');
+        expect(body.data.weeks[0]?.workouts[0]?.status).toBe('pending');
+      }
     });
 
     it('should mark week 7 as deload', async () => {
@@ -228,33 +255,42 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const createBody = createResponse.body as ApiResult<Mesocycle>;
+      if (!createBody.success) throw new Error('Failed to create mesocycle');
 
-      const mesocycleId = createResponse.body.data.id;
+      const mesocycleId = createBody.data.id;
 
       const response = await request(app).get(`/api/mesocycles/${mesocycleId}`);
+      const body = response.body as ApiResult<MesocycleWithDetails>;
 
       expect(response.status).toBe(200);
-      // Weeks 1-6 not deload
-      for (let i = 0; i < 6; i++) {
-        expect(response.body.data.weeks[i].is_deload).toBe(false);
+      if (body.success) {
+        // Weeks 1-6 not deload
+        for (let i = 0; i < 6; i++) {
+          expect(body.data.weeks[i]?.is_deload).toBe(false);
+        }
+        // Week 7 is deload
+        expect(body.data.weeks[6]?.is_deload).toBe(true);
       }
-      // Week 7 is deload
-      expect(response.body.data.weeks[6].is_deload).toBe(true);
     });
 
     it('should return 404 when mesocycle not found', async () => {
       const response = await request(app).get('/api/mesocycles/99999');
+      const body = response.body as ApiResult<MesocycleWithDetails>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('NOT_FOUND');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('NOT_FOUND');
+      }
     });
 
     it('should return 404 for invalid id format', async () => {
       const response = await request(app).get('/api/mesocycles/invalid');
+      const body = response.body as ApiResult<MesocycleWithDetails>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
+      expect(body.success).toBe(false);
     });
   });
 
@@ -266,13 +302,16 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.plan_id).toBe(planId);
-      expect(response.body.data.status).toBe('active');
-      expect(response.body.data.current_week).toBe(1);
-      expect(response.body.data.id).toBeDefined();
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data.plan_id).toBe(planId);
+        expect(body.data.status).toBe('active');
+        expect(body.data.current_week).toBe(1);
+        expect(body.data.id).toBeDefined();
+      }
     });
 
     it('should generate workouts for the mesocycle', async () => {
@@ -282,12 +321,15 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(201);
 
-      const workouts = workoutRepo.findByMesocycleId(response.body.data.id);
-      // 7 weeks * 2 days = 14 workouts
-      expect(workouts).toHaveLength(14);
+      if (body.success) {
+        const workouts = workoutRepo.findByMesocycleId(body.data.id);
+        // 7 weeks * 2 days = 14 workouts
+        expect(workouts).toHaveLength(14);
+      }
     });
 
     it('should return 409 when active mesocycle exists', async () => {
@@ -304,13 +346,14 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-03-01',
       });
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(409);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('CONFLICT');
-      expect(response.body.error.message).toBe(
-        'An active mesocycle already exists'
-      );
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('CONFLICT');
+        expect(body.error.message).toBe('An active mesocycle already exists');
+      }
     });
 
     it('should return 404 when plan does not exist', async () => {
@@ -318,10 +361,13 @@ describe('Mesocycle Routes', () => {
         plan_id: 99999,
         start_date: '2024-01-01',
       });
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('NOT_FOUND');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('NOT_FOUND');
+      }
     });
 
     it('should return 400 when plan has no days', async () => {
@@ -331,20 +377,26 @@ describe('Mesocycle Routes', () => {
         plan_id: plan.id,
         start_date: '2024-01-01',
       });
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('VALIDATION_ERROR');
+      }
     });
 
     it('should return 400 when plan_id is missing', async () => {
       const response = await request(app).post('/api/mesocycles').send({
         start_date: '2024-01-01',
       });
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('VALIDATION_ERROR');
+      }
     });
 
     it('should return 400 when start_date is missing', async () => {
@@ -353,10 +405,13 @@ describe('Mesocycle Routes', () => {
       const response = await request(app).post('/api/mesocycles').send({
         plan_id: planId,
       });
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('VALIDATION_ERROR');
+      }
     });
 
     it('should return 400 when start_date format is invalid', async () => {
@@ -366,9 +421,10 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '01-01-2024', // Invalid format
       });
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
+      expect(body.success).toBe(false);
     });
   });
 
@@ -380,16 +436,21 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const createBody = createResponse.body as ApiResult<Mesocycle>;
+      if (!createBody.success) throw new Error('Failed to create mesocycle');
 
-      const mesocycleId = createResponse.body.data.id;
+      const mesocycleId = createBody.data.id;
 
       const response = await request(app).put(
         `/api/mesocycles/${mesocycleId}/complete`
       );
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.status).toBe('completed');
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data.status).toBe('completed');
+      }
     });
 
     it('should allow creating new mesocycle after completion', async () => {
@@ -399,8 +460,10 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const createBody = createResponse.body as ApiResult<Mesocycle>;
+      if (!createBody.success) throw new Error('Failed to create mesocycle');
 
-      const mesocycleId = createResponse.body.data.id;
+      const mesocycleId = createBody.data.id;
 
       await request(app).put(`/api/mesocycles/${mesocycleId}/complete`);
 
@@ -415,10 +478,13 @@ describe('Mesocycle Routes', () => {
 
     it('should return 404 when mesocycle not found', async () => {
       const response = await request(app).put('/api/mesocycles/99999/complete');
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('NOT_FOUND');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('NOT_FOUND');
+      }
     });
 
     it('should return 400 when mesocycle is not active', async () => {
@@ -428,8 +494,10 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const createBody = createResponse.body as ApiResult<Mesocycle>;
+      if (!createBody.success) throw new Error('Failed to create mesocycle');
 
-      const mesocycleId = createResponse.body.data.id;
+      const mesocycleId = createBody.data.id;
 
       // Complete it first
       await request(app).put(`/api/mesocycles/${mesocycleId}/complete`);
@@ -438,10 +506,13 @@ describe('Mesocycle Routes', () => {
       const response = await request(app).put(
         `/api/mesocycles/${mesocycleId}/complete`
       );
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.message).toBe('Mesocycle is not active');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.message).toBe('Mesocycle is not active');
+      }
     });
   });
 
@@ -453,16 +524,21 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const createBody = createResponse.body as ApiResult<Mesocycle>;
+      if (!createBody.success) throw new Error('Failed to create mesocycle');
 
-      const mesocycleId = createResponse.body.data.id;
+      const mesocycleId = createBody.data.id;
 
       const response = await request(app).put(
         `/api/mesocycles/${mesocycleId}/cancel`
       );
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.status).toBe('cancelled');
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data.status).toBe('cancelled');
+      }
     });
 
     it('should preserve workout data when cancelled', async () => {
@@ -472,8 +548,10 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const createBody = createResponse.body as ApiResult<Mesocycle>;
+      if (!createBody.success) throw new Error('Failed to create mesocycle');
 
-      const mesocycleId = createResponse.body.data.id;
+      const mesocycleId = createBody.data.id;
 
       await request(app).put(`/api/mesocycles/${mesocycleId}/cancel`);
 
@@ -488,8 +566,10 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const createBody = createResponse.body as ApiResult<Mesocycle>;
+      if (!createBody.success) throw new Error('Failed to create mesocycle');
 
-      const mesocycleId = createResponse.body.data.id;
+      const mesocycleId = createBody.data.id;
 
       await request(app).put(`/api/mesocycles/${mesocycleId}/cancel`);
 
@@ -504,10 +584,13 @@ describe('Mesocycle Routes', () => {
 
     it('should return 404 when mesocycle not found', async () => {
       const response = await request(app).put('/api/mesocycles/99999/cancel');
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('NOT_FOUND');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('NOT_FOUND');
+      }
     });
 
     it('should return 400 when mesocycle is not active', async () => {
@@ -517,8 +600,10 @@ describe('Mesocycle Routes', () => {
         plan_id: planId,
         start_date: '2024-01-01',
       });
+      const createBody = createResponse.body as ApiResult<Mesocycle>;
+      if (!createBody.success) throw new Error('Failed to create mesocycle');
 
-      const mesocycleId = createResponse.body.data.id;
+      const mesocycleId = createBody.data.id;
 
       // Cancel it first
       await request(app).put(`/api/mesocycles/${mesocycleId}/cancel`);
@@ -527,10 +612,13 @@ describe('Mesocycle Routes', () => {
       const response = await request(app).put(
         `/api/mesocycles/${mesocycleId}/cancel`
       );
+      const body = response.body as ApiResult<Mesocycle>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.message).toBe('Mesocycle is not active');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.message).toBe('Mesocycle is not active');
+      }
     });
   });
 });

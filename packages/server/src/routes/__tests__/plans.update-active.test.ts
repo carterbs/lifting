@@ -16,7 +16,7 @@ import {
   WorkoutRepository,
   WorkoutSetRepository,
 } from '../../repositories/index.js';
-import type { DayOfWeek, PlanDayExercise } from '@lifting/shared';
+import type { DayOfWeek, PlanDayExercise, Plan, ApiResult } from '@lifting/shared';
 
 describe('PUT /api/plans/:id with active mesocycle', () => {
   let ctx: TestContext;
@@ -39,7 +39,9 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
   } {
     // Use existing exercise from seeds
     const exercise = exerciseRepo.findByName('Leg Extension');
-    expect(exercise).not.toBeNull();
+    if (!exercise) {
+      throw new Error('Leg Extension exercise not found in seeds');
+    }
 
     const plan = planRepo.create({ name: 'Test Plan', duration_weeks: 6 });
 
@@ -57,7 +59,7 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
 
       const pde = planDayExerciseRepo.create({
         plan_day_id: day.id,
-        exercise_id: exercise!.id,
+        exercise_id: exercise.id,
         sets: 3,
         reps: 10,
         weight: 100,
@@ -67,7 +69,7 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
       planDayExercises.push(pde);
     }
 
-    return { planId: plan.id, dayIds, exerciseId: exercise!.id, planDayExercises };
+    return { planId: plan.id, dayIds, exerciseId: exercise.id, planDayExercises };
   }
 
   beforeEach(() => {
@@ -92,10 +94,13 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
       const response = await request(app)
         .put('/api/plans/99999')
         .send({ name: 'Updated Plan' });
+      const body = response.body as ApiResult<Plan>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('NOT_FOUND');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('NOT_FOUND');
+      }
     });
 
     it('should return 400 for invalid plan structure', async () => {
@@ -104,10 +109,13 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
       const response = await request(app)
         .put(`/api/plans/${planId}`)
         .send({ name: '' }); // Invalid: empty name
+      const body = response.body as ApiResult<Plan>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('VALIDATION_ERROR');
+      }
     });
 
     it('should return 200 when plan has no active mesocycle (standard update)', async () => {
@@ -116,16 +124,19 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
       const response = await request(app)
         .put(`/api/plans/${planId}`)
         .send({ name: 'Updated Plan Name' });
+      const body = response.body as ApiResult<Plan>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe('Updated Plan Name');
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data.name).toBe('Updated Plan Name');
+      }
     });
   });
 
   describe('detecting affected workouts', () => {
     it('should identify future workouts only', async () => {
-      const { planId, dayIds } = createTestPlanWithDays(1);
+      const { planId } = createTestPlanWithDays(1);
 
       // Create mesocycle
       await request(app).post('/api/mesocycles').send({
@@ -135,22 +146,27 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
 
       const mesocycle = mesocycleRepo.findActive()[0];
       expect(mesocycle).toBeDefined();
+      if (!mesocycle) return;
 
       // Mark first workout as completed (past)
-      const workouts = workoutRepo.findByMesocycleId(mesocycle!.id);
-      workoutRepo.update(workouts[0]!.id, { status: 'completed' });
+      const workouts = workoutRepo.findByMesocycleId(mesocycle.id);
+      const firstWorkout = workouts[0];
+      if (firstWorkout) {
+        workoutRepo.update(firstWorkout.id, { status: 'completed' });
+      }
 
       // Update plan name - should return affected workouts count
       const response = await request(app)
         .put(`/api/plans/${planId}`)
         .send({ name: 'Updated Plan' });
+      const body = response.body as ApiResult<Plan>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
+      expect(body.success).toBe(true);
     });
 
     it('should not modify past workouts', async () => {
-      const { planId, dayIds, exerciseId } = createTestPlanWithDays(1);
+      const { planId, dayIds } = createTestPlanWithDays(1);
 
       // Create mesocycle
       await request(app).post('/api/mesocycles').send({
@@ -158,14 +174,22 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         start_date: new Date().toISOString().split('T')[0],
       });
 
-      const mesocycle = mesocycleRepo.findActive()[0]!;
+      const mesocycle = mesocycleRepo.findActive()[0];
+      if (!mesocycle) {
+        throw new Error('Active mesocycle not found');
+      }
       const workouts = workoutRepo.findByMesocycleId(mesocycle.id);
 
+      const firstWorkout = workouts[0];
+      if (!firstWorkout) {
+        throw new Error('First workout not found');
+      }
+
       // Mark first workout as completed
-      workoutRepo.update(workouts[0]!.id, { status: 'completed' });
+      workoutRepo.update(firstWorkout.id, { status: 'completed' });
 
       // Get sets for past workout
-      const pastSets = workoutSetRepo.findByWorkoutId(workouts[0]!.id);
+      const pastSets = workoutSetRepo.findByWorkoutId(firstWorkout.id);
       const originalSetCount = pastSets.length;
 
       // Add new exercise to plan
@@ -174,8 +198,13 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         weight_increment: 5,
       });
 
+      const firstDayId = dayIds[0];
+      if (firstDayId === undefined) {
+        throw new Error('First day ID not found');
+      }
+
       planDayExerciseRepo.create({
-        plan_day_id: dayIds[0]!,
+        plan_day_id: firstDayId,
         exercise_id: newExercise.id,
         sets: 3,
         reps: 8,
@@ -190,7 +219,7 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         .send({ name: 'Updated Plan' });
 
       // Past workout should NOT have new exercise sets
-      const pastSetsAfter = workoutSetRepo.findByWorkoutId(workouts[0]!.id);
+      const pastSetsAfter = workoutSetRepo.findByWorkoutId(firstWorkout.id);
       expect(pastSetsAfter.length).toBe(originalSetCount);
 
       // Check new exercise sets don't exist in past workout
@@ -201,7 +230,7 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
     });
 
     it('should not modify current in-progress workout', async () => {
-      const { planId, dayIds, exerciseId } = createTestPlanWithDays(1);
+      const { planId, dayIds } = createTestPlanWithDays(1);
 
       // Create mesocycle
       await request(app).post('/api/mesocycles').send({
@@ -209,13 +238,21 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         start_date: new Date().toISOString().split('T')[0],
       });
 
-      const mesocycle = mesocycleRepo.findActive()[0]!;
+      const mesocycle = mesocycleRepo.findActive()[0];
+      if (!mesocycle) {
+        throw new Error('Active mesocycle not found');
+      }
       const workouts = workoutRepo.findByMesocycleId(mesocycle.id);
 
-      // Mark first workout as in_progress
-      workoutRepo.update(workouts[0]!.id, { status: 'in_progress' });
+      const firstWorkout = workouts[0];
+      if (!firstWorkout) {
+        throw new Error('First workout not found');
+      }
 
-      const inProgressSets = workoutSetRepo.findByWorkoutId(workouts[0]!.id);
+      // Mark first workout as in_progress
+      workoutRepo.update(firstWorkout.id, { status: 'in_progress' });
+
+      const inProgressSets = workoutSetRepo.findByWorkoutId(firstWorkout.id);
       const originalSetCount = inProgressSets.length;
 
       // Add new exercise to plan
@@ -224,8 +261,13 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         weight_increment: 5,
       });
 
+      const firstDayId = dayIds[0];
+      if (firstDayId === undefined) {
+        throw new Error('First day ID not found');
+      }
+
       planDayExerciseRepo.create({
-        plan_day_id: dayIds[0]!,
+        plan_day_id: firstDayId,
         exercise_id: newExercise.id,
         sets: 3,
         reps: 8,
@@ -240,7 +282,7 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         .send({ name: 'Updated Plan' });
 
       // In-progress workout should NOT be modified
-      const inProgressSetsAfter = workoutSetRepo.findByWorkoutId(workouts[0]!.id);
+      const inProgressSetsAfter = workoutSetRepo.findByWorkoutId(firstWorkout.id);
       expect(inProgressSetsAfter.length).toBe(originalSetCount);
     });
   });
@@ -255,7 +297,10 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         start_date: new Date().toISOString().split('T')[0],
       });
 
-      const mesocycle = mesocycleRepo.findActive()[0]!;
+      const mesocycle = mesocycleRepo.findActive()[0];
+      if (!mesocycle) {
+        throw new Error('Active mesocycle not found');
+      }
 
       // Add new exercise to plan
       const newExercise = exerciseRepo.create({
@@ -263,8 +308,13 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         weight_increment: 5,
       });
 
+      const firstDayId = dayIds[0];
+      if (firstDayId === undefined) {
+        throw new Error('First day ID not found');
+      }
+
       planDayExerciseRepo.create({
-        plan_day_id: dayIds[0]!,
+        plan_day_id: firstDayId,
         exercise_id: newExercise.id,
         sets: 3,
         reps: 8,
@@ -304,7 +354,10 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         start_date: new Date().toISOString().split('T')[0],
       });
 
-      const mesocycle = mesocycleRepo.findActive()[0]!;
+      const mesocycle = mesocycleRepo.findActive()[0];
+      if (!mesocycle) {
+        throw new Error('Active mesocycle not found');
+      }
 
       // Add new exercise with specific config
       const newExercise = exerciseRepo.create({
@@ -312,8 +365,13 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         weight_increment: 5,
       });
 
+      const firstDayId = dayIds[0];
+      if (firstDayId === undefined) {
+        throw new Error('First day ID not found');
+      }
+
       planDayExerciseRepo.create({
-        plan_day_id: dayIds[0]!,
+        plan_day_id: firstDayId,
         exercise_id: newExercise.id,
         sets: 4,
         reps: 10,
@@ -356,15 +414,29 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         start_date: new Date().toISOString().split('T')[0],
       });
 
-      const mesocycle = mesocycleRepo.findActive()[0]!;
+      const mesocycle = mesocycleRepo.findActive()[0];
+      if (!mesocycle) {
+        throw new Error('Active mesocycle not found');
+      }
 
       // Mark first workout as completed
       const workouts = workoutRepo.findByMesocycleId(mesocycle.id);
-      workoutRepo.update(workouts[0]!.id, { status: 'completed' });
+      const firstWorkout = workouts[0];
+      if (!firstWorkout) {
+        throw new Error('First workout not found');
+      }
+      workoutRepo.update(firstWorkout.id, { status: 'completed' });
 
       // Remove exercise from plan day
-      const planDayExercises = planDayExerciseRepo.findByPlanDayId(dayIds[0]!);
-      planDayExerciseRepo.delete(planDayExercises[0]!.id);
+      const firstDayId = dayIds[0];
+      if (firstDayId === undefined) {
+        throw new Error('First day ID not found');
+      }
+      const planDayExercises = planDayExerciseRepo.findByPlanDayId(firstDayId);
+      const firstPlanDayExercise = planDayExercises[0];
+      if (firstPlanDayExercise) {
+        planDayExerciseRepo.delete(firstPlanDayExercise.id);
+      }
 
       // Update plan
       await request(app)
@@ -373,7 +445,7 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
 
       // Past workout should still have the exercise sets
       const pastSets = workoutSetRepo.findByWorkoutAndExercise(
-        workouts[0]!.id,
+        firstWorkout.id,
         exerciseId
       );
       expect(pastSets.length).toBeGreaterThan(0);
@@ -383,7 +455,7 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         (w) =>
           w.status === 'pending' &&
           w.plan_day_id === dayIds[0] &&
-          w.id !== workouts[0]!.id
+          w.id !== firstWorkout.id
       );
 
       for (const workout of futureWorkouts) {
@@ -404,7 +476,10 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         start_date: new Date().toISOString().split('T')[0],
       });
 
-      const mesocycle = mesocycleRepo.findActive()[0]!;
+      const mesocycle = mesocycleRepo.findActive()[0];
+      if (!mesocycle) {
+        throw new Error('Active mesocycle not found');
+      }
       const workouts = workoutRepo.findByMesocycleId(mesocycle.id);
       const pendingWorkout = workouts.find((w) => w.status === 'pending');
 
@@ -415,8 +490,9 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
           exerciseId
         );
 
-        if (sets[0]) {
-          workoutSetRepo.update(sets[0].id, {
+        const firstSet = sets[0];
+        if (firstSet) {
+          workoutSetRepo.update(firstSet.id, {
             actual_reps: 10,
             actual_weight: 100,
             status: 'completed',
@@ -424,8 +500,15 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         }
 
         // Remove exercise from plan
-        const planDayExercises = planDayExerciseRepo.findByPlanDayId(dayIds[0]!);
-        planDayExerciseRepo.delete(planDayExercises[0]!.id);
+        const firstDayId = dayIds[0];
+        if (firstDayId === undefined) {
+          throw new Error('First day ID not found');
+        }
+        const planDayExercises = planDayExerciseRepo.findByPlanDayId(firstDayId);
+        const firstPlanDayExercise = planDayExercises[0];
+        if (firstPlanDayExercise) {
+          planDayExerciseRepo.delete(firstPlanDayExercise.id);
+        }
 
         // Update plan
         await request(app)
@@ -452,10 +535,17 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         start_date: new Date().toISOString().split('T')[0],
       });
 
-      const mesocycle = mesocycleRepo.findActive()[0]!;
+      const mesocycle = mesocycleRepo.findActive()[0];
+      if (!mesocycle) {
+        throw new Error('Active mesocycle not found');
+      }
 
       // Update exercise to have 5 sets instead of 3
-      planDayExerciseRepo.update(planDayExercises[0]!.id, { sets: 5 });
+      const firstPlanDayExercise = planDayExercises[0];
+      if (!firstPlanDayExercise) {
+        throw new Error('First plan day exercise not found');
+      }
+      planDayExerciseRepo.update(firstPlanDayExercise.id, { sets: 5 });
 
       // Update plan
       await request(app)
@@ -493,10 +583,17 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         start_date: new Date().toISOString().split('T')[0],
       });
 
-      const mesocycle = mesocycleRepo.findActive()[0]!;
+      const mesocycle = mesocycleRepo.findActive()[0];
+      if (!mesocycle) {
+        throw new Error('Active mesocycle not found');
+      }
 
       // Update exercise weight from 100 to 120
-      planDayExerciseRepo.update(planDayExercises[0]!.id, { weight: 120 });
+      const firstPlanDayExercise = planDayExercises[0];
+      if (!firstPlanDayExercise) {
+        throw new Error('First plan day exercise not found');
+      }
+      planDayExerciseRepo.update(firstPlanDayExercise.id, { weight: 120 });
 
       // Update plan
       await request(app)
@@ -530,11 +627,14 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
       const response = await request(app)
         .put(`/api/plans/${planId}`)
         .send({ name: 'New Plan Name', duration_weeks: 8 });
+      const body = response.body as ApiResult<Plan>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe('New Plan Name');
-      expect(response.body.data.duration_weeks).toBe(8);
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data.name).toBe('New Plan Name');
+        expect(body.data.duration_weeks).toBe(8);
+      }
     });
 
     it('should include metadata about affected workouts when mesocycle is active', async () => {
@@ -552,8 +652,13 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
         weight_increment: 10,
       });
 
+      const firstDayId = dayIds[0];
+      if (firstDayId === undefined) {
+        throw new Error('First day ID not found');
+      }
+
       planDayExerciseRepo.create({
-        plan_day_id: dayIds[0]!,
+        plan_day_id: firstDayId,
         exercise_id: newExercise.id,
         sets: 3,
         reps: 5,
@@ -565,11 +670,14 @@ describe('PUT /api/plans/:id with active mesocycle', () => {
       const response = await request(app)
         .put(`/api/plans/${planId}`)
         .send({ name: 'Updated Plan' });
+      const body = response.body as ApiResult<Plan>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
+      expect(body.success).toBe(true);
       // The response should include modification metadata
-      expect(response.body.data).toBeDefined();
+      if (body.success) {
+        expect(body.data).toBeDefined();
+      }
     });
   });
 });

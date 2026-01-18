@@ -103,9 +103,11 @@ function createTestQueryClient(): QueryClient {
 
 function createWrapper(): ({ children }: { children: ReactNode }) => JSX.Element {
   const queryClient = createTestQueryClient();
-  return ({ children }: { children: ReactNode }) => (
+  const TestWrapper = ({ children }: { children: ReactNode }): JSX.Element => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+  TestWrapper.displayName = 'TestWrapper';
+  return TestWrapper;
 }
 
 describe('useExercises', () => {
@@ -180,7 +182,7 @@ describe('useCreateExercise', () => {
 
   it('should create exercise and invalidate cache', async () => {
     const queryClient = createTestQueryClient();
-    const wrapper = ({ children }: { children: ReactNode }) => (
+    const wrapper = ({ children }: { children: ReactNode }): JSX.Element => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
@@ -202,7 +204,7 @@ describe('useUpdateExercise', () => {
 
   it('should update exercise and invalidate cache', async () => {
     const queryClient = createTestQueryClient();
-    const wrapper = ({ children }: { children: ReactNode }) => (
+    const wrapper = ({ children }: { children: ReactNode }): JSX.Element => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
@@ -223,7 +225,7 @@ describe('useDeleteExercise', () => {
 
   it('should delete exercise and invalidate cache', async () => {
     const queryClient = createTestQueryClient();
-    const wrapper = ({ children }: { children: ReactNode }) => (
+    const wrapper = ({ children }: { children: ReactNode }): JSX.Element => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 

@@ -78,7 +78,7 @@ export function EditPlanPage(): JSX.Element {
   };
 
   const handleWarningCancel = (): void => {
-    navigate(`/plans/${planId}`);
+    void navigate(`/plans/${planId}`);
   };
 
   const handleSubmit = async (data: PlanFormState): Promise<void> => {
@@ -144,7 +144,7 @@ export function EditPlanPage(): JSX.Element {
         await handleDayExercises(planId, dayId, dayData.exercises);
       }
 
-      navigate(`/plans/${planId}`);
+      void navigate(`/plans/${planId}`);
     } catch (error) {
       console.error('Failed to update plan:', error);
     }
@@ -157,7 +157,7 @@ export function EditPlanPage(): JSX.Element {
   ): Promise<void> => {
     for (let i = 0; i < formExercises.length; i++) {
       const exerciseData = formExercises[i];
-      if (exerciseData === undefined || exerciseData.exerciseId === null) continue;
+      if (exerciseData?.exerciseId === undefined || exerciseData.exerciseId === null) continue;
 
       // Check if this is an existing exercise or new
       if (exerciseData.tempId.startsWith('existing-')) {
@@ -249,8 +249,8 @@ export function EditPlanPage(): JSX.Element {
         <PlanForm
           initialData={initialFormState}
           availableExercises={exercises ?? []}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate(`/plans/${planId}`)}
+          onSubmit={(data) => void handleSubmit(data)}
+          onCancel={() => void navigate(`/plans/${planId}`)}
           isSubmitting={isSubmitting}
         />
       </Flex>

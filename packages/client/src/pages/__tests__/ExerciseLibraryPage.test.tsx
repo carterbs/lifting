@@ -117,12 +117,12 @@ describe('ExerciseLibraryPage', () => {
     server.resetHandlers();
   });
 
-  it('should render page title', async () => {
+  it('should render page title', () => {
     renderWithProviders(<ExerciseLibraryPage />);
     expect(screen.getByText('Exercise Library')).toBeInTheDocument();
   });
 
-  it('should render add exercise form', async () => {
+  it('should render add exercise form', () => {
     renderWithProviders(<ExerciseLibraryPage />);
     expect(screen.getByText('Add Custom Exercise')).toBeInTheDocument();
   });

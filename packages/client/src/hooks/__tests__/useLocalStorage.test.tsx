@@ -30,7 +30,9 @@ describe('useLocalStorage', () => {
     });
 
     expect(result.current[0]).toBe('new-value');
-    expect(JSON.parse(window.localStorage.getItem('test-key')!)).toBe('new-value');
+    const storedValue = window.localStorage.getItem('test-key');
+    expect(storedValue).not.toBeNull();
+    expect(JSON.parse(storedValue ?? '')).toBe('new-value');
   });
 
   it('should support function updates', () => {
@@ -159,12 +161,12 @@ describe('useWorkoutStorage', () => {
       });
     });
 
-    expect(result.current.storedState!.sets[2]).toEqual({
+    expect(result.current.storedState?.sets[2]).toEqual({
       actual_reps: 8,
       actual_weight: 140,
       status: 'completed',
     });
-    expect(result.current.storedState!.sets[1]).toEqual({
+    expect(result.current.storedState?.sets[1]).toEqual({
       actual_reps: 10,
       actual_weight: 135,
       status: 'completed',
@@ -194,8 +196,8 @@ describe('useWorkoutStorage', () => {
       });
     });
 
-    expect(result.current.storedState!.workoutId).toBe(2);
-    expect(result.current.storedState!.sets[5]).toEqual({
+    expect(result.current.storedState?.workoutId).toBe(2);
+    expect(result.current.storedState?.sets[5]).toEqual({
       actual_reps: 12,
       actual_weight: 100,
       status: 'completed',
@@ -243,6 +245,6 @@ describe('useWorkoutStorage', () => {
       });
     });
 
-    expect(result.current.storedState!.lastUpdated).not.toBe(oldDate);
+    expect(result.current.storedState?.lastUpdated).not.toBe(oldDate);
   });
 });

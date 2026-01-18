@@ -27,10 +27,10 @@ export function getDefaultDatabasePath(): string {
 }
 
 export function createDatabase(config: DatabaseConfig): Database.Database {
-  const filename = config.inMemory ? ':memory:' : config.filename;
+  const filename = config.inMemory === true ? ':memory:' : config.filename;
 
   // Ensure data directory exists for file-based databases
-  if (!config.inMemory) {
+  if (config.inMemory !== true) {
     const dataDir = path.dirname(filename);
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
@@ -43,7 +43,7 @@ export function createDatabase(config: DatabaseConfig): Database.Database {
   database.pragma('foreign_keys = ON');
 
   // WAL mode for better concurrency (only for file-based databases)
-  if (!config.inMemory) {
+  if (config.inMemory !== true) {
     database.pragma('journal_mode = WAL');
   }
 

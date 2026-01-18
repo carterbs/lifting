@@ -58,7 +58,7 @@ export function PlanForm({
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setFormState((prev) => ({ ...prev, name: e.target.value }));
-    if (nameError) setNameError(null);
+    if (nameError !== null) setNameError(null);
   };
 
   const handleDurationChange = (value: string): void => {
@@ -180,7 +180,7 @@ export function PlanForm({
                 placeholder="e.g., Push Pull Legs"
                 data-testid="plan-name-input"
               />
-              {nameError && (
+              {nameError !== null && (
                 <Text color="red" size="1" mt="1">
                   {nameError}
                 </Text>

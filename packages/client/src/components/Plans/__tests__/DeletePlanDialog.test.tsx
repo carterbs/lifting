@@ -20,7 +20,7 @@ const mockDeletePlanReturn: {
 };
 
 vi.mock('../../../hooks/usePlans', () => ({
-  useDeletePlan: () => mockDeletePlanReturn,
+  useDeletePlan: (): typeof mockDeletePlanReturn => mockDeletePlanReturn,
 }));
 
 const mockPlan: Plan = {

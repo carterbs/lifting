@@ -205,7 +205,11 @@ describe('ExerciseCard', () => {
 
     // Get the first set's skip button
     const skipButtons = screen.getAllByTestId('skip-set-button');
-    await user.click(skipButtons[0]!);
+    const firstSkipButton = skipButtons[0];
+    if (firstSkipButton === undefined) {
+      throw new Error('Expected at least one skip button to be present');
+    }
+    await user.click(firstSkipButton);
 
     expect(mockOnSetSkipped).toHaveBeenCalledWith(1);
   });

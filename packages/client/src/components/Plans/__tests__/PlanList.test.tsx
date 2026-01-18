@@ -11,12 +11,17 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
-    useNavigate: () => mockNavigate,
+    useNavigate: (): typeof mockNavigate => mockNavigate,
   };
 });
 
 vi.mock('../../../hooks/usePlans', () => ({
-  useDeletePlan: () => ({
+  useDeletePlan: (): {
+    mutate: ReturnType<typeof vi.fn>;
+    isPending: boolean;
+    isError: boolean;
+    error: null;
+  } => ({
     mutate: vi.fn(),
     isPending: false,
     isError: false,
@@ -70,7 +75,7 @@ describe('PlanList', () => {
   it('should display empty state when no plans', () => {
     renderWithProviders(<PlanList plans={[]} />);
     expect(screen.getByTestId('empty-plans-message')).toBeInTheDocument();
-    expect(screen.getByText("You haven't created any workout plans yet.")).toBeInTheDocument();
+    expect(screen.getByText('You have not created any workout plans yet.')).toBeInTheDocument();
   });
 
   it('should show create first plan button in empty state', () => {

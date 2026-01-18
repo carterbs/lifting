@@ -64,7 +64,7 @@ function MesoPage(): JSX.Element {
   };
 
   const handleWorkoutClick = (workoutId: number): void => {
-    navigate(`/workouts/${workoutId}`);
+    void navigate(`/workouts/${workoutId}`);
   };
 
   return (

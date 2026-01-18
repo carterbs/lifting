@@ -75,7 +75,7 @@ describe('MesocycleService', () => {
 
   describe('create', () => {
     it('should create a new mesocycle with generated workouts', () => {
-      const { planId, dayIds } = createTestPlanWithDays(3);
+      const { planId } = createTestPlanWithDays(3);
 
       const result = service.create({
         plan_id: planId,
@@ -89,7 +89,7 @@ describe('MesocycleService', () => {
     });
 
     it('should generate workouts for each week including deload', () => {
-      const { planId, dayIds } = createTestPlanWithDays(3);
+      const { planId } = createTestPlanWithDays(3);
 
       service.create({
         plan_id: planId,
@@ -153,11 +153,13 @@ describe('MesocycleService', () => {
       const workouts = repos.workout.findByMesocycleId(mesocycle.id);
       const week1Workout = workouts.find((w) => w.week_number === 1);
       expect(week1Workout).toBeDefined();
+      if (!week1Workout) return;
 
-      const sets = repos.workoutSet.findByWorkoutId(week1Workout!.id);
+      const sets = repos.workoutSet.findByWorkoutId(week1Workout.id);
+      const firstSet = sets[0];
       // Week 1 (odd): base reps (10), base weight (100)
-      expect(sets[0].target_reps).toBe(10);
-      expect(sets[0].target_weight).toBe(100);
+      expect(firstSet?.target_reps).toBe(10);
+      expect(firstSet?.target_weight).toBe(100);
     });
 
     it('should apply progressive overload: +1 rep on odd weeks', () => {
@@ -172,22 +174,22 @@ describe('MesocycleService', () => {
       const workouts = repos.workout.findByMesocycleId(mesocycle.id);
 
       // Week 1: base reps (10)
-      const week1Sets = repos.workoutSet.findByWorkoutId(
-        workouts.find((w) => w.week_number === 1)!.id
-      );
-      expect(week1Sets[0].target_reps).toBe(10);
+      const week1Workout = workouts.find((w) => w.week_number === 1);
+      if (!week1Workout) throw new Error('Week 1 workout not found');
+      const week1Sets = repos.workoutSet.findByWorkoutId(week1Workout.id);
+      expect(week1Sets[0]?.target_reps).toBe(10);
 
       // Week 3: +1 rep = 11 (after week 2 weight increase resets reps)
-      const week3Sets = repos.workoutSet.findByWorkoutId(
-        workouts.find((w) => w.week_number === 3)!.id
-      );
-      expect(week3Sets[0].target_reps).toBe(11);
+      const week3Workout = workouts.find((w) => w.week_number === 3);
+      if (!week3Workout) throw new Error('Week 3 workout not found');
+      const week3Sets = repos.workoutSet.findByWorkoutId(week3Workout.id);
+      expect(week3Sets[0]?.target_reps).toBe(11);
 
       // Week 5: +1 rep = 11 (after week 4 weight increase resets reps)
-      const week5Sets = repos.workoutSet.findByWorkoutId(
-        workouts.find((w) => w.week_number === 5)!.id
-      );
-      expect(week5Sets[0].target_reps).toBe(11);
+      const week5Workout = workouts.find((w) => w.week_number === 5);
+      if (!week5Workout) throw new Error('Week 5 workout not found');
+      const week5Sets = repos.workoutSet.findByWorkoutId(week5Workout.id);
+      expect(week5Sets[0]?.target_reps).toBe(11);
     });
 
     it('should apply progressive overload: +weight on even weeks', () => {
@@ -202,25 +204,25 @@ describe('MesocycleService', () => {
       const workouts = repos.workout.findByMesocycleId(mesocycle.id);
 
       // Week 2: +5 lbs = 105, reps reset to base (10)
-      const week2Sets = repos.workoutSet.findByWorkoutId(
-        workouts.find((w) => w.week_number === 2)!.id
-      );
-      expect(week2Sets[0].target_weight).toBe(105);
-      expect(week2Sets[0].target_reps).toBe(10);
+      const week2Workout = workouts.find((w) => w.week_number === 2);
+      if (!week2Workout) throw new Error('Week 2 workout not found');
+      const week2Sets = repos.workoutSet.findByWorkoutId(week2Workout.id);
+      expect(week2Sets[0]?.target_weight).toBe(105);
+      expect(week2Sets[0]?.target_reps).toBe(10);
 
       // Week 4: +5 lbs = 110, reps reset to base (10)
-      const week4Sets = repos.workoutSet.findByWorkoutId(
-        workouts.find((w) => w.week_number === 4)!.id
-      );
-      expect(week4Sets[0].target_weight).toBe(110);
-      expect(week4Sets[0].target_reps).toBe(10);
+      const week4Workout = workouts.find((w) => w.week_number === 4);
+      if (!week4Workout) throw new Error('Week 4 workout not found');
+      const week4Sets = repos.workoutSet.findByWorkoutId(week4Workout.id);
+      expect(week4Sets[0]?.target_weight).toBe(110);
+      expect(week4Sets[0]?.target_reps).toBe(10);
 
       // Week 6: +5 lbs = 115, reps reset to base (10)
-      const week6Sets = repos.workoutSet.findByWorkoutId(
-        workouts.find((w) => w.week_number === 6)!.id
-      );
-      expect(week6Sets[0].target_weight).toBe(115);
-      expect(week6Sets[0].target_reps).toBe(10);
+      const week6Workout = workouts.find((w) => w.week_number === 6);
+      if (!week6Workout) throw new Error('Week 6 workout not found');
+      const week6Sets = repos.workoutSet.findByWorkoutId(week6Workout.id);
+      expect(week6Sets[0]?.target_weight).toBe(115);
+      expect(week6Sets[0]?.target_reps).toBe(10);
     });
 
     it('should generate deload week (week 7) with 50% volume', () => {
@@ -239,16 +241,17 @@ describe('MesocycleService', () => {
 
       expect(week6Workout).toBeDefined();
       expect(week7Workout).toBeDefined();
+      if (!week6Workout || !week7Workout) return;
 
-      const week6Sets = repos.workoutSet.findByWorkoutId(week6Workout!.id);
-      const week7Sets = repos.workoutSet.findByWorkoutId(week7Workout!.id);
+      const week6Sets = repos.workoutSet.findByWorkoutId(week6Workout.id);
+      const week7Sets = repos.workoutSet.findByWorkoutId(week7Workout.id);
 
       // Original: 3 sets, Deload: 2 sets (50% rounded up)
       expect(week6Sets.length).toBe(3);
       expect(week7Sets.length).toBe(2);
 
       // Weight should be same as week 6 (115)
-      expect(week7Sets[0].target_weight).toBe(115);
+      expect(week7Sets[0]?.target_weight).toBe(115);
     });
 
     it('should schedule workouts on correct dates based on day_of_week', () => {
@@ -290,9 +293,10 @@ describe('MesocycleService', () => {
       const result = service.getActive();
 
       expect(result).not.toBeNull();
-      expect(result!.status).toBe('active');
-      expect(result!.plan_name).toBe('Test Plan');
-      expect(result!.weeks).toHaveLength(7);
+      if (!result) return;
+      expect(result.status).toBe('active');
+      expect(result.plan_name).toBe('Test Plan');
+      expect(result.weeks).toHaveLength(7);
     });
 
     it('should not return completed mesocycles', () => {
@@ -322,10 +326,11 @@ describe('MesocycleService', () => {
       const result = service.getById(mesocycle.id);
 
       expect(result).not.toBeNull();
-      expect(result!.id).toBe(mesocycle.id);
-      expect(result!.plan_name).toBe('Test Plan');
-      expect(result!.weeks).toHaveLength(7);
-      expect(result!.total_workouts).toBe(14); // 7 weeks * 2 days
+      if (!result) return;
+      expect(result.id).toBe(mesocycle.id);
+      expect(result.plan_name).toBe('Test Plan');
+      expect(result.weeks).toHaveLength(7);
+      expect(result.total_workouts).toBe(14); // 7 weeks * 2 days
     });
 
     it('should return null for non-existent mesocycle', () => {
@@ -343,9 +348,10 @@ describe('MesocycleService', () => {
 
       const result = service.getById(mesocycle.id);
 
-      expect(result!.weeks[0].workouts).toHaveLength(1);
-      expect(result!.weeks[0].workouts[0].plan_day_name).toBe('Day 1');
-      expect(result!.weeks[0].workouts[0].status).toBe('pending');
+      if (!result) throw new Error('Result not found');
+      expect(result.weeks[0]?.workouts).toHaveLength(1);
+      expect(result.weeks[0]?.workouts[0]?.plan_day_name).toBe('Day 1');
+      expect(result.weeks[0]?.workouts[0]?.status).toBe('pending');
     });
 
     it('should correctly mark deload week', () => {
@@ -358,13 +364,14 @@ describe('MesocycleService', () => {
 
       const result = service.getById(mesocycle.id);
 
+      if (!result) throw new Error('Result not found');
       // Weeks 1-6 should not be deload
       for (let i = 0; i < 6; i++) {
-        expect(result!.weeks[i].is_deload).toBe(false);
+        expect(result.weeks[i]?.is_deload).toBe(false);
       }
 
       // Week 7 should be deload
-      expect(result!.weeks[6].is_deload).toBe(true);
+      expect(result.weeks[6]?.is_deload).toBe(true);
     });
   });
 
@@ -562,16 +569,16 @@ describe('MesocycleService', () => {
       const workouts = repos.workout.findByMesocycleId(mesocycle.id);
 
       // Week 2: +2.5 lbs = 102.5
-      const week2Sets = repos.workoutSet.findByWorkoutId(
-        workouts.find((w) => w.week_number === 2)!.id
-      );
-      expect(week2Sets[0].target_weight).toBe(102.5);
+      const week2Workout = workouts.find((w) => w.week_number === 2);
+      if (!week2Workout) throw new Error('Week 2 workout not found');
+      const week2Sets = repos.workoutSet.findByWorkoutId(week2Workout.id);
+      expect(week2Sets[0]?.target_weight).toBe(102.5);
 
       // Week 4: +2.5 lbs = 105
-      const week4Sets = repos.workoutSet.findByWorkoutId(
-        workouts.find((w) => w.week_number === 4)!.id
-      );
-      expect(week4Sets[0].target_weight).toBe(105);
+      const week4Workout = workouts.find((w) => w.week_number === 4);
+      if (!week4Workout) throw new Error('Week 4 workout not found');
+      const week4Sets = repos.workoutSet.findByWorkoutId(week4Workout.id);
+      expect(week4Sets[0]?.target_weight).toBe(105);
     });
   });
 });

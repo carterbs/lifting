@@ -102,7 +102,7 @@ export function EditExerciseDialog({
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
-                  if (validationError) setValidationError(null);
+                  if (validationError !== null) setValidationError(null);
                 }}
               />
             </Box>
@@ -119,12 +119,12 @@ export function EditExerciseDialog({
                 value={weightIncrement}
                 onChange={(e) => {
                   setWeightIncrement(e.target.value);
-                  if (validationError) setValidationError(null);
+                  if (validationError !== null) setValidationError(null);
                 }}
               />
             </Box>
 
-            {validationError && (
+            {validationError !== null && (
               <Text color="red" size="2">
                 {validationError}
               </Text>

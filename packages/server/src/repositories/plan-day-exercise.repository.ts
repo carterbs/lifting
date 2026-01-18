@@ -55,7 +55,11 @@ export class PlanDayExerciseRepository extends BaseRepository<
       data.sort_order
     );
 
-    return this.findById(result.lastInsertRowid as number)!;
+    const planDayExercise = this.findById(result.lastInsertRowid as number);
+    if (!planDayExercise) {
+      throw new Error('Failed to retrieve newly created plan day exercise');
+    }
+    return planDayExercise;
   }
 
   findById(id: number): PlanDayExercise | null {

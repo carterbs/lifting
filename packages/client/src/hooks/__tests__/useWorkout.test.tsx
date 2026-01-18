@@ -32,7 +32,13 @@ vi.mock('../../api/workoutApi', () => ({
 
 // Mock localStorage hook
 vi.mock('../useLocalStorage', () => ({
-  useWorkoutStorage: () => ({
+  useWorkoutStorage: (): {
+    storedState: null;
+    saveState: ReturnType<typeof vi.fn>;
+    clearState: ReturnType<typeof vi.fn>;
+    updateSet: ReturnType<typeof vi.fn>;
+    getStoredStateForWorkout: ReturnType<typeof vi.fn>;
+  } => ({
     storedState: null,
     saveState: vi.fn(),
     clearState: vi.fn(),

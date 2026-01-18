@@ -20,7 +20,7 @@ export function PlanCard({
   const navigate = useNavigate();
 
   const handleClick = (): void => {
-    navigate(`/plans/${plan.id}`);
+    void navigate(`/plans/${plan.id}`);
   };
 
   const formatDate = (dateString: string): string => {

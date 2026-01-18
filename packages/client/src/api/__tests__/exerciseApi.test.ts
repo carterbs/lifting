@@ -65,7 +65,7 @@ const handlers = [
   // POST /api/exercises
   http.post('/api/exercises', async ({ request }) => {
     const body = await request.json() as { name?: string };
-    if (!body.name) {
+    if (body.name === undefined || body.name === null || body.name === '') {
       const response: ApiError = {
         success: false,
         error: { code: 'VALIDATION_ERROR', message: 'Name is required' },

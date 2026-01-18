@@ -21,25 +21,26 @@ describe('Migrator', () => {
         {
           version: 3,
           name: 'third',
-          up: () => {},
-          down: () => {},
+          up: (): void => {},
+          down: (): void => {},
         },
         {
           version: 1,
           name: 'first',
-          up: () => {},
-          down: () => {},
+          up: (): void => {},
+          down: (): void => {},
         },
         {
           version: 2,
           name: 'second',
-          up: () => {},
-          down: () => {},
+          up: (): void => {},
+          down: (): void => {},
         },
       ];
 
       const migrator = new Migrator(db, unsortedMigrations);
-      expect(migrator.getPendingMigrations()[0].version).toBe(1);
+      const pendingMigrations = migrator.getPendingMigrations();
+      expect(pendingMigrations[0]?.version).toBe(1);
     });
   });
 

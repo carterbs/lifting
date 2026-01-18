@@ -4,6 +4,7 @@ import type { Express } from 'express';
 import type Database from 'better-sqlite3';
 import { setupTestApp, teardownTestApp, type TestContext } from '../../test/test-app.js';
 import { ExerciseRepository } from '../../repositories/exercise.repository.js';
+import type { ApiResult, Exercise } from '@lifting/shared';
 
 describe('Exercise Routes', () => {
   let ctx: TestContext;
@@ -25,32 +26,41 @@ describe('Exercise Routes', () => {
   describe('GET /api/exercises', () => {
     it('should return 200 with array of exercises', async () => {
       const response = await request(app).get('/api/exercises');
+      const body = response.body as ApiResult<Exercise[]>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(Array.isArray(body.data)).toBe(true);
+      }
     });
 
     it('should return exercises in alphabetical order', async () => {
       const response = await request(app).get('/api/exercises');
+      const body = response.body as ApiResult<Exercise[]>;
 
       expect(response.status).toBe(200);
-      const names = response.body.data.map((e: { name: string }) => e.name);
-      const sortedNames = [...names].sort();
-      expect(names).toEqual(sortedNames);
+      if (body.success) {
+        const names = body.data.map((e) => e.name);
+        const sortedNames = [...names].sort();
+        expect(names).toEqual(sortedNames);
+      }
     });
 
     it('should include all seeded built-in exercises', async () => {
       const response = await request(app).get('/api/exercises');
+      const body = response.body as ApiResult<Exercise[]>;
 
       expect(response.status).toBe(200);
-      expect(response.body.data.length).toBe(12);
+      if (body.success) {
+        expect(body.data.length).toBe(12);
 
-      // Check for specific exercises
-      const names = response.body.data.map((e: { name: string }) => e.name);
-      expect(names).toContain('Dumbbell Press (flat)');
-      expect(names).toContain('Seated Cable Row');
-      expect(names).toContain('Leg Extension');
+        // Check for specific exercises
+        const names = body.data.map((e) => e.name);
+        expect(names).toContain('Dumbbell Press (flat)');
+        expect(names).toContain('Seated Cable Row');
+        expect(names).toContain('Leg Extension');
+      }
     });
 
     it('should include both built-in and custom exercises', async () => {
@@ -58,15 +68,16 @@ describe('Exercise Routes', () => {
       repository.create({ name: 'Custom Squat', is_custom: true });
 
       const response = await request(app).get('/api/exercises');
+      const body = response.body as ApiResult<Exercise[]>;
 
       expect(response.status).toBe(200);
-      expect(response.body.data.length).toBe(13);
+      if (body.success) {
+        expect(body.data.length).toBe(13);
 
-      const customExercise = response.body.data.find(
-        (e: { name: string }) => e.name === 'Custom Squat'
-      );
-      expect(customExercise).toBeDefined();
-      expect(customExercise.is_custom).toBe(true);
+        const customExercise = body.data.find((e) => e.name === 'Custom Squat');
+        expect(customExercise).toBeDefined();
+        expect(customExercise?.is_custom).toBe(true);
+      }
     });
   });
 
@@ -74,28 +85,36 @@ describe('Exercise Routes', () => {
     it('should return 200 with exercise when found', async () => {
       const exercise = repository.findByName('Leg Extension');
       expect(exercise).not.toBeNull();
+      if (!exercise) return;
 
-      const response = await request(app).get(`/api/exercises/${exercise!.id}`);
+      const response = await request(app).get(`/api/exercises/${exercise.id}`);
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe('Leg Extension');
-      expect(response.body.data.id).toBe(exercise!.id);
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data.name).toBe('Leg Extension');
+        expect(body.data.id).toBe(exercise.id);
+      }
     });
 
     it('should return 404 when exercise not found', async () => {
       const response = await request(app).get('/api/exercises/99999');
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('NOT_FOUND');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('NOT_FOUND');
+      }
     });
 
     it('should return 404 for invalid id format', async () => {
       const response = await request(app).get('/api/exercises/invalid');
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
+      expect(body.success).toBe(false);
     });
   });
 
@@ -104,42 +123,54 @@ describe('Exercise Routes', () => {
       const response = await request(app)
         .post('/api/exercises')
         .send({ name: 'Barbell Squat', weight_increment: 10 });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe('Barbell Squat');
-      expect(response.body.data.weight_increment).toBe(10);
-      expect(response.body.data.is_custom).toBe(true);
-      expect(response.body.data.id).toBeDefined();
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data.name).toBe('Barbell Squat');
+        expect(body.data.weight_increment).toBe(10);
+        expect(body.data.is_custom).toBe(true);
+        expect(body.data.id).toBeDefined();
+      }
     });
 
     it('should use default weight_increment of 5 when not provided', async () => {
       const response = await request(app)
         .post('/api/exercises')
         .send({ name: 'Barbell Deadlift' });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(201);
-      expect(response.body.data.weight_increment).toBe(5);
+      if (body.success) {
+        expect(body.data.weight_increment).toBe(5);
+      }
     });
 
     it('should return 400 when name is missing', async () => {
       const response = await request(app)
         .post('/api/exercises')
         .send({ weight_increment: 5 });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('VALIDATION_ERROR');
+      }
     });
 
     it('should return 400 when name is empty', async () => {
       const response = await request(app)
         .post('/api/exercises')
         .send({ name: '' });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('VALIDATION_ERROR');
+      }
     });
 
     it('should return 400 when name exceeds 100 characters', async () => {
@@ -147,38 +178,46 @@ describe('Exercise Routes', () => {
       const response = await request(app)
         .post('/api/exercises')
         .send({ name: longName });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('VALIDATION_ERROR');
+      }
     });
 
     it('should return 400 when weight_increment is negative', async () => {
       const response = await request(app)
         .post('/api/exercises')
         .send({ name: 'Test Exercise', weight_increment: -5 });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
+      expect(body.success).toBe(false);
     });
 
     it('should return 400 when weight_increment is zero', async () => {
       const response = await request(app)
         .post('/api/exercises')
         .send({ name: 'Test Exercise', weight_increment: 0 });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
+      expect(body.success).toBe(false);
     });
 
     it('should return 409 when exercise name already exists', async () => {
       const response = await request(app)
         .post('/api/exercises')
         .send({ name: 'Leg Extension' }); // Already exists as built-in
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(409);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('CONFLICT');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('CONFLICT');
+      }
     });
   });
 
@@ -197,77 +236,94 @@ describe('Exercise Routes', () => {
       const response = await request(app)
         .put(`/api/exercises/${customExercise.id}`)
         .send({ name: 'Updated Custom Press' });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe('Updated Custom Press');
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data.name).toBe('Updated Custom Press');
+      }
     });
 
     it('should update weight_increment', async () => {
       const response = await request(app)
         .put(`/api/exercises/${customExercise.id}`)
         .send({ weight_increment: 2.5 });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(200);
-      expect(response.body.data.weight_increment).toBe(2.5);
+      if (body.success) {
+        expect(body.data.weight_increment).toBe(2.5);
+      }
     });
 
     it('should update multiple fields', async () => {
       const response = await request(app)
         .put(`/api/exercises/${customExercise.id}`)
         .send({ name: 'New Name', weight_increment: 10 });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(200);
-      expect(response.body.data.name).toBe('New Name');
-      expect(response.body.data.weight_increment).toBe(10);
+      if (body.success) {
+        expect(body.data.name).toBe('New Name');
+        expect(body.data.weight_increment).toBe(10);
+      }
     });
 
     it('should return 404 when exercise not found', async () => {
       const response = await request(app)
         .put('/api/exercises/99999')
         .send({ name: 'New Name' });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
+      expect(body.success).toBe(false);
     });
 
     it('should return 404 for invalid id format', async () => {
       const response = await request(app)
         .put('/api/exercises/invalid')
         .send({ name: 'New Name' });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
+      expect(body.success).toBe(false);
     });
 
     it('should return 400 when name is empty string', async () => {
       const response = await request(app)
         .put(`/api/exercises/${customExercise.id}`)
         .send({ name: '' });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
+      expect(body.success).toBe(false);
     });
 
     it('should return 409 when updating to existing name', async () => {
       const response = await request(app)
         .put(`/api/exercises/${customExercise.id}`)
         .send({ name: 'Leg Extension' }); // Already exists
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(409);
-      expect(response.body.success).toBe(false);
+      expect(body.success).toBe(false);
     });
 
     it('should allow updating built-in exercises', async () => {
       const builtIn = repository.findByName('Leg Extension');
       expect(builtIn).not.toBeNull();
+      if (!builtIn) return;
 
       const response = await request(app)
-        .put(`/api/exercises/${builtIn!.id}`)
+        .put(`/api/exercises/${builtIn.id}`)
         .send({ weight_increment: 2.5 });
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(200);
-      expect(response.body.data.weight_increment).toBe(2.5);
+      if (body.success) {
+        expect(body.data.weight_increment).toBe(2.5);
+      }
     });
   });
 
@@ -291,35 +347,41 @@ describe('Exercise Routes', () => {
 
     it('should return 404 when exercise not found', async () => {
       const response = await request(app).delete('/api/exercises/99999');
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
+      expect(body.success).toBe(false);
     });
 
     it('should return 403 when attempting to delete built-in exercise', async () => {
       const builtIn = repository.findByName('Leg Extension');
       expect(builtIn).not.toBeNull();
-      expect(builtIn!.is_custom).toBe(false);
+      if (!builtIn) return;
+      expect(builtIn.is_custom).toBe(false);
 
       const response = await request(app).delete(
-        `/api/exercises/${builtIn!.id}`
+        `/api/exercises/${builtIn.id}`
       );
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(403);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('FORBIDDEN');
-      expect(response.body.error.message).toBe('Cannot delete built-in exercises');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('FORBIDDEN');
+        expect(body.error.message).toBe('Cannot delete built-in exercises');
+      }
 
       // Verify exercise still exists
-      const stillExists = repository.findById(builtIn!.id);
+      const stillExists = repository.findById(builtIn.id);
       expect(stillExists).not.toBeNull();
     });
 
     it('should return 404 for invalid id format', async () => {
       const response = await request(app).delete('/api/exercises/invalid');
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
+      expect(body.success).toBe(false);
     });
 
     it('should return 409 when exercise is used in a plan', async () => {
@@ -350,10 +412,13 @@ describe('Exercise Routes', () => {
       const response = await request(app).delete(
         `/api/exercises/${customExercise.id}`
       );
+      const body = response.body as ApiResult<Exercise>;
 
       expect(response.status).toBe(409);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error.code).toBe('CONFLICT');
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('CONFLICT');
+      }
     });
   });
 });

@@ -18,7 +18,7 @@ export function PlanList({
   const [planToDelete, setPlanToDelete] = useState<Plan | null>(null);
 
   const handleEdit = (plan: Plan): void => {
-    navigate(`/plans/${plan.id}/edit`);
+    void navigate(`/plans/${plan.id}/edit`);
   };
 
   const handleDelete = (plan: Plan): void => {
@@ -51,9 +51,9 @@ export function PlanList({
         data-testid="empty-plans-message"
       >
         <Text color="gray" as="p" mb="4">
-          You haven't created any workout plans yet.
+          You have not created any workout plans yet.
         </Text>
-        <Button onClick={() => navigate('/plans/new')} data-testid="create-first-plan-button">
+        <Button onClick={() => { void navigate('/plans/new'); }} data-testid="create-first-plan-button">
           Create Your First Plan
         </Button>
       </Box>

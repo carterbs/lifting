@@ -33,7 +33,7 @@ export function CreatePlanPage(): JSX.Element {
         // Create exercises for this day
         for (let i = 0; i < dayData.exercises.length; i++) {
           const exerciseData = dayData.exercises[i];
-          if (exerciseData?.exerciseId) {
+          if (exerciseData?.exerciseId !== undefined && exerciseData.exerciseId !== null) {
             await createPlanDayExercise.mutateAsync({
               planId: plan.id,
               dayId: planDay.id,
@@ -50,7 +50,7 @@ export function CreatePlanPage(): JSX.Element {
         }
       }
 
-      navigate(`/plans/${plan.id}`);
+      void navigate(`/plans/${plan.id}`);
     } catch (error) {
       // Error is handled by React Query
       console.error('Failed to create plan:', error);
@@ -83,8 +83,8 @@ export function CreatePlanPage(): JSX.Element {
 
         <PlanForm
           availableExercises={exercises ?? []}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate('/plans')}
+          onSubmit={(data) => void handleSubmit(data)}
+          onCancel={() => void navigate('/plans')}
           isSubmitting={isSubmitting}
         />
       </Flex>

@@ -37,7 +37,11 @@ export class PlanRepository extends BaseRepository<
 
     const result = stmt.run(data.name, data.duration_weeks ?? 6);
 
-    return this.findById(result.lastInsertRowid as number)!;
+    const plan = this.findById(result.lastInsertRowid as number);
+    if (!plan) {
+      throw new Error('Failed to retrieve newly created plan');
+    }
+    return plan;
   }
 
   findById(id: number): Plan | null {

@@ -47,7 +47,11 @@ export class ExerciseRepository extends BaseRepository<
       (data.is_custom ?? false) ? 1 : 0
     );
 
-    return this.findById(result.lastInsertRowid as number)!;
+    const exercise = this.findById(result.lastInsertRowid as number);
+    if (!exercise) {
+      throw new Error('Failed to retrieve newly created exercise');
+    }
+    return exercise;
   }
 
   findById(id: number): Exercise | null {

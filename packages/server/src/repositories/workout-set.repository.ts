@@ -56,7 +56,11 @@ export class WorkoutSetRepository extends BaseRepository<
       data.target_weight
     );
 
-    return this.findById(result.lastInsertRowid as number)!;
+    const workoutSet = this.findById(result.lastInsertRowid as number);
+    if (!workoutSet) {
+      throw new Error('Failed to retrieve newly created workout set');
+    }
+    return workoutSet;
   }
 
   findById(id: number): WorkoutSet | null {

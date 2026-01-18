@@ -9,6 +9,7 @@ import {
   type ApiResponse,
   type Mesocycle,
   type MesocycleWithDetails,
+  type CreateMesocycleRequest,
 } from '@lifting/shared';
 import { validate } from '../middleware/validate.js';
 import {
@@ -94,7 +95,8 @@ mesocycleRouter.post(
   (req: Request, res: Response, next: NextFunction): void => {
     try {
       const service = getMesocycleService();
-      const mesocycle = service.create(req.body);
+      const createRequest = req.body as CreateMesocycleRequest;
+      const mesocycle = service.create(createRequest);
 
       const response: ApiResponse<Mesocycle> = {
         success: true,
@@ -105,7 +107,7 @@ mesocycleRouter.post(
       // Convert service errors to HTTP errors
       if (error instanceof Error) {
         if (error.message.includes('not found')) {
-          next(new NotFoundError('Plan', req.body.plan_id));
+          next(new NotFoundError('Plan', (req.body as CreateMesocycleRequest).plan_id));
           return;
         }
         if (error.message.includes('already exists')) {
