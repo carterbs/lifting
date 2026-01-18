@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import * as AlertDialog from '@radix-ui/react-alert-dialog';
-import { Box, Button, Flex, Heading, Text, Badge, Card } from '@radix-ui/themes';
+import { AlertDialog, Box, Button, Flex, Heading, Text, Badge, Card } from '@radix-ui/themes';
 import type { LogWorkoutSetInput } from '@lifting/shared';
 import type { WorkoutWithExercises } from '../../api/workoutApi';
 import { ExerciseCard } from './ExerciseCard';
@@ -280,113 +279,61 @@ export function WorkoutView({
 
       {/* Complete confirmation dialog */}
       <AlertDialog.Root open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              position: 'fixed',
-              inset: 0,
-            }}
-          />
-          <AlertDialog.Content
-            data-testid="confirm-dialog"
-            style={{
-              backgroundColor: 'var(--gray-1)',
-              borderRadius: 'var(--radius-3)',
-              padding: 'var(--space-5)',
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '90vw',
-              maxWidth: '400px',
-            }}
-          >
-            <AlertDialog.Title asChild>
-              <Heading size="5" mb="2" as="h2">
-                Complete Workout?
-              </Heading>
-            </AlertDialog.Title>
-            <AlertDialog.Description asChild>
-              <Text size="3" color="gray" as="p" mb="4">
-                You have {pendingSetsCount} set{pendingSetsCount !== 1 ? 's' : ''} not
-                logged. They will remain as pending. Are you sure you want to
-                complete this workout?
-              </Text>
-            </AlertDialog.Description>
-            <Flex gap="3" justify="end">
-              <AlertDialog.Cancel asChild>
-                <Button variant="soft" color="gray">
-                  Cancel
-                </Button>
-              </AlertDialog.Cancel>
-              <AlertDialog.Action asChild>
-                <Button
-                  color="green"
-                  onClick={onWorkoutCompleted}
-                  data-testid="confirm-button"
-                >
-                  Complete Anyway
-                </Button>
-              </AlertDialog.Action>
-            </Flex>
-          </AlertDialog.Content>
-        </AlertDialog.Portal>
+        <AlertDialog.Content maxWidth="400px" data-testid="confirm-dialog">
+          <AlertDialog.Title>Complete Workout?</AlertDialog.Title>
+          <AlertDialog.Description>
+            <Text size="3" color="gray" as="p">
+              You have {pendingSetsCount} set{pendingSetsCount !== 1 ? 's' : ''} not
+              logged. They will remain as pending. Are you sure you want to
+              complete this workout?
+            </Text>
+          </AlertDialog.Description>
+          <Flex gap="3" justify="end" mt="4">
+            <AlertDialog.Cancel>
+              <Button variant="soft" color="gray">
+                Cancel
+              </Button>
+            </AlertDialog.Cancel>
+            <AlertDialog.Action>
+              <Button
+                color="green"
+                onClick={onWorkoutCompleted}
+                data-testid="confirm-button"
+              >
+                Complete Anyway
+              </Button>
+            </AlertDialog.Action>
+          </Flex>
+        </AlertDialog.Content>
       </AlertDialog.Root>
 
       {/* Skip confirmation dialog */}
       <AlertDialog.Root open={showSkipConfirm} onOpenChange={setShowSkipConfirm}>
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              position: 'fixed',
-              inset: 0,
-            }}
-          />
-          <AlertDialog.Content
-            data-testid="confirm-dialog"
-            style={{
-              backgroundColor: 'var(--gray-1)',
-              borderRadius: 'var(--radius-3)',
-              padding: 'var(--space-5)',
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '90vw',
-              maxWidth: '400px',
-            }}
-          >
-            <AlertDialog.Title asChild>
-              <Heading size="5" mb="2" as="h2">
-                Skip Workout?
-              </Heading>
-            </AlertDialog.Title>
-            <AlertDialog.Description asChild>
-              <Text size="3" color="gray" as="p" mb="4">
-                Are you sure you want to skip this workout? All pending sets will
-                be marked as skipped. Any logged sets will be preserved.
-              </Text>
-            </AlertDialog.Description>
-            <Flex gap="3" justify="end">
-              <AlertDialog.Cancel asChild>
-                <Button variant="soft" color="gray">
-                  Cancel
-                </Button>
-              </AlertDialog.Cancel>
-              <AlertDialog.Action asChild>
-                <Button
-                  color="red"
-                  onClick={onWorkoutSkipped}
-                  data-testid="confirm-button"
-                >
-                  Skip Workout
-                </Button>
-              </AlertDialog.Action>
-            </Flex>
-          </AlertDialog.Content>
-        </AlertDialog.Portal>
+        <AlertDialog.Content maxWidth="400px" data-testid="confirm-dialog">
+          <AlertDialog.Title>Skip Workout?</AlertDialog.Title>
+          <AlertDialog.Description>
+            <Text size="3" color="gray" as="p">
+              Are you sure you want to skip this workout? All pending sets will
+              be marked as skipped. Any logged sets will be preserved.
+            </Text>
+          </AlertDialog.Description>
+          <Flex gap="3" justify="end" mt="4">
+            <AlertDialog.Cancel>
+              <Button variant="soft" color="gray">
+                Cancel
+              </Button>
+            </AlertDialog.Cancel>
+            <AlertDialog.Action>
+              <Button
+                color="red"
+                onClick={onWorkoutSkipped}
+                data-testid="confirm-button"
+              >
+                Skip Workout
+              </Button>
+            </AlertDialog.Action>
+          </Flex>
+        </AlertDialog.Content>
       </AlertDialog.Root>
     </Flex>
   );
