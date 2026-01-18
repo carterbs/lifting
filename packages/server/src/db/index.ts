@@ -41,8 +41,9 @@ export function getDatabaseFilename(): string {
 
 export function getDefaultDatabasePath(): string {
   // Explicit DB_PATH always takes precedence
-  if (process.env['DB_PATH']) {
-    return process.env['DB_PATH'];
+  const dbPath = process.env['DB_PATH'];
+  if (dbPath !== undefined && dbPath !== '') {
+    return dbPath;
   }
 
   const filename = getDatabaseFilename();
