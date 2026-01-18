@@ -59,6 +59,7 @@ export function SetRow({
       data-testid={`set-row-${set.id}`}
       className={getStatusClass()}
       align="center"
+      justify="between"
       gap="2"
       p="2"
       style={{
@@ -94,10 +95,9 @@ export function SetRow({
       <Flex align="center" gap="1">
         <TextField.Root
           data-testid={`weight-input-${set.id}`}
-          type="number"
+          type="text"
           inputMode="decimal"
-          min="0"
-          step="0.5"
+          pattern="[0-9]*\.?[0-9]*"
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
           disabled={isDisabled || isSkipped}
@@ -111,9 +111,9 @@ export function SetRow({
       <Flex align="center" gap="1">
         <TextField.Root
           data-testid={`reps-input-${set.id}`}
-          type="number"
+          type="text"
           inputMode="numeric"
-          min="0"
+          pattern="[0-9]*"
           value={reps}
           onChange={(e) => setReps(e.target.value)}
           disabled={isDisabled || isSkipped}
@@ -129,7 +129,7 @@ export function SetRow({
         checked={isLogged}
         onCheckedChange={handleCheckboxChange}
         disabled={isDisabled || isSkipped}
-        size="2"
+        size="3"
       />
     </Flex>
   );

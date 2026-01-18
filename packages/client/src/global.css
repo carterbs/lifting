@@ -1,0 +1,5 @@
+/* Center text in SetRow inputs - must reset text-indent which Radix uses for padding */
+.rt-TextFieldInput {
+  text-align: center !important;
+  text-indent: 0 !important;
+}
