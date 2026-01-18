@@ -17,6 +17,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npm run test -w e2e",
+    "validate": "./scripts/validate.sh",
     "docker:dev": "docker-compose up --build",
     "docker:dev:detached": "docker-compose up --build -d",
     "docker:down": "docker-compose down",
