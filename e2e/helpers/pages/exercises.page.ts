@@ -50,9 +50,15 @@ export class ExercisesPage extends BasePage {
    * Add a new custom exercise
    */
   async addExercise(name: string, weightIncrement = 5): Promise<void> {
+    // Fill name and wait for value to be set
     await this.exerciseNameInput.fill(name);
-    await this.weightIncrementInput.clear();
+    await expect(this.exerciseNameInput).toHaveValue(name);
+
+    // Fill weight increment and wait for value to be set
     await this.weightIncrementInput.fill(String(weightIncrement));
+    await expect(this.weightIncrementInput).toHaveValue(String(weightIncrement));
+
+    // Now submit
     await this.addExerciseButton.click();
 
     // Wait for the exercise to appear in the list

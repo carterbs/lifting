@@ -22,7 +22,7 @@ const exerciseConfigs = [
  * - Week 4: 2 increases (floor(4/2) = 2)
  * - Week 5: 2 increases (floor(5/2) = 2)
  * - Week 6: 3 increases (floor(6/2) = 3)
- * - Week 7: deload (same as week 6 weight)
+ * - Week 7: deload (returns to base weight for recovery)
  */
 function calculateExpectedWeight(
   baseWeight: number,
@@ -30,8 +30,8 @@ function calculateExpectedWeight(
   weekNumber: number
 ): number {
   if (weekNumber === 7) {
-    // Deload: use week 6 weight (no reduction)
-    return baseWeight + increment * 3;
+    // Deload: reduced intensity means returning to base weight
+    return baseWeight;
   }
 
   // Weight increments: floor(weekNumber / 2)
