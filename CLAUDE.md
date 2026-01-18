@@ -24,6 +24,27 @@ git branch -d <branch-name>
 
 This keeps main clean and allows easy rollback of changes.
 
+## Subagent Usage (MANDATORY)
+
+**All validation commands MUST be run in subagents to conserve context.**
+
+Use the Task tool with `subagent_type=Bash` for:
+- `npm run validate` - Full validation suite
+- `npm run typecheck` - TypeScript compilation
+- `npm run lint` - ESLint checks
+- `npm test` - Unit tests (vitest)
+- `npm run test:e2e` - E2E tests (Playwright)
+
+Example:
+```
+Task tool with subagent_type=Bash:
+  prompt: "Run npm run validate in /Users/bradcarter/Documents/Dev/lifting and report results"
+```
+
+**Why**: These commands produce verbose output that consumes context. Running them in subagents keeps the main conversation focused on implementation decisions.
+
+**Exception**: Quick single-command checks (like `git status`) can run directly.
+
 ## Project Overview
 
 A single-user weight training workout tracker web app. Users create workout plans, run 6-week mesocycles with progressive overload, and track workouts with automatic weight/rep progression.
