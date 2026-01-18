@@ -43,7 +43,7 @@ export function PlanCard({
         transition: 'background-color 0.15s ease',
       }}
       onClick={handleClick}
-      data-testid="plan-card"
+      data-testid={`plan-card-${plan.id}`}
     >
       <Flex justify="between" align="start" gap="3">
         <Flex direction="column" gap="2" style={{ flex: 1 }}>

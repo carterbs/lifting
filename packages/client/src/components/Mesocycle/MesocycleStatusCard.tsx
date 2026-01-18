@@ -80,7 +80,7 @@ export function MesocycleStatusCard({
             color={getStatusColor(mesocycle.status)}
             variant="soft"
             size="2"
-            data-testid="mesocycle-status"
+            data-testid="mesocycle-status-badge"
           >
             {mesocycle.status.charAt(0).toUpperCase() +
               mesocycle.status.slice(1)}

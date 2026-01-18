@@ -82,7 +82,7 @@ export function WeekCard({
                   cursor: onWorkoutClick ? 'pointer' : 'default',
                 }}
                 onClick={() => onWorkoutClick?.(workout.id)}
-                data-testid="workout-item"
+                data-testid={`workout-item-${workout.id}`}
               >
                 <Flex justify="between" align="center" gap="2">
                   <Flex direction="column" gap="1">

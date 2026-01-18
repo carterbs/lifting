@@ -73,7 +73,7 @@ export class PlansPage extends BasePage {
    * Get a plan card by name
    */
   getPlanCard(name: string): Locator {
-    return this.page.locator('[data-testid="plan-card"]').filter({
+    return this.page.locator('[data-testid^="plan-card"]').filter({
       hasText: name,
     });
   }
@@ -108,7 +108,7 @@ export class PlansPage extends BasePage {
   async deletePlan(name: string): Promise<void> {
     // First, try to click from the plans list page
     // Check if we're on the list page or detail page
-    const onListPage = await this.page.getByTestId('plan-card').first().isVisible().catch(() => false);
+    const onListPage = await this.page.locator('[data-testid^="plan-card"]').first().isVisible().catch(() => false);
 
     if (onListPage) {
       // We're on the list page, click the plan to go to detail page
@@ -122,7 +122,7 @@ export class PlansPage extends BasePage {
     await deleteButton.click();
 
     // Confirm deletion
-    const deleteDialog = this.page.getByTestId('delete-plan-dialog');
+    const deleteDialog = this.page.getByTestId('delete-confirm-dialog');
     await expect(deleteDialog).toBeVisible();
     await deleteDialog.getByRole('button', { name: /^delete$/i }).click();
     await expect(deleteDialog).not.toBeVisible();
@@ -132,7 +132,7 @@ export class PlansPage extends BasePage {
    * Get the count of plans in the list
    */
   async getPlanCount(): Promise<number> {
-    const cards = this.page.locator('[data-testid="plan-card"]');
+    const cards = this.page.locator('[data-testid^="plan-card"]');
     return cards.count();
   }
 
@@ -204,11 +204,11 @@ export class PlansPage extends BasePage {
 
     // Find the last exercise row (the one we just added)
     const dayContent = this.page.getByTestId(`day-content-${dayOfWeek}`);
-    const exerciseRows = dayContent.locator('[data-testid="exercise-config-row"]');
+    const exerciseRows = dayContent.locator('[data-testid^="exercise-config-row"]');
     const lastRow = exerciseRows.last();
 
     // Select the exercise from the dropdown
-    const exerciseSelect = lastRow.locator('[data-testid="exercise-select"]');
+    const exerciseSelect = lastRow.locator('[data-testid^="exercise-select"]');
     await exerciseSelect.click();
 
     // Wait for the options to load and then click the exercise option
@@ -218,25 +218,25 @@ export class PlansPage extends BasePage {
 
     // Fill in config if provided - these are all Radix Select dropdowns
     if (config?.sets !== undefined) {
-      const setsSelect = lastRow.locator('[data-testid="sets-input"]');
+      const setsSelect = lastRow.locator('[data-testid^="sets-select"]');
       await setsSelect.click();
       await this.page.getByTestId(`sets-option-${config.sets}`).click();
     }
 
     if (config?.reps !== undefined) {
-      const repsSelect = lastRow.locator('[data-testid="reps-input"]');
+      const repsSelect = lastRow.locator('[data-testid^="reps-select"]');
       await repsSelect.click();
       await this.page.getByTestId(`reps-option-${config.reps}`).click();
     }
 
     if (config?.weight !== undefined) {
-      const weightSelect = lastRow.locator('[data-testid="weight-input"]');
+      const weightSelect = lastRow.locator('[data-testid^="weight-select"]');
       await weightSelect.click();
       await this.page.getByTestId(`weight-option-${config.weight}`).click();
     }
 
     if (config?.restSeconds !== undefined) {
-      const restSelect = lastRow.locator('[data-testid="rest-input"]');
+      const restSelect = lastRow.locator('[data-testid^="rest-select"]');
       await restSelect.click();
       await this.page.getByTestId(`rest-option-${config.restSeconds}`).click();
     }

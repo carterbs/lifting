@@ -24,7 +24,7 @@ export function ExerciseConfigRow({
   onChange,
   onRemove,
   disabled = false,
-  index: _index,
+  index,
 }: ExerciseConfigRowProps): JSX.Element {
   const handleExerciseChange = (value: string): void => {
     onChange({
@@ -79,7 +79,7 @@ export function ExerciseConfigRow({
         borderRadius: 'var(--radius-2)',
         border: '1px solid var(--gray-4)',
       }}
-      data-testid="exercise-config-row"
+      data-testid={`exercise-config-row-${index}`}
     >
       <Flex direction="column" gap="1" style={{ flex: '1 1 200px', minWidth: '150px' }}>
         <Text size="1" color="gray" weight="medium">
@@ -92,7 +92,7 @@ export function ExerciseConfigRow({
         >
           <Select.Trigger
             placeholder="Select exercise..."
-            data-testid="exercise-select"
+            data-testid={`exercise-select-${index}`}
           />
           <Select.Content>
             {availableExercises.map((ex) => (
@@ -117,7 +117,7 @@ export function ExerciseConfigRow({
           onValueChange={handleSetsChange}
           disabled={disabled}
         >
-          <Select.Trigger data-testid="sets-input" />
+          <Select.Trigger data-testid={`sets-select-${index}`} />
           <Select.Content>
             {SETS_OPTIONS.map((option) => (
               <Select.Item
@@ -141,7 +141,7 @@ export function ExerciseConfigRow({
           onValueChange={handleRepsChange}
           disabled={disabled}
         >
-          <Select.Trigger data-testid="reps-input" />
+          <Select.Trigger data-testid={`reps-select-${index}`} />
           <Select.Content>
             {REPS_OPTIONS.map((option) => (
               <Select.Item
@@ -165,7 +165,7 @@ export function ExerciseConfigRow({
           onValueChange={handleWeightChange}
           disabled={disabled}
         >
-          <Select.Trigger data-testid="weight-input" />
+          <Select.Trigger data-testid={`weight-select-${index}`} />
           <Select.Content>
             {WEIGHT_OPTIONS.map((option) => (
               <Select.Item
@@ -189,7 +189,7 @@ export function ExerciseConfigRow({
           onValueChange={handleRestChange}
           disabled={disabled}
         >
-          <Select.Trigger data-testid="rest-input" />
+          <Select.Trigger data-testid={`rest-select-${index}`} />
           <Select.Content>
             {REST_OPTIONS.map((option) => (
               <Select.Item
@@ -213,7 +213,7 @@ export function ExerciseConfigRow({
           onValueChange={handleWeightIncrementChange}
           disabled={disabled}
         >
-          <Select.Trigger data-testid="increment-input" />
+          <Select.Trigger data-testid={`increment-select-${index}`} />
           <Select.Content>
             {WEIGHT_INCREMENT_OPTIONS.map((option) => (
               <Select.Item
@@ -236,7 +236,7 @@ export function ExerciseConfigRow({
           onClick={onRemove}
           disabled={disabled}
           aria-label="Remove exercise"
-          data-testid="remove-exercise"
+          data-testid={`remove-exercise-${index}`}
           style={{ marginTop: 'auto' }}
         >
           <TrashIcon />
