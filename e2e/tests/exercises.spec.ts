@@ -23,7 +23,7 @@ test.describe('Exercise Library', () => {
       await exercisesPage.waitForLoad();
 
       // Check a known default exercise exists
-      const exists = await exercisesPage.exerciseExists('Dumbbell Press (flat)');
+      const exists = await exercisesPage.exerciseExists('Dumbbell Press (Flat)');
       expect(exists).toBe(true);
     });
   });
@@ -117,7 +117,7 @@ test.describe('Exercise Library', () => {
 
       // Built-in exercises should not have delete button
       const isCustom = await exercisesPage.isExerciseCustom(
-        'Dumbbell Press (flat)'
+        'Dumbbell Press (Flat)'
       );
       expect(isCustom).toBe(false);
     });

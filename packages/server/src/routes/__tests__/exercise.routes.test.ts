@@ -57,7 +57,7 @@ describe('Exercise Routes', () => {
 
         // Check for specific exercises
         const names = body.data.map((e) => e.name);
-        expect(names).toContain('Dumbbell Press (flat)');
+        expect(names).toContain('Dumbbell Press (Flat)');
         expect(names).toContain('Seated Cable Row');
         expect(names).toContain('Leg Extension');
       }

@@ -68,11 +68,11 @@ describe('seedDefaultExercises', () => {
 
     // Check specific exercises with non-default weight increments
     const lateralRaises = repository.findByName(
-      'Seated Dumbbell Lateral Raises'
+      'Dumbbell Lateral Raise (Super ROM)'
     );
     expect(lateralRaises?.weight_increment).toBe(2.5);
 
-    const benchPress = repository.findByName('Dumbbell Press (flat)');
+    const benchPress = repository.findByName('Dumbbell Press (Flat)');
     expect(benchPress?.weight_increment).toBe(5.0);
   });
 });
