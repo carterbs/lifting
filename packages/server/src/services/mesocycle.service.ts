@@ -153,6 +153,7 @@ export class MesocycleService {
           week_number: workout.week_number,
           scheduled_date: workout.scheduled_date,
           status: workout.status,
+          completed_at: workout.completed_at,
           exercise_count: uniqueExercises.size,
           set_count: sets.length,
           completed_set_count: completedSets,

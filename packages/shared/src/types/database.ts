@@ -195,6 +195,7 @@ export interface WorkoutSummary {
   week_number: number;
   scheduled_date: string;
   status: WorkoutStatus;
+  completed_at: string | null;
   exercise_count: number;
   set_count: number;
   completed_set_count: number;

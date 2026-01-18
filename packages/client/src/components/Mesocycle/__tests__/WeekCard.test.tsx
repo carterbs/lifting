@@ -20,6 +20,7 @@ const mockWeek: WeekSummary = {
       week_number: 1,
       scheduled_date: '2024-01-01',
       status: 'pending',
+      completed_at: null,
       exercise_count: 5,
       set_count: 15,
       completed_set_count: 0,
@@ -32,6 +33,7 @@ const mockWeek: WeekSummary = {
       week_number: 1,
       scheduled_date: '2024-01-03',
       status: 'completed',
+      completed_at: '2024-01-03T14:30:00.000Z',
       exercise_count: 5,
       set_count: 15,
       completed_set_count: 15,
@@ -116,6 +118,22 @@ describe('WeekCard', () => {
     expect(screen.getByText('No workouts this week')).toBeInTheDocument();
   });
 
+  it('should display completion timestamp for completed workouts', () => {
+    renderWithTheme(<WeekCard week={mockWeek} />);
+
+    // The completed workout should show "Completed" with the timestamp
+    expect(screen.getByText(/Completed.*Jan/)).toBeInTheDocument();
+  });
+
+  it('should display scheduled date for non-completed workouts', () => {
+    renderWithTheme(<WeekCard week={mockWeek} />);
+
+    // The pending workout should show the scheduled date (format varies by timezone)
+    // Just verify the element exists and contains date-like content
+    const pushDayWorkout = screen.getByTestId('workout-item-1');
+    expect(pushDayWorkout).toHaveTextContent(/\w+, \w+ \d+/); // e.g., "Sun, Dec 31" or "Mon, Jan 1"
+  });
+
   it('should display correct status badges for workouts', () => {
     const workout0 = mockWeek.workouts[0];
     const workout1 = mockWeek.workouts[1];
@@ -135,6 +153,7 @@ describe('WeekCard', () => {
           week_number: 1,
           scheduled_date: '2024-01-05',
           status: 'in_progress',
+          completed_at: null,
           exercise_count: 4,
           set_count: 12,
           completed_set_count: 6,
@@ -147,6 +166,7 @@ describe('WeekCard', () => {
           week_number: 1,
           scheduled_date: '2024-01-06',
           status: 'skipped',
+          completed_at: null,
           exercise_count: 0,
           set_count: 0,
           completed_set_count: 0,

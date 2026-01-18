@@ -31,6 +31,17 @@ function formatDate(dateString: string): string {
   });
 }
 
+function formatCompletedAt(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export function WeekCard({
   week,
   isCurrentWeek = false,
@@ -89,9 +100,15 @@ export function WeekCard({
                     <Text size="2" weight="medium">
                       {workout.plan_day_name}
                     </Text>
-                    <Text size="1" color="gray">
-                      {formatDate(workout.scheduled_date)}
-                    </Text>
+                    {workout.status === 'completed' && workout.completed_at ? (
+                      <Text size="1" color="gray">
+                        Completed {formatCompletedAt(workout.completed_at)}
+                      </Text>
+                    ) : (
+                      <Text size="1" color="gray">
+                        {formatDate(workout.scheduled_date)}
+                      </Text>
+                    )}
                   </Flex>
 
                   <Flex gap="2" align="center">

@@ -34,6 +34,17 @@ function formatDate(dateString: string): string {
   });
 }
 
+function formatCompletedAt(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 function getStatusBadge(status: string): JSX.Element {
   switch (status) {
     case 'pending':
@@ -188,9 +199,15 @@ export function WorkoutView({
         <Flex justify="between" align="center">
           <Box>
             <Heading size="5">{workout.plan_day_name}</Heading>
-            <Text size="2" color="gray">
-              {formatDate(workout.scheduled_date)}
-            </Text>
+            {workout.status === 'completed' && workout.completed_at ? (
+              <Text size="2" color="gray" data-testid="completed-at">
+                Completed {formatCompletedAt(workout.completed_at)}
+              </Text>
+            ) : (
+              <Text size="2" color="gray">
+                {formatDate(workout.scheduled_date)}
+              </Text>
+            )}
           </Box>
           {getStatusBadge(workout.status)}
         </Flex>
