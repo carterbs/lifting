@@ -39,26 +39,6 @@ export class TodayPage extends BasePage {
     return this.page.getByTestId('rest-timer');
   }
 
-  get logSetModal(): Locator {
-    return this.page.getByTestId('log-set-modal');
-  }
-
-  get repsInput(): Locator {
-    return this.page.getByTestId('reps-input');
-  }
-
-  get weightInput(): Locator {
-    return this.page.getByTestId('weight-input');
-  }
-
-  get saveButton(): Locator {
-    return this.page.getByTestId('save-button');
-  }
-
-  get cancelButton(): Locator {
-    return this.page.getByTestId('cancel-button');
-  }
-
   get confirmDialog(): Locator {
     return this.page.getByTestId('confirm-dialog');
   }
@@ -93,48 +73,59 @@ export class TodayPage extends BasePage {
   }
 
   /**
-   * Click on a set row to open the log modal
+   * Get the weight input for a set
    */
-  async clickSet(setId: number): Promise<void> {
-    await this.getSetRow(setId).click();
-    await expect(this.logSetModal).toBeVisible();
+  getWeightInput(setId: number): Locator {
+    return this.page.getByTestId(`weight-input-${setId}`);
   }
 
   /**
-   * Log a set with specific reps and weight
+   * Get the reps input for a set
+   */
+  getRepsInput(setId: number): Locator {
+    return this.page.getByTestId(`reps-input-${setId}`);
+  }
+
+  /**
+   * Get the log checkbox for a set
+   */
+  getLogCheckbox(setId: number): Locator {
+    return this.page.getByTestId(`log-checkbox-${setId}`);
+  }
+
+  /**
+   * Log a set with specific reps and weight using inline inputs
    */
   async logSet(setId: number, reps: number, weight: number): Promise<void> {
-    await this.clickSet(setId);
+    // Clear and fill weight
+    const weightInput = this.getWeightInput(setId);
+    await weightInput.clear();
+    await weightInput.fill(String(weight));
 
     // Clear and fill reps
-    await this.repsInput.clear();
-    await this.repsInput.fill(String(reps));
+    const repsInput = this.getRepsInput(setId);
+    await repsInput.clear();
+    await repsInput.fill(String(reps));
 
-    // Clear and fill weight
-    await this.weightInput.clear();
-    await this.weightInput.fill(String(weight));
-
-    // Save
-    await this.saveButton.click();
-    await expect(this.logSetModal).not.toBeVisible();
+    // Click the checkbox to log
+    const checkbox = this.getLogCheckbox(setId);
+    await checkbox.click();
   }
 
   /**
-   * Log a set using target values (just click save)
+   * Log a set using target values (just click checkbox, inputs already have targets)
    */
   async logSetWithTargets(setId: number): Promise<void> {
-    await this.clickSet(setId);
-    await this.saveButton.click();
-    await expect(this.logSetModal).not.toBeVisible();
+    const checkbox = this.getLogCheckbox(setId);
+    await checkbox.click();
   }
 
   /**
-   * Skip a specific set
+   * Unlog a set (uncheck the checkbox)
    */
-  async skipSet(setId: number): Promise<void> {
-    const setRow = this.getSetRow(setId);
-    const skipButton = setRow.getByTestId('skip-set-button');
-    await skipButton.click();
+  async unlogSet(setId: number): Promise<void> {
+    const checkbox = this.getLogCheckbox(setId);
+    await checkbox.click();
   }
 
   /**
@@ -198,49 +189,33 @@ export class TodayPage extends BasePage {
   }
 
   /**
-   * Check if set is logged (has green background / completed status)
+   * Check if set is logged (checkbox is checked)
    */
   async isSetLogged(setId: number): Promise<boolean> {
-    const setRow = this.getSetRow(setId);
-    const badge = setRow.getByText('Logged');
-    return badge.isVisible();
+    const checkbox = this.getLogCheckbox(setId);
+    const isChecked = await checkbox.isChecked();
+    return isChecked;
   }
 
   /**
-   * Check if set is skipped
-   */
-  async isSetSkipped(setId: number): Promise<boolean> {
-    const setRow = this.getSetRow(setId);
-    // Wait a moment for the UI to update
-    await this.page.waitForTimeout(500);
-    // Check for the Badge with "Skipped" text (the span element)
-    const skippedBadge = setRow.getByText('Skipped', { exact: true });
-    return skippedBadge.isVisible();
-  }
-
-  /**
-   * Get the actual values logged for a set
+   * Get the actual values entered for a set
    */
   async getLoggedValues(
     setId: number
   ): Promise<{ reps: number; weight: number } | null> {
-    const setRow = this.getSetRow(setId);
-    const repsEl = setRow.getByTestId('actual-reps');
-    const weightEl = setRow.getByTestId('actual-weight');
+    const weightInput = this.getWeightInput(setId);
+    const repsInput = this.getRepsInput(setId);
 
-    // Wait for the element to appear (gives UI time to update)
     try {
-      await repsEl.waitFor({ state: 'visible', timeout: 5000 });
+      const weightText = await weightInput.inputValue();
+      const repsText = await repsInput.inputValue();
+
+      return {
+        reps: parseInt(repsText ?? '0', 10),
+        weight: parseFloat(weightText ?? '0'),
+      };
     } catch {
       return null;
     }
-
-    const repsText = await repsEl.textContent();
-    const weightText = await weightEl.textContent();
-
-    return {
-      reps: parseInt(repsText ?? '0', 10),
-      weight: parseFloat(weightText ?? '0'),
-    };
   }
 }

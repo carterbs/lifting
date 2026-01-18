@@ -63,7 +63,7 @@ const renderWithTheme = (ui: React.ReactElement): ReturnType<typeof render> => {
 
 describe('WorkoutView', () => {
   const mockOnSetLogged = vi.fn();
-  const mockOnSetSkipped = vi.fn();
+  const mockOnSetUnlogged = vi.fn();
   const mockOnWorkoutStarted = vi.fn();
   const mockOnWorkoutCompleted = vi.fn();
   const mockOnWorkoutSkipped = vi.fn();
@@ -82,7 +82,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('pending')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -98,7 +98,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('pending')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -113,7 +113,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('pending')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -128,7 +128,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('pending')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -143,7 +143,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('pending')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -158,7 +158,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('in_progress')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -173,7 +173,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('in_progress')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -188,7 +188,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('pending')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -203,7 +203,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('completed')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -222,7 +222,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('pending')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -241,7 +241,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('in_progress')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -262,7 +262,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('in_progress')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -285,7 +285,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('pending')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -305,7 +305,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('pending')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -325,7 +325,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('in_progress')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -340,7 +340,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('completed')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -355,7 +355,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('skipped')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -370,7 +370,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('pending')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -386,7 +386,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('in_progress')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -402,7 +402,7 @@ describe('WorkoutView', () => {
       <WorkoutView
         workout={createMockWorkout('pending')}
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
         onWorkoutStarted={mockOnWorkoutStarted}
         onWorkoutCompleted={mockOnWorkoutCompleted}
         onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -427,7 +427,7 @@ describe('WorkoutView', () => {
         <WorkoutView
           workout={createMockWorkout('in_progress')}
           onSetLogged={mockOnSetLogged}
-          onSetSkipped={mockOnSetSkipped}
+          onSetUnlogged={mockOnSetUnlogged}
           onWorkoutStarted={mockOnWorkoutStarted}
           onWorkoutCompleted={mockOnWorkoutCompleted}
           onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -451,7 +451,7 @@ describe('WorkoutView', () => {
         <WorkoutView
           workout={createMockWorkout('in_progress')}
           onSetLogged={mockOnSetLogged}
-          onSetSkipped={mockOnSetSkipped}
+          onSetUnlogged={mockOnSetUnlogged}
           onWorkoutStarted={mockOnWorkoutStarted}
           onWorkoutCompleted={mockOnWorkoutCompleted}
           onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -476,7 +476,7 @@ describe('WorkoutView', () => {
         <WorkoutView
           workout={createMockWorkout('in_progress')}
           onSetLogged={mockOnSetLogged}
-          onSetSkipped={mockOnSetSkipped}
+          onSetUnlogged={mockOnSetUnlogged}
           onWorkoutStarted={mockOnWorkoutStarted}
           onWorkoutCompleted={mockOnWorkoutCompleted}
           onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -501,7 +501,7 @@ describe('WorkoutView', () => {
         <WorkoutView
           workout={createMockWorkout('in_progress')}
           onSetLogged={mockOnSetLogged}
-          onSetSkipped={mockOnSetSkipped}
+          onSetUnlogged={mockOnSetUnlogged}
           onWorkoutStarted={mockOnWorkoutStarted}
           onWorkoutCompleted={mockOnWorkoutCompleted}
           onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -534,7 +534,7 @@ describe('WorkoutView', () => {
         <WorkoutView
           workout={createMockWorkout('in_progress')}
           onSetLogged={mockOnSetLogged}
-          onSetSkipped={mockOnSetSkipped}
+          onSetUnlogged={mockOnSetUnlogged}
           onWorkoutStarted={mockOnWorkoutStarted}
           onWorkoutCompleted={mockOnWorkoutCompleted}
           onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -549,7 +549,7 @@ describe('WorkoutView', () => {
           <WorkoutView
             workout={createMockWorkout('completed')}
             onSetLogged={mockOnSetLogged}
-            onSetSkipped={mockOnSetSkipped}
+            onSetUnlogged={mockOnSetUnlogged}
             onWorkoutStarted={mockOnWorkoutStarted}
             onWorkoutCompleted={mockOnWorkoutCompleted}
             onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -574,7 +574,7 @@ describe('WorkoutView', () => {
         <WorkoutView
           workout={createMockWorkout('in_progress')}
           onSetLogged={mockOnSetLogged}
-          onSetSkipped={mockOnSetSkipped}
+          onSetUnlogged={mockOnSetUnlogged}
           onWorkoutStarted={mockOnWorkoutStarted}
           onWorkoutCompleted={mockOnWorkoutCompleted}
           onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -601,7 +601,7 @@ describe('WorkoutView', () => {
         <WorkoutView
           workout={createMockWorkout('in_progress')}
           onSetLogged={mockOnSetLogged}
-          onSetSkipped={mockOnSetSkipped}
+          onSetUnlogged={mockOnSetUnlogged}
           onWorkoutStarted={mockOnWorkoutStarted}
           onWorkoutCompleted={mockOnWorkoutCompleted}
           onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -625,7 +625,7 @@ describe('WorkoutView', () => {
         <WorkoutView
           workout={createMockWorkout('in_progress')}
           onSetLogged={mockOnSetLogged}
-          onSetSkipped={mockOnSetSkipped}
+          onSetUnlogged={mockOnSetUnlogged}
           onWorkoutStarted={mockOnWorkoutStarted}
           onWorkoutCompleted={mockOnWorkoutCompleted}
           onWorkoutSkipped={mockOnWorkoutSkipped}
@@ -657,7 +657,7 @@ describe('WorkoutView', () => {
         <WorkoutView
           workout={createMockWorkout('in_progress')}
           onSetLogged={mockOnSetLogged}
-          onSetSkipped={mockOnSetSkipped}
+          onSetUnlogged={mockOnSetUnlogged}
           onWorkoutStarted={mockOnWorkoutStarted}
           onWorkoutCompleted={mockOnWorkoutCompleted}
           onWorkoutSkipped={mockOnWorkoutSkipped}

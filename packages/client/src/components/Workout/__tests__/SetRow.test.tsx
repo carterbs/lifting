@@ -47,8 +47,7 @@ const renderWithTheme = (ui: React.ReactElement): ReturnType<typeof render> => {
 
 describe('SetRow', () => {
   const mockOnLog = vi.fn();
-  const mockOnSkip = vi.fn();
-  const mockOnClick = vi.fn();
+  const mockOnUnlog = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,27 +58,28 @@ describe('SetRow', () => {
       <SetRow
         set={mockPendingSet}
         workoutStatus="in_progress"
+        isActive={false}
         onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
+        onUnlog={mockOnUnlog}
       />
     );
 
     expect(screen.getByText('Set 1')).toBeInTheDocument();
   });
 
-  it('should display target reps and weight', () => {
+  it('should display target info', () => {
     renderWithTheme(
       <SetRow
         set={mockPendingSet}
         workoutStatus="in_progress"
+        isActive={false}
         onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
+        onUnlog={mockOnUnlog}
       />
     );
 
-    expect(screen.getByText('Target: 10 reps @ 135 lbs')).toBeInTheDocument();
+    // Target is shown as "reps×weight" format
+    expect(screen.getByText('10×135')).toBeInTheDocument();
   });
 
   it('should show "pending" class for pending sets', () => {
@@ -87,9 +87,9 @@ describe('SetRow', () => {
       <SetRow
         set={mockPendingSet}
         workoutStatus="in_progress"
+        isActive={false}
         onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
+        onUnlog={mockOnUnlog}
       />
     );
 
@@ -97,21 +97,19 @@ describe('SetRow', () => {
     expect(setRow).toHaveClass('pending');
   });
 
-  it('should show "logged" class with actual values for logged sets', () => {
+  it('should show "logged" class for logged sets', () => {
     renderWithTheme(
       <SetRow
         set={mockLoggedSet}
         workoutStatus="in_progress"
+        isActive={false}
         onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
+        onUnlog={mockOnUnlog}
       />
     );
 
     const setRow = screen.getByTestId('set-row-2');
     expect(setRow).toHaveClass('logged');
-    expect(screen.getByTestId('actual-reps')).toHaveTextContent('8');
-    expect(screen.getByTestId('actual-weight')).toHaveTextContent('140');
   });
 
   it('should show "skipped" class for skipped sets', () => {
@@ -119,9 +117,9 @@ describe('SetRow', () => {
       <SetRow
         set={mockSkippedSet}
         workoutStatus="in_progress"
+        isActive={false}
         onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
+        onUnlog={mockOnUnlog}
       />
     );
 
@@ -129,171 +127,244 @@ describe('SetRow', () => {
     expect(setRow).toHaveClass('skipped');
   });
 
-  it('should call onClick when clicked (pending set)', async () => {
+  it('should have inline weight input with target value', () => {
+    renderWithTheme(
+      <SetRow
+        set={mockPendingSet}
+        workoutStatus="in_progress"
+        isActive={false}
+        onLog={mockOnLog}
+        onUnlog={mockOnUnlog}
+      />
+    );
+
+    const weightInput = screen.getByTestId('weight-input-1');
+    expect(weightInput).toHaveValue(135);
+  });
+
+  it('should have inline reps input with target value', () => {
+    renderWithTheme(
+      <SetRow
+        set={mockPendingSet}
+        workoutStatus="in_progress"
+        isActive={false}
+        onLog={mockOnLog}
+        onUnlog={mockOnUnlog}
+      />
+    );
+
+    const repsInput = screen.getByTestId('reps-input-1');
+    expect(repsInput).toHaveValue(10);
+  });
+
+  it('should have checkbox unchecked for pending sets', () => {
+    renderWithTheme(
+      <SetRow
+        set={mockPendingSet}
+        workoutStatus="in_progress"
+        isActive={false}
+        onLog={mockOnLog}
+        onUnlog={mockOnUnlog}
+      />
+    );
+
+    const checkbox = screen.getByTestId('log-checkbox-1');
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('should have checkbox checked for logged sets', () => {
+    renderWithTheme(
+      <SetRow
+        set={mockLoggedSet}
+        workoutStatus="in_progress"
+        isActive={false}
+        onLog={mockOnLog}
+        onUnlog={mockOnUnlog}
+      />
+    );
+
+    const checkbox = screen.getByTestId('log-checkbox-2');
+    expect(checkbox).toBeChecked();
+  });
+
+  it('should call onLog when checkbox is checked', async () => {
     const user = userEvent.setup();
 
     renderWithTheme(
       <SetRow
         set={mockPendingSet}
         workoutStatus="in_progress"
+        isActive={false}
         onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
+        onUnlog={mockOnUnlog}
+      />
+    );
+
+    const checkbox = screen.getByTestId('log-checkbox-1');
+    await user.click(checkbox);
+
+    expect(mockOnLog).toHaveBeenCalledWith({
+      actual_weight: 135,
+      actual_reps: 10,
+    });
+  });
+
+  it('should call onLog with custom input values', async () => {
+    const user = userEvent.setup();
+
+    renderWithTheme(
+      <SetRow
+        set={mockPendingSet}
+        workoutStatus="in_progress"
+        isActive={false}
+        onLog={mockOnLog}
+        onUnlog={mockOnUnlog}
+      />
+    );
+
+    // Change the input values
+    const weightInput = screen.getByTestId('weight-input-1');
+    const repsInput = screen.getByTestId('reps-input-1');
+
+    await user.clear(weightInput);
+    await user.type(weightInput, '145');
+    await user.clear(repsInput);
+    await user.type(repsInput, '8');
+
+    const checkbox = screen.getByTestId('log-checkbox-1');
+    await user.click(checkbox);
+
+    expect(mockOnLog).toHaveBeenCalledWith({
+      actual_weight: 145,
+      actual_reps: 8,
+    });
+  });
+
+  it('should call onUnlog when checkbox is unchecked', async () => {
+    const user = userEvent.setup();
+
+    renderWithTheme(
+      <SetRow
+        set={mockLoggedSet}
+        workoutStatus="in_progress"
+        isActive={false}
+        onLog={mockOnLog}
+        onUnlog={mockOnUnlog}
+      />
+    );
+
+    const checkbox = screen.getByTestId('log-checkbox-2');
+    await user.click(checkbox);
+
+    expect(mockOnUnlog).toHaveBeenCalled();
+    expect(mockOnLog).not.toHaveBeenCalled();
+  });
+
+  it('should highlight active row with border', () => {
+    renderWithTheme(
+      <SetRow
+        set={mockPendingSet}
+        workoutStatus="in_progress"
+        isActive={true}
+        onLog={mockOnLog}
+        onUnlog={mockOnUnlog}
       />
     );
 
     const setRow = screen.getByTestId('set-row-1');
-    await user.click(setRow);
-
-    expect(mockOnClick).toHaveBeenCalled();
+    expect(setRow).toHaveStyle('border: 2px solid var(--accent-9)');
   });
 
-  it('should call onClick when clicked (logged set for re-logging)', async () => {
-    const user = userEvent.setup();
-
-    renderWithTheme(
-      <SetRow
-        set={mockLoggedSet}
-        workoutStatus="in_progress"
-        onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
-      />
-    );
-
-    const setRow = screen.getByTestId('set-row-2');
-    await user.click(setRow);
-
-    expect(mockOnClick).toHaveBeenCalled();
-  });
-
-  it('should show skip button for pending sets', () => {
+  it('should not highlight inactive row', () => {
     renderWithTheme(
       <SetRow
         set={mockPendingSet}
         workoutStatus="in_progress"
+        isActive={false}
         onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
+        onUnlog={mockOnUnlog}
       />
     );
 
-    expect(screen.getByTestId('skip-set-button')).toBeInTheDocument();
+    const setRow = screen.getByTestId('set-row-1');
+    expect(setRow).toHaveStyle('border: 2px solid transparent');
   });
 
-  it('should show skip button for logged sets', () => {
-    renderWithTheme(
-      <SetRow
-        set={mockLoggedSet}
-        workoutStatus="in_progress"
-        onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
-      />
-    );
-
-    expect(screen.getByTestId('skip-set-button')).toBeInTheDocument();
-  });
-
-  it('should not show skip button for already skipped sets', () => {
-    renderWithTheme(
-      <SetRow
-        set={mockSkippedSet}
-        workoutStatus="in_progress"
-        onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
-      />
-    );
-
-    expect(screen.queryByTestId('skip-set-button')).not.toBeInTheDocument();
-  });
-
-  it('should call onSkip when skip button clicked', async () => {
-    const user = userEvent.setup();
-
-    renderWithTheme(
-      <SetRow
-        set={mockPendingSet}
-        workoutStatus="in_progress"
-        onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
-      />
-    );
-
-    const skipButton = screen.getByTestId('skip-set-button');
-    await user.click(skipButton);
-
-    expect(mockOnSkip).toHaveBeenCalled();
-    // Should not trigger onClick when clicking skip button
-    expect(mockOnClick).not.toHaveBeenCalled();
-  });
-
-  it('should disable interactions when workout completed', async () => {
-    const user = userEvent.setup();
-
+  it('should disable inputs when workout completed', () => {
     renderWithTheme(
       <SetRow
         set={mockPendingSet}
         workoutStatus="completed"
+        isActive={false}
         onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
+        onUnlog={mockOnUnlog}
       />
     );
 
-    const setRow = screen.getByTestId('set-row-1');
-    await user.click(setRow);
+    const weightInput = screen.getByTestId('weight-input-1');
+    const repsInput = screen.getByTestId('reps-input-1');
+    const checkbox = screen.getByTestId('log-checkbox-1');
 
-    expect(mockOnClick).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('skip-set-button')).not.toBeInTheDocument();
+    expect(weightInput).toBeDisabled();
+    expect(repsInput).toBeDisabled();
+    expect(checkbox).toBeDisabled();
   });
 
-  it('should disable interactions when workout skipped', async () => {
-    const user = userEvent.setup();
-
+  it('should disable inputs when workout skipped', () => {
     renderWithTheme(
       <SetRow
         set={mockPendingSet}
         workoutStatus="skipped"
+        isActive={false}
         onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
+        onUnlog={mockOnUnlog}
       />
     );
 
-    const setRow = screen.getByTestId('set-row-1');
-    await user.click(setRow);
+    const weightInput = screen.getByTestId('weight-input-1');
+    const repsInput = screen.getByTestId('reps-input-1');
+    const checkbox = screen.getByTestId('log-checkbox-1');
 
-    expect(mockOnClick).not.toHaveBeenCalled();
+    expect(weightInput).toBeDisabled();
+    expect(repsInput).toBeDisabled();
+    expect(checkbox).toBeDisabled();
   });
 
-  it('should show Logged badge for logged sets', () => {
-    renderWithTheme(
-      <SetRow
-        set={mockLoggedSet}
-        workoutStatus="in_progress"
-        onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
-      />
-    );
-
-    expect(screen.getByText('Logged')).toBeInTheDocument();
-  });
-
-  it('should show Skipped badge for skipped sets', () => {
+  it('should disable inputs for skipped sets', () => {
     renderWithTheme(
       <SetRow
         set={mockSkippedSet}
         workoutStatus="in_progress"
+        isActive={false}
         onLog={mockOnLog}
-        onSkip={mockOnSkip}
-        onClick={mockOnClick}
+        onUnlog={mockOnUnlog}
       />
     );
 
-    expect(screen.getByText('Skipped')).toBeInTheDocument();
+    const weightInput = screen.getByTestId('weight-input-3');
+    const repsInput = screen.getByTestId('reps-input-3');
+    const checkbox = screen.getByTestId('log-checkbox-3');
+
+    expect(weightInput).toBeDisabled();
+    expect(repsInput).toBeDisabled();
+    expect(checkbox).toBeDisabled();
+  });
+
+  it('should show actual values in inputs for logged sets', () => {
+    renderWithTheme(
+      <SetRow
+        set={mockLoggedSet}
+        workoutStatus="in_progress"
+        isActive={false}
+        onLog={mockOnLog}
+        onUnlog={mockOnUnlog}
+      />
+    );
+
+    const weightInput = screen.getByTestId('weight-input-2');
+    const repsInput = screen.getByTestId('reps-input-2');
+
+    expect(weightInput).toHaveValue(140);
+    expect(repsInput).toHaveValue(8);
   });
 });

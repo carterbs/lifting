@@ -20,7 +20,7 @@ import {
   useCompleteWorkout,
   useSkipWorkout,
   useLogSet,
-  useSkipSet,
+  useUnlogSet,
 } from '../hooks/useWorkout';
 import type { LogWorkoutSetInput } from '@lifting/shared';
 
@@ -34,7 +34,7 @@ export function WorkoutPage(): JSX.Element {
   const completeMutation = useCompleteWorkout();
   const skipWorkoutMutation = useSkipWorkout();
   const logSetMutation = useLogSet();
-  const skipSetMutation = useSkipSet();
+  const unlogSetMutation = useUnlogSet();
 
   const handleStart = (): void => {
     startMutation.mutate(workoutId);
@@ -52,8 +52,8 @@ export function WorkoutPage(): JSX.Element {
     logSetMutation.mutate({ setId, data, workoutId });
   };
 
-  const handleSkipSet = (setId: number): void => {
-    skipSetMutation.mutate({ setId, workoutId });
+  const handleUnlogSet = (setId: number): void => {
+    unlogSetMutation.mutate({ setId, workoutId });
   };
 
   if (isLoading) {
@@ -121,7 +121,7 @@ export function WorkoutPage(): JSX.Element {
         <WorkoutView
           workout={workout}
           onSetLogged={handleLogSet}
-          onSetSkipped={handleSkipSet}
+          onSetUnlogged={handleUnlogSet}
           onWorkoutStarted={handleStart}
           onWorkoutCompleted={handleComplete}
           onWorkoutSkipped={handleSkipWorkout}

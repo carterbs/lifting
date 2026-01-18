@@ -39,7 +39,7 @@ const renderWithTheme = (ui: React.ReactElement): ReturnType<typeof render> => {
 
 describe('ExerciseCard', () => {
   const mockOnSetLogged = vi.fn();
-  const mockOnSetSkipped = vi.fn();
+  const mockOnSetUnlogged = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -51,7 +51,7 @@ describe('ExerciseCard', () => {
         exercise={mockExercise}
         workoutStatus="in_progress"
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
       />
     );
 
@@ -64,7 +64,7 @@ describe('ExerciseCard', () => {
         exercise={mockExercise}
         workoutStatus="in_progress"
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
       />
     );
 
@@ -82,7 +82,7 @@ describe('ExerciseCard', () => {
         exercise={exerciseWith60sRest}
         workoutStatus="in_progress"
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
       />
     );
 
@@ -100,7 +100,7 @@ describe('ExerciseCard', () => {
         exercise={exerciseWith45sRest}
         workoutStatus="in_progress"
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
       />
     );
 
@@ -113,7 +113,7 @@ describe('ExerciseCard', () => {
         exercise={mockExercise}
         workoutStatus="in_progress"
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
       />
     );
 
@@ -128,7 +128,7 @@ describe('ExerciseCard', () => {
         exercise={mockExercise}
         workoutStatus="in_progress"
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
       />
     );
 
@@ -147,7 +147,7 @@ describe('ExerciseCard', () => {
         exercise={exerciseWithCompletedSets}
         workoutStatus="in_progress"
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
       />
     );
 
@@ -166,32 +166,35 @@ describe('ExerciseCard', () => {
         exercise={exerciseAllComplete}
         workoutStatus="in_progress"
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
       />
     );
 
     expect(screen.getByTestId('progress-badge')).toHaveTextContent('3/3 sets');
   });
 
-  it('should open modal when set is clicked', async () => {
-    const user = userEvent.setup();
+  it('should highlight first pending set as active', () => {
+    const exerciseWithFirstCompleted: WorkoutExerciseWithSets = {
+      ...mockExercise,
+      sets: createMockSets(3, 1),
+      completed_sets: 1,
+    };
 
     renderWithTheme(
       <ExerciseCard
-        exercise={mockExercise}
+        exercise={exerciseWithFirstCompleted}
         workoutStatus="in_progress"
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
       />
     );
 
-    const setRow = screen.getByTestId('set-row-1');
-    await user.click(setRow);
-
-    expect(screen.getByTestId('log-set-modal')).toBeInTheDocument();
+    // Second set (id=2) should be active (first pending)
+    const activeSet = screen.getByTestId('set-row-2');
+    expect(activeSet).toHaveStyle('border: 2px solid var(--accent-9)');
   });
 
-  it('should call onSetSkipped when skip button is clicked', async () => {
+  it('should call onSetLogged when checkbox is clicked', async () => {
     const user = userEvent.setup();
 
     renderWithTheme(
@@ -199,44 +202,42 @@ describe('ExerciseCard', () => {
         exercise={mockExercise}
         workoutStatus="in_progress"
         onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
+        onSetUnlogged={mockOnSetUnlogged}
       />
     );
 
-    // Get the first set's skip button
-    const skipButtons = screen.getAllByTestId('skip-set-button');
-    const firstSkipButton = skipButtons[0];
-    if (firstSkipButton === undefined) {
-      throw new Error('Expected at least one skip button to be present');
-    }
-    await user.click(firstSkipButton);
-
-    expect(mockOnSetSkipped).toHaveBeenCalledWith(1);
-  });
-
-  it('should call onSetLogged when modal is saved', async () => {
-    const user = userEvent.setup();
-
-    renderWithTheme(
-      <ExerciseCard
-        exercise={mockExercise}
-        workoutStatus="in_progress"
-        onSetLogged={mockOnSetLogged}
-        onSetSkipped={mockOnSetSkipped}
-      />
-    );
-
-    // Click on a set to open modal
-    const setRow = screen.getByTestId('set-row-1');
-    await user.click(setRow);
-
-    // Click save button
-    const saveButton = screen.getByTestId('save-button');
-    await user.click(saveButton);
+    // Click the first checkbox
+    const checkbox = screen.getByTestId('log-checkbox-1');
+    await user.click(checkbox);
 
     expect(mockOnSetLogged).toHaveBeenCalledWith(1, {
       actual_reps: 10,
       actual_weight: 135,
     });
+  });
+
+  it('should call onSetUnlogged when checkbox is unchecked', async () => {
+    const user = userEvent.setup();
+
+    const exerciseWithCompletedSet: WorkoutExerciseWithSets = {
+      ...mockExercise,
+      sets: createMockSets(3, 1),
+      completed_sets: 1,
+    };
+
+    renderWithTheme(
+      <ExerciseCard
+        exercise={exerciseWithCompletedSet}
+        workoutStatus="in_progress"
+        onSetLogged={mockOnSetLogged}
+        onSetUnlogged={mockOnSetUnlogged}
+      />
+    );
+
+    // Click the first checkbox (which is already checked)
+    const checkbox = screen.getByTestId('log-checkbox-1');
+    await user.click(checkbox);
+
+    expect(mockOnSetUnlogged).toHaveBeenCalledWith(1);
   });
 });

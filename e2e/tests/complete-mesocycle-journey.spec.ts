@@ -62,11 +62,11 @@ function calculateExpectedReps(baseReps: number, weekNumber: number): number {
 }
 
 /**
- * Track a single workout - log some sets, skip others
+ * Track a single workout - log some sets, leave others pending
  */
 async function trackWorkout(
   workoutId: number,
-  skipExerciseIndex: number, // Which exercise to skip entirely (0 or 1)
+  skipExerciseIndex: number, // Which exercise to leave entirely pending (0 or 1)
   api: ApiHelper,
   todayPage: TodayPage,
   page: Page
@@ -99,12 +99,10 @@ async function trackWorkout(
     const sets = exercise?.sets ?? [];
 
     if (exIdx === skipExerciseIndex) {
-      // Skip all sets for this exercise
-      for (const set of sets) {
-        await todayPage.skipSet(set.id);
-      }
+      // Leave all sets for this exercise pending (don't log them)
+      // In the new design, unchecked sets will remain pending when completing
     } else {
-      // Log first N-1 sets, skip last set (variety in tracking)
+      // Log first N-1 sets, leave last set pending (variety in tracking)
       for (let i = 0; i < sets.length; i++) {
         const set = sets[i];
         if (set === undefined) continue;
@@ -115,9 +113,8 @@ async function trackWorkout(
           if (await todayPage.isRestTimerVisible()) {
             await todayPage.dismissRestTimer();
           }
-        } else {
-          await todayPage.skipSet(set.id);
         }
+        // Last set is left unchecked (pending)
       }
     }
   }

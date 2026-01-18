@@ -105,6 +105,7 @@ export function useWorkoutStorage(): {
     setId: number,
     data: { actual_reps: number; actual_weight: number; status: 'completed' | 'skipped' }
   ) => void;
+  removeSet: (workoutId: number, setId: number) => void;
   getStoredStateForWorkout: (workoutId: number) => StoredWorkoutState | null;
 } {
   const [storedState, setStoredState, clearStoredState] =
@@ -153,6 +154,32 @@ export function useWorkoutStorage(): {
     [setStoredState]
   );
 
+  const removeSet = useCallback(
+    (workoutId: number, setId: number) => {
+      setStoredState((prev) => {
+        if (!prev || prev.workoutId !== workoutId) {
+          return prev;
+        }
+
+        // Remove the set from the stored state
+        const { [setId]: _removed, ...remainingSets } = prev.sets;
+        void _removed; // Suppress unused variable warning
+
+        // If no sets remain, clear the state entirely
+        if (Object.keys(remainingSets).length === 0) {
+          return null;
+        }
+
+        return {
+          ...prev,
+          sets: remainingSets,
+          lastUpdated: new Date().toISOString(),
+        };
+      });
+    },
+    [setStoredState]
+  );
+
   const getStoredStateForWorkout = useCallback(
     (workoutId: number): StoredWorkoutState | null => {
       if (storedState && storedState.workoutId === workoutId) {
@@ -168,6 +195,7 @@ export function useWorkoutStorage(): {
     saveState,
     clearState,
     updateSet,
+    removeSet,
     getStoredStateForWorkout,
   };
 }

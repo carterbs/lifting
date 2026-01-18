@@ -77,7 +77,7 @@ test.describe('Workout Tracking', () => {
       expect(firstSet).toBeDefined();
       if (firstSet === undefined) throw new Error('First set should be defined');
 
-      // Log the set with target values (just click save)
+      // Log the set with target values (just click checkbox)
       await todayPage.logSetWithTargets(firstSet.id);
 
       // Verify the set is logged with target values
@@ -113,7 +113,7 @@ test.describe('Workout Tracking', () => {
       expect(timerVisible).toBe(true);
     });
 
-    test('should skip a set', async ({ todayPage, api }) => {
+    test('should unlog a set', async ({ todayPage, api }) => {
       await todayPage.goto();
       await todayPage.waitForLoad();
       await todayPage.startWorkout();
@@ -128,11 +128,25 @@ test.describe('Workout Tracking', () => {
       expect(firstSet).toBeDefined();
       if (firstSet === undefined) throw new Error('First set should be defined');
 
-      await todayPage.skipSet(firstSet.id);
+      // Log the set first
+      await todayPage.logSetWithTargets(firstSet.id);
 
-      // Verify the set is skipped
-      const isSkipped = await todayPage.isSetSkipped(firstSet.id);
-      expect(isSkipped).toBe(true);
+      // Verify the set is logged
+      let isLogged = await todayPage.isSetLogged(firstSet.id);
+      expect(isLogged).toBe(true);
+
+      // Dismiss the rest timer if visible
+      const timerVisible = await todayPage.isRestTimerVisible();
+      if (timerVisible) {
+        await todayPage.dismissRestTimer();
+      }
+
+      // Unlog the set
+      await todayPage.unlogSet(firstSet.id);
+
+      // Verify the set is unlogged
+      isLogged = await todayPage.isSetLogged(firstSet.id);
+      expect(isLogged).toBe(false);
     });
 
     test('should complete a workout with all sets logged', async ({
@@ -165,7 +179,7 @@ test.describe('Workout Tracking', () => {
       // After completion, the app shows the next upcoming workout (next week)
     });
 
-    test('should complete a workout with some sets skipped', async ({
+    test('should complete a workout with some sets pending', async ({
       todayPage,
       api,
     }) => {
@@ -180,7 +194,7 @@ test.describe('Workout Tracking', () => {
       const firstExercise = workout.exercises[0];
       const sets = firstExercise?.sets ?? [];
 
-      // Log first set, skip the rest
+      // Log first set only, leave others pending
       const firstSetInSets = sets[0];
       if (firstSetInSets !== undefined) {
         await todayPage.logSetWithTargets(firstSetInSets.id);
@@ -190,15 +204,7 @@ test.describe('Workout Tracking', () => {
         }
       }
 
-      // Skip remaining sets
-      for (let i = 1; i < sets.length; i++) {
-        const set = sets[i];
-        if (set !== undefined) {
-          await todayPage.skipSet(set.id);
-        }
-      }
-
-      // Complete the workout
+      // Complete the workout (pending sets will remain as pending)
       await todayPage.completeWorkout();
 
       // After completion, the app shows the next upcoming workout (next week)

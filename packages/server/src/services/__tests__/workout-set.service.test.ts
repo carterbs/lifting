@@ -382,4 +382,107 @@ describe('WorkoutSetService', () => {
       expect(result.status).toBe('skipped');
     });
   });
+
+  describe('unlog', () => {
+    it('should throw for non-existent set', () => {
+      expect(() => service.unlog(999)).toThrow('WorkoutSet with id 999 not found');
+    });
+
+    it('should set status to pending', () => {
+      const { workoutSetId, workoutId } = createTestData();
+      const repos = createRepositories(db);
+
+      repos.workout.update(workoutId, {
+        status: 'in_progress',
+        started_at: new Date().toISOString(),
+      });
+
+      // Log the set first
+      service.log(workoutSetId, { actual_reps: 8, actual_weight: 95 });
+
+      // Then unlog it
+      const result = service.unlog(workoutSetId);
+
+      expect(result.status).toBe('pending');
+    });
+
+    it('should clear actual values', () => {
+      const { workoutSetId, workoutId } = createTestData();
+      const repos = createRepositories(db);
+
+      repos.workout.update(workoutId, {
+        status: 'in_progress',
+        started_at: new Date().toISOString(),
+      });
+
+      // Log the set first
+      service.log(workoutSetId, { actual_reps: 8, actual_weight: 95 });
+
+      // Then unlog it
+      const result = service.unlog(workoutSetId);
+
+      expect(result.actual_reps).toBeNull();
+      expect(result.actual_weight).toBeNull();
+    });
+
+    it('should throw for completed workout', () => {
+      const { workoutSetId, workoutId } = createTestData();
+      const repos = createRepositories(db);
+
+      repos.workout.update(workoutId, {
+        status: 'completed',
+        started_at: new Date().toISOString(),
+        completed_at: new Date().toISOString(),
+      });
+
+      expect(() => service.unlog(workoutSetId)).toThrow(
+        'Cannot unlog sets for a completed workout'
+      );
+    });
+
+    it('should throw for skipped workout', () => {
+      const { workoutSetId, workoutId } = createTestData();
+      const repos = createRepositories(db);
+
+      repos.workout.update(workoutId, { status: 'skipped' });
+
+      expect(() => service.unlog(workoutSetId)).toThrow(
+        'Cannot unlog sets for a skipped workout'
+      );
+    });
+
+    it('should unlog a skipped set', () => {
+      const { workoutSetId, workoutId } = createTestData();
+      const repos = createRepositories(db);
+
+      repos.workout.update(workoutId, {
+        status: 'in_progress',
+        started_at: new Date().toISOString(),
+      });
+
+      // Skip the set first
+      service.skip(workoutSetId);
+
+      // Then unlog it
+      const result = service.unlog(workoutSetId);
+
+      expect(result.status).toBe('pending');
+      expect(result.actual_reps).toBeNull();
+      expect(result.actual_weight).toBeNull();
+    });
+
+    it('should allow unlogging an already pending set (idempotent)', () => {
+      const { workoutSetId, workoutId } = createTestData();
+      const repos = createRepositories(db);
+
+      repos.workout.update(workoutId, {
+        status: 'in_progress',
+        started_at: new Date().toISOString(),
+      });
+
+      // Unlog a pending set - should not throw
+      const result = service.unlog(workoutSetId);
+      expect(result.status).toBe('pending');
+    });
+  });
 });

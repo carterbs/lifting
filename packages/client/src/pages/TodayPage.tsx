@@ -11,7 +11,7 @@ export function TodayPage(): JSX.Element {
     completeWorkout,
     skipWorkout,
     logSet,
-    skipSet,
+    unlogSet,
     isStarting,
     isCompleting,
     isSkippingWorkout,
@@ -74,7 +74,7 @@ export function TodayPage(): JSX.Element {
         <WorkoutView
           workout={workout}
           onSetLogged={(setId, data) => logSet(setId, data)}
-          onSetSkipped={(setId) => skipSet(setId)}
+          onSetUnlogged={(setId) => unlogSet(setId)}
           onWorkoutStarted={startWorkout}
           onWorkoutCompleted={completeWorkout}
           onWorkoutSkipped={skipWorkout}

@@ -122,4 +122,14 @@ export const workoutApi = {
     });
     return handleResponse<WorkoutSet>(response);
   },
+
+  /**
+   * Unlog a set (revert to pending)
+   */
+  unlogSet: async (setId: number): Promise<WorkoutSet> => {
+    const response = await fetch(`${API_BASE}/workout-sets/${setId}/unlog`, {
+      method: 'PUT',
+    });
+    return handleResponse<WorkoutSet>(response);
+  },
 };

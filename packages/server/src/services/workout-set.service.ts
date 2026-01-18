@@ -119,4 +119,42 @@ export class WorkoutSetService {
 
     return updated;
   }
+
+  /**
+   * Unlog a set (revert to pending)
+   * Clears actual_reps/actual_weight and sets status back to pending
+   */
+  unlog(id: number): WorkoutSet {
+    const workoutSet = this.workoutSetRepo.findById(id);
+    if (!workoutSet) {
+      throw new Error(`WorkoutSet with id ${id} not found`);
+    }
+
+    // Check workout status
+    const workout = this.workoutRepo.findById(workoutSet.workout_id);
+    if (!workout) {
+      throw new Error(`Workout with id ${workoutSet.workout_id} not found`);
+    }
+
+    if (workout.status === 'completed') {
+      throw new Error('Cannot unlog sets for a completed workout');
+    }
+
+    if (workout.status === 'skipped') {
+      throw new Error('Cannot unlog sets for a skipped workout');
+    }
+
+    // Update the set - clear actual values and set status to pending
+    const updated = this.workoutSetRepo.update(id, {
+      actual_reps: null,
+      actual_weight: null,
+      status: 'pending',
+    });
+
+    if (!updated) {
+      throw new Error(`Failed to update WorkoutSet with id ${id}`);
+    }
+
+    return updated;
+  }
 }

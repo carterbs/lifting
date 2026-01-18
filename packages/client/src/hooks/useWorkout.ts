@@ -357,6 +357,76 @@ export function useSkipSet(): UseMutationResult<
 }
 
 /**
+ * Hook for unlogging a set (reverting to pending)
+ */
+export function useUnlogSet(): UseMutationResult<
+  WorkoutSet,
+  ApiClientError,
+  { setId: number; workoutId: number },
+  { previousWorkout: WorkoutWithExercises | null | undefined }
+> {
+  const queryClient = useQueryClient();
+  const { removeSet } = useWorkoutStorage();
+
+  return useMutation({
+    mutationFn: ({ setId }) => workoutApi.unlogSet(setId),
+    onMutate: async ({ setId, workoutId }) => {
+      await queryClient.cancelQueries({ queryKey: workoutKeys.detail(workoutId) });
+      await queryClient.cancelQueries({ queryKey: workoutKeys.today() });
+
+      const previousWorkout = queryClient.getQueryData<WorkoutWithExercises>(
+        workoutKeys.detail(workoutId)
+      );
+
+      // Optimistically update the workout
+      if (previousWorkout) {
+        const optimisticWorkout: WorkoutWithExercises = {
+          ...previousWorkout,
+          exercises: previousWorkout.exercises.map((ex) => ({
+            ...ex,
+            sets: ex.sets.map((set) =>
+              set.id === setId
+                ? {
+                    ...set,
+                    actual_reps: null,
+                    actual_weight: null,
+                    status: 'pending' as const,
+                  }
+                : set
+            ),
+            completed_sets: ex.sets.filter(
+              (s) => s.id !== setId && s.status === 'completed'
+            ).length,
+          })),
+        };
+        queryClient.setQueryData(workoutKeys.detail(workoutId), optimisticWorkout);
+        queryClient.setQueryData(workoutKeys.today(), optimisticWorkout);
+      }
+
+      // Remove the set from localStorage
+      removeSet(workoutId, setId);
+
+      return { previousWorkout };
+    },
+    onError: (_error, { workoutId }, context) => {
+      if (context?.previousWorkout) {
+        queryClient.setQueryData(
+          workoutKeys.detail(workoutId),
+          context.previousWorkout
+        );
+        queryClient.setQueryData(workoutKeys.today(), context.previousWorkout);
+      }
+    },
+    onSettled: (_data, _error, { workoutId }) => {
+      void queryClient.invalidateQueries({
+        queryKey: workoutKeys.detail(workoutId),
+      });
+      void queryClient.invalidateQueries({ queryKey: workoutKeys.today() });
+    },
+  });
+}
+
+/**
  * Combined hook for workout tracking functionality
  */
 export function useWorkoutTracking(workoutId?: number): {
@@ -367,19 +437,19 @@ export function useWorkoutTracking(workoutId?: number): {
   completeWorkout: () => void;
   skipWorkout: () => void;
   logSet: (setId: number, data: LogWorkoutSetInput) => void;
-  skipSet: (setId: number) => void;
+  unlogSet: (setId: number) => void;
   isStarting: boolean;
   isCompleting: boolean;
   isSkippingWorkout: boolean;
   isLoggingSet: boolean;
-  isSkippingSet: boolean;
+  isUnloggingSet: boolean;
 } {
   const todaysWorkoutQuery = useTodaysWorkout();
   const startMutation = useStartWorkout();
   const completeMutation = useCompleteWorkout();
   const skipWorkoutMutation = useSkipWorkout();
   const logSetMutation = useLogSet();
-  const skipSetMutation = useSkipSet();
+  const unlogSetMutation = useUnlogSet();
 
   // Use today's workout or specific workout if ID provided
   const effectiveWorkoutId = workoutId ?? todaysWorkoutQuery.data?.id;
@@ -412,13 +482,13 @@ export function useWorkoutTracking(workoutId?: number): {
     [effectiveWorkoutId, logSetMutation]
   );
 
-  const skipSet = useCallback(
+  const unlogSet = useCallback(
     (setId: number) => {
       if (effectiveWorkoutId !== undefined) {
-        skipSetMutation.mutate({ setId, workoutId: effectiveWorkoutId });
+        unlogSetMutation.mutate({ setId, workoutId: effectiveWorkoutId });
       }
     },
-    [effectiveWorkoutId, skipSetMutation]
+    [effectiveWorkoutId, unlogSetMutation]
   );
 
   return {
@@ -429,11 +499,11 @@ export function useWorkoutTracking(workoutId?: number): {
     completeWorkout,
     skipWorkout,
     logSet,
-    skipSet,
+    unlogSet,
     isStarting: startMutation.isPending,
     isCompleting: completeMutation.isPending,
     isSkippingWorkout: skipWorkoutMutation.isPending,
     isLoggingSet: logSetMutation.isPending,
-    isSkippingSet: skipSetMutation.isPending,
+    isUnloggingSet: unlogSetMutation.isPending,
   };
 }

@@ -100,7 +100,7 @@ export function WeekCard({
                     <Text size="2" weight="medium">
                       {workout.plan_day_name}
                     </Text>
-                    {workout.status === 'completed' && workout.completed_at ? (
+                    {workout.status === 'completed' && workout.completed_at !== null ? (
                       <Text size="1" color="gray">
                         Completed {formatCompletedAt(workout.completed_at)}
                       </Text>

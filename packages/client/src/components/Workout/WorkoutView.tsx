@@ -16,7 +16,7 @@ import {
 interface WorkoutViewProps {
   workout: WorkoutWithExercises;
   onSetLogged: (setId: number, data: LogWorkoutSetInput) => void;
-  onSetSkipped: (setId: number) => void;
+  onSetUnlogged: (setId: number) => void;
   onWorkoutStarted: () => void;
   onWorkoutCompleted: () => void;
   onWorkoutSkipped: () => void;
@@ -83,7 +83,7 @@ function getStatusBadge(status: string): JSX.Element {
 export function WorkoutView({
   workout,
   onSetLogged,
-  onSetSkipped,
+  onSetUnlogged,
   onWorkoutStarted,
   onWorkoutCompleted,
   onWorkoutSkipped,
@@ -199,7 +199,7 @@ export function WorkoutView({
         <Flex justify="between" align="center">
           <Box>
             <Heading size="5">{workout.plan_day_name}</Heading>
-            {workout.status === 'completed' && workout.completed_at ? (
+            {workout.status === 'completed' && workout.completed_at !== null ? (
               <Text size="2" color="gray" data-testid="completed-at">
                 Completed {formatCompletedAt(workout.completed_at)}
               </Text>
@@ -273,7 +273,7 @@ export function WorkoutView({
             exercise={exercise}
             workoutStatus={workout.status}
             onSetLogged={handleSetLogged}
-            onSetSkipped={onSetSkipped}
+            onSetUnlogged={onSetUnlogged}
           />
         ))}
       </Flex>
@@ -291,9 +291,9 @@ export function WorkoutView({
           <AlertDialog.Content
             data-testid="confirm-dialog"
             style={{
-              backgroundColor: 'var(--color-background)',
+              backgroundColor: 'var(--gray-1)',
               borderRadius: 'var(--radius-3)',
-              padding: '24px',
+              padding: 'var(--space-5)',
               position: 'fixed',
               top: '50%',
               left: '50%',
@@ -347,9 +347,9 @@ export function WorkoutView({
           <AlertDialog.Content
             data-testid="confirm-dialog"
             style={{
-              backgroundColor: 'var(--color-background)',
+              backgroundColor: 'var(--gray-1)',
               borderRadius: 'var(--radius-3)',
-              padding: '24px',
+              padding: 'var(--space-5)',
               position: 'fixed',
               top: '50%',
               left: '50%',

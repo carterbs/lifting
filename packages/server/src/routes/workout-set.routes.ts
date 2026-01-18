@@ -88,3 +88,38 @@ workoutSetRouter.put(
     }
   }
 );
+
+// PUT /api/workout-sets/:id/unlog
+workoutSetRouter.put(
+  '/:id/unlog',
+  (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const service = getWorkoutSetService();
+      const id = parseInt(req.params['id'] ?? '', 10);
+
+      if (isNaN(id)) {
+        throw new NotFoundError('WorkoutSet', req.params['id'] ?? 'unknown');
+      }
+
+      const set = service.unlog(id);
+
+      const response: ApiResponse<WorkoutSet> = {
+        success: true,
+        data: set,
+      };
+      res.json(response);
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          return next(
+            new NotFoundError('WorkoutSet', req.params['id'] ?? 'unknown')
+          );
+        }
+        if (error.message.includes('Cannot')) {
+          return next(new ValidationError(error.message));
+        }
+      }
+      next(error);
+    }
+  }
+);
