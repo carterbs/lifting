@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Box, Container, Heading, Flex } from '@radix-ui/themes';
 import { BottomNav } from './Navigation';
@@ -10,6 +10,7 @@ import {
   PlanDetailPage,
   EditPlanPage,
   TodayPage,
+  WorkoutPage,
 } from '../pages';
 import { usePlans } from '../hooks/usePlans';
 import {
@@ -29,6 +30,7 @@ const queryClient = new QueryClient({
 });
 
 function MesoPage(): JSX.Element {
+  const navigate = useNavigate();
   const { data: activeMesocycle, isLoading: isLoadingMesocycle } =
     useActiveMesocycle();
   const { data: plans, isLoading: isLoadingPlans } = usePlans();
@@ -54,8 +56,7 @@ function MesoPage(): JSX.Element {
   };
 
   const handleWorkoutClick = (workoutId: number): void => {
-    // TODO: Navigate to workout tracking page when implemented
-    console.log('Workout clicked:', workoutId);
+    navigate(`/workouts/${workoutId}`);
   };
 
   return (
@@ -88,6 +89,7 @@ function AppContent(): JSX.Element {
         <Routes>
           <Route path="/" element={<TodayPage />} />
           <Route path="/meso" element={<MesoPage />} />
+          <Route path="/workouts/:id" element={<WorkoutPage />} />
           <Route path="/plans" element={<PlansPage />} />
           <Route path="/plans/new" element={<CreatePlanPage />} />
           <Route path="/plans/:id" element={<PlanDetailPage />} />

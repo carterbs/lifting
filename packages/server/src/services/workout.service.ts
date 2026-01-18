@@ -52,24 +52,21 @@ export class WorkoutService {
   }
 
   /**
-   * Get today's workout that is pending or in_progress
-   * Returns null if no workout scheduled or if workout is already completed/skipped
+   * Get the next upcoming workout that is pending or in_progress
+   * Looks from today onwards, so "Today" always shows the next workout to do
    */
   getTodaysWorkout(): WorkoutWithExercises | null {
     const todayParts = new Date().toISOString().split('T');
     const today = todayParts[0] ?? '';
-    const workouts = this.workoutRepo.findByDate(today);
 
-    // Find a workout that is pending or in_progress
-    const activeWorkout = workouts.find(
-      (w) => w.status === 'pending' || w.status === 'in_progress'
-    );
+    // Find the next upcoming workout (today or future)
+    const nextWorkout = this.workoutRepo.findNextUpcoming(today);
 
-    if (!activeWorkout) {
+    if (!nextWorkout) {
       return null;
     }
 
-    return this.buildWorkoutWithExercises(activeWorkout);
+    return this.buildWorkoutWithExercises(nextWorkout);
   }
 
   /**

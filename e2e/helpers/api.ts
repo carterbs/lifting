@@ -491,7 +491,7 @@ export class ApiHelper {
     // Start date should be the most recent occurrence of day 0 (Sunday)
     const startDate = new Date(today);
     startDate.setDate(today.getDate() - today.getDay());
-    const [startDateStr] = startDate.toISOString().split('T');;
+    const startDateStr = startDate.toISOString().split('T')[0] ?? '';
 
     // Create mesocycle
     const mesocycle = await this.createMesocycle(plan.id, startDateStr);

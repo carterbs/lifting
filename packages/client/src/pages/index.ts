@@ -4,3 +4,4 @@ export { CreatePlanPage } from './CreatePlanPage';
 export { PlanDetailPage } from './PlanDetailPage';
 export { EditPlanPage } from './EditPlanPage';
 export { TodayPage } from './TodayPage';
+export { WorkoutPage } from './WorkoutPage';

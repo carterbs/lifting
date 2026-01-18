@@ -86,6 +86,21 @@ export class WorkoutRepository extends BaseRepository<
     return rows.map((row) => this.rowToWorkout(row));
   }
 
+  /**
+   * Find the next upcoming workout (pending or in_progress) on or after the given date
+   */
+  findNextUpcoming(fromDate: string): Workout | null {
+    const stmt = this.db.prepare(`
+      SELECT * FROM workouts
+      WHERE scheduled_date >= ?
+        AND status IN ('pending', 'in_progress')
+      ORDER BY scheduled_date ASC, id ASC
+      LIMIT 1
+    `);
+    const row = stmt.get(fromDate) as WorkoutRow | undefined;
+    return row ? this.rowToWorkout(row) : null;
+  }
+
   findAll(): Workout[] {
     const stmt = this.db.prepare(
       'SELECT * FROM workouts ORDER BY scheduled_date DESC'
