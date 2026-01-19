@@ -312,13 +312,11 @@ export function WorkoutView({
       <AlertDialog.Root open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
         <AlertDialog.Content maxWidth="400px" data-testid="confirm-dialog">
           <AlertDialog.Title>Complete Workout?</AlertDialog.Title>
-          <AlertDialog.Description>
-            <Text size="3" color="gray" as="p">
-              You have {pendingSetsCount} set{pendingSetsCount !== 1 ? 's' : ''} not
-              logged. They will remain as pending. Are you sure you want to
-              complete this workout?
-            </Text>
-          </AlertDialog.Description>
+          <Text as="p" size="3" color="gray">
+            You have {pendingSetsCount} set{pendingSetsCount !== 1 ? 's' : ''} not
+            logged. They will remain as pending. Are you sure you want to
+            complete this workout?
+          </Text>
           <Flex gap="3" justify="end" mt="4">
             <AlertDialog.Cancel>
               <Button variant="soft" color="gray">
@@ -342,12 +340,10 @@ export function WorkoutView({
       <AlertDialog.Root open={showSkipConfirm} onOpenChange={setShowSkipConfirm}>
         <AlertDialog.Content maxWidth="400px" data-testid="confirm-dialog">
           <AlertDialog.Title>Skip Workout?</AlertDialog.Title>
-          <AlertDialog.Description>
-            <Text size="3" color="gray" as="p">
-              Are you sure you want to skip this workout? All pending sets will
-              be marked as skipped. Any logged sets will be preserved.
-            </Text>
-          </AlertDialog.Description>
+          <Text as="p" size="3" color="gray">
+            Are you sure you want to skip this workout? All pending sets will
+            be marked as skipped. Any logged sets will be preserved.
+          </Text>
           <Flex gap="3" justify="end" mt="4">
             <AlertDialog.Cancel>
               <Button variant="soft" color="gray">

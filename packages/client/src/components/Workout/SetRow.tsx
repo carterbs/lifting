@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Flex, Text, TextField, Checkbox, IconButton } from '@radix-ui/themes';
 import { TrashIcon } from '@radix-ui/react-icons';
 import type { WorkoutSet, WorkoutStatus, LogWorkoutSetInput } from '@lifting/shared';
@@ -13,6 +13,21 @@ interface SetRowProps {
   onUnlog: () => void;
   onRemove?: (() => void) | undefined;
   onWeightChange?: ((weight: string) => void) | undefined;
+}
+
+function validateWeight(value: string): string | null {
+  const num = parseFloat(value);
+  if (isNaN(num)) return 'Enter a valid number';
+  if (num < 0) return 'Weight cannot be negative';
+  return null;
+}
+
+function validateReps(value: string): string | null {
+  const num = parseInt(value, 10);
+  if (isNaN(num)) return 'Enter a valid number';
+  if (num < 0) return 'Reps cannot be negative';
+  if (!Number.isInteger(parseFloat(value))) return 'Reps must be a whole number';
+  return null;
 }
 
 export function SetRow({
@@ -37,17 +52,63 @@ export function SetRow({
   const [reps, setReps] = useState<string>(
     String(set.actual_reps ?? set.target_reps)
   );
+  const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Update input values when set changes (e.g., after unlog) or weight override changes
+  // Track previous values to detect actual changes (not just initial mount)
+  const prevTargetWeight = useRef(set.target_weight);
+  const prevTargetReps = useRef(set.target_reps);
+  const prevWeightOverride = useRef(weightOverride);
+
+  // Update input values when target values or weight override ACTUALLY CHANGE.
+  // We skip the initial render to preserve actual values for already-logged sets.
+  // We also intentionally exclude actual_weight/actual_reps from dependencies
+  // to preserve user input when server errors cause optimistic updates to revert.
   useEffect(() => {
-    setWeight(weightOverride ?? String(set.actual_weight ?? set.target_weight));
-    setReps(String(set.actual_reps ?? set.target_reps));
-  }, [set.actual_weight, set.actual_reps, set.target_weight, set.target_reps, weightOverride]);
+    const targetWeightChanged = set.target_weight !== prevTargetWeight.current;
+    const weightOverrideChanged = weightOverride !== prevWeightOverride.current;
+
+    if (targetWeightChanged || weightOverrideChanged) {
+      setWeight(weightOverride ?? String(set.target_weight));
+    }
+
+    prevTargetWeight.current = set.target_weight;
+    prevWeightOverride.current = weightOverride;
+  }, [set.target_weight, weightOverride]);
+
+  useEffect(() => {
+    const targetRepsChanged = set.target_reps !== prevTargetReps.current;
+
+    if (targetRepsChanged) {
+      setReps(String(set.target_reps));
+    }
+
+    prevTargetReps.current = set.target_reps;
+  }, [set.target_reps]);
+
+  // Clear validation error when inputs change
+  useEffect(() => {
+    if (validationError !== null) {
+      setValidationError(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weight, reps]);
 
   const handleCheckboxChange = (checked: boolean): void => {
     if (checked) {
-      const weightNum = parseFloat(weight) || 0;
-      const repsNum = parseInt(reps, 10) || 0;
+      // Validate before logging
+      const weightError = validateWeight(weight);
+      if (weightError !== null) {
+        setValidationError(weightError);
+        return;
+      }
+      const repsError = validateReps(reps);
+      if (repsError !== null) {
+        setValidationError(repsError);
+        return;
+      }
+
+      const weightNum = parseFloat(weight);
+      const repsNum = parseInt(reps, 10);
       onLog({
         actual_weight: weightNum,
         actual_reps: repsNum,
@@ -63,25 +124,33 @@ export function SetRow({
     return 'pending';
   };
 
+  const hasError = validationError !== null;
+
   return (
     <Flex
       data-testid={`set-row-${set.id}`}
       className={getStatusClass()}
-      align="center"
-      justify="between"
-      gap="2"
+      direction="column"
+      gap="1"
       p="2"
       style={{
         backgroundColor: isLogged
           ? 'var(--green-2)'
           : isSkipped
             ? 'var(--gray-3)'
-            : 'var(--gray-2)',
+            : hasError
+              ? 'var(--red-2)'
+              : 'var(--gray-2)',
         borderRadius: 'var(--radius-2)',
         opacity: isSkipped ? 0.7 : 1,
-        border: isActive ? '2px solid var(--accent-9)' : '2px solid transparent',
+        border: isActive
+          ? '2px solid var(--accent-9)'
+          : hasError
+            ? '2px solid var(--red-6)'
+            : '2px solid transparent',
       }}
     >
+      <Flex align="center" justify="between" gap="2">
       {/* Set number badge */}
       <Flex
         align="center"
@@ -164,6 +233,14 @@ export function SetRow({
           size="3"
         />
       </Flex>
+      </Flex>
+
+      {/* Validation error message */}
+      {validationError !== null && (
+        <Text size="1" color="red" data-testid={`validation-error-${set.id}`}>
+          {validationError}
+        </Text>
+      )}
     </Flex>
   );
 }
