@@ -5,6 +5,7 @@ import { useExercises } from '../hooks/useExercises';
 import {
   usePlan,
   usePlanDays,
+  useAllPlanDayExercises,
   useUpdatePlan,
   useCreatePlanDay,
   useUpdatePlanDay,
@@ -31,6 +32,10 @@ export function EditPlanPage(): JSX.Element {
 
   const { data: plan, isLoading: planLoading, error: planError } = usePlan(planId);
   const { data: planDays, isLoading: daysLoading } = usePlanDays(planId);
+  const { data: dayExercisesMap, isLoading: dayExercisesLoading } = useAllPlanDayExercises(
+    planId,
+    planDays ?? []
+  );
   const { data: exercises, isLoading: exercisesLoading } = useExercises();
   const { data: activeMesocycle } = useActiveMesocycle();
 
@@ -53,17 +58,17 @@ export function EditPlanPage(): JSX.Element {
 
   // Build initial form state from fetched plan data
   useEffect(() => {
-    if (plan && planDays && initialFormState === null) {
+    if (plan && planDays && dayExercisesMap && initialFormState === null) {
       const formState: PlanFormState = {
         name: plan.name,
         durationWeeks: plan.duration_weeks,
         days: planDays.map((day) =>
-          convertPlanDayToFormState(day, [])
+          convertPlanDayToFormState(day, dayExercisesMap.get(day.id) ?? [])
         ),
       };
       setInitialFormState(formState);
     }
-  }, [plan, planDays, initialFormState]);
+  }, [plan, planDays, dayExercisesMap, initialFormState]);
 
   // Show warning dialog if plan has active mesocycle and user hasn't acknowledged
   useEffect(() => {
@@ -195,7 +200,7 @@ export function EditPlanPage(): JSX.Element {
     }
   };
 
-  const isLoading = planLoading || daysLoading || exercisesLoading;
+  const isLoading = planLoading || daysLoading || dayExercisesLoading || exercisesLoading;
   const isSubmitting =
     updatePlan.isPending ||
     createPlanDay.isPending ||

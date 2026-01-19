@@ -1,5 +1,6 @@
 import {
   useQuery,
+  useQueries,
   useMutation,
   useQueryClient,
   type UseQueryResult,
@@ -228,4 +229,42 @@ export function useDeletePlanDayExercise(): UseMutationResult<
       });
     },
   });
+}
+
+/**
+ * Fetch exercises for all days of a plan in parallel.
+ * Returns a map of dayId -> exercises array.
+ */
+export function useAllPlanDayExercises(
+  planId: number,
+  days: PlanDay[]
+): {
+  data: Map<number, PlanDayExercise[]> | undefined;
+  isLoading: boolean;
+} {
+  const queries = useQueries({
+    queries: days.map((day) => ({
+      queryKey: planKeys.dayExercises(planId, day.id),
+      queryFn: (): Promise<PlanDayExercise[]> =>
+        planDayExerciseApi.getPlanDayExercises(planId, day.id),
+      enabled: planId > 0 && day.id > 0,
+    })),
+  });
+
+  const isLoading = queries.some((q) => q.isLoading);
+  const allLoaded = queries.every((q) => q.isSuccess);
+
+  if (!allLoaded || days.length === 0) {
+    return { data: undefined, isLoading };
+  }
+
+  const exerciseMap = new Map<number, PlanDayExercise[]>();
+  days.forEach((day, index) => {
+    const query = queries[index];
+    if (query?.data) {
+      exerciseMap.set(day.id, query.data);
+    }
+  });
+
+  return { data: exerciseMap, isLoading };
 }
