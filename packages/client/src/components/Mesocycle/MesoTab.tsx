@@ -20,7 +20,8 @@ interface MesoTabProps {
 }
 
 function formatDate(dateString: string): string {
-  const date = new Date(dateString);
+  // Append T00:00:00 to parse as local time, not UTC (avoids off-by-one day in negative UTC timezones)
+  const date = new Date(dateString + 'T00:00:00');
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
