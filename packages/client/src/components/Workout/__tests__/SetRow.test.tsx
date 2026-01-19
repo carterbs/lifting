@@ -352,4 +352,76 @@ describe('SetRow', () => {
     expect(weightInput).toHaveValue('140');
     expect(repsInput).toHaveValue('8');
   });
+
+  it('should call onWeightChange when weight input changes', async () => {
+    const user = userEvent.setup();
+    const mockOnWeightChange = vi.fn();
+
+    renderWithTheme(
+      <SetRow
+        set={mockPendingSet}
+        workoutStatus="in_progress"
+        isActive={false}
+        onLog={mockOnLog}
+        onUnlog={mockOnUnlog}
+        onWeightChange={mockOnWeightChange}
+      />
+    );
+
+    const weightInput = screen.getByTestId('weight-input-1');
+    await user.clear(weightInput);
+    await user.type(weightInput, '150');
+
+    // onWeightChange is called for each character typed after clear
+    expect(mockOnWeightChange).toHaveBeenCalledWith('1');
+    expect(mockOnWeightChange).toHaveBeenCalledWith('15');
+    expect(mockOnWeightChange).toHaveBeenCalledWith('150');
+  });
+
+  it('should use weightOverride when provided', () => {
+    renderWithTheme(
+      <SetRow
+        set={mockPendingSet}
+        workoutStatus="in_progress"
+        isActive={false}
+        onLog={mockOnLog}
+        onUnlog={mockOnUnlog}
+        weightOverride="200"
+      />
+    );
+
+    const weightInput = screen.getByTestId('weight-input-1');
+    expect(weightInput).toHaveValue('200');
+  });
+
+  it('should update weight when weightOverride changes', () => {
+    const { rerender } = renderWithTheme(
+      <SetRow
+        set={mockPendingSet}
+        workoutStatus="in_progress"
+        isActive={false}
+        onLog={mockOnLog}
+        onUnlog={mockOnUnlog}
+      />
+    );
+
+    const weightInput = screen.getByTestId('weight-input-1');
+    expect(weightInput).toHaveValue('135');
+
+    // Re-render with weightOverride
+    rerender(
+      <Theme>
+        <SetRow
+          set={mockPendingSet}
+          workoutStatus="in_progress"
+          isActive={false}
+          onLog={mockOnLog}
+          onUnlog={mockOnUnlog}
+          weightOverride="180"
+        />
+      </Theme>
+    );
+
+    expect(weightInput).toHaveValue('180');
+  });
 });

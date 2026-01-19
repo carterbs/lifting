@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, Flex, Text, Badge, Box, Button } from '@radix-ui/themes';
 import { PlusIcon } from '@radix-ui/react-icons';
 import type { WorkoutStatus, LogWorkoutSetInput } from '@lifting/shared';
@@ -51,6 +52,24 @@ export function ExerciseCard({
   const lastPendingSet = pendingSets[pendingSets.length - 1];
   const canRemoveAnySet = totalSets > 1 && pendingSets.length > 0;
 
+  // Track weight overrides for cascading weight changes to subsequent sets
+  const [weightOverrides, setWeightOverrides] = useState<Record<number, string>>({});
+
+  // When a set's weight changes, cascade the new weight to all subsequent sets
+  const handleWeightChange = (setIndex: number, newWeight: string): void => {
+    setWeightOverrides((prev) => {
+      const updated = { ...prev };
+      // Update all sets after the current one
+      for (let i = setIndex + 1; i < exercise.sets.length; i++) {
+        const set = exercise.sets[i];
+        if (set !== undefined) {
+          updated[set.id] = newWeight;
+        }
+      }
+      return updated;
+    });
+  };
+
   return (
     <Card
       data-testid={`exercise-card-${exercise.exercise_id}`}
@@ -78,16 +97,18 @@ export function ExerciseCard({
 
       {/* Sets list */}
       <Flex direction="column" gap="2">
-        {exercise.sets.map((set) => (
+        {exercise.sets.map((set, index) => (
           <SetRow
             key={set.id}
             set={set}
             workoutStatus={workoutStatus}
             isActive={set.id === activeSetId}
             canRemove={canRemoveAnySet && set.id === lastPendingSet?.id}
+            weightOverride={weightOverrides[set.id]}
             onLog={(data) => onSetLogged(set.id, data)}
             onUnlog={() => onSetUnlogged(set.id)}
             onRemove={onRemoveSet}
+            onWeightChange={(weight) => handleWeightChange(index, weight)}
           />
         ))}
       </Flex>
