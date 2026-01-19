@@ -8,9 +8,11 @@ interface SetRowProps {
   workoutStatus: WorkoutStatus;
   isActive: boolean;
   canRemove?: boolean | undefined;
+  weightOverride?: string | undefined;
   onLog: (data: LogWorkoutSetInput) => void;
   onUnlog: () => void;
   onRemove?: (() => void) | undefined;
+  onWeightChange?: ((weight: string) => void) | undefined;
 }
 
 export function SetRow({
@@ -18,9 +20,11 @@ export function SetRow({
   workoutStatus,
   isActive,
   canRemove,
+  weightOverride,
   onLog,
   onUnlog,
   onRemove,
+  onWeightChange,
 }: SetRowProps): JSX.Element {
   const isDisabled = workoutStatus === 'completed' || workoutStatus === 'skipped';
   const isLogged = set.status === 'completed';
@@ -28,17 +32,17 @@ export function SetRow({
 
   // Initialize input values from target or actual values
   const [weight, setWeight] = useState<string>(
-    String(set.actual_weight ?? set.target_weight)
+    weightOverride ?? String(set.actual_weight ?? set.target_weight)
   );
   const [reps, setReps] = useState<string>(
     String(set.actual_reps ?? set.target_reps)
   );
 
-  // Update input values when set changes (e.g., after unlog)
+  // Update input values when set changes (e.g., after unlog) or weight override changes
   useEffect(() => {
-    setWeight(String(set.actual_weight ?? set.target_weight));
+    setWeight(weightOverride ?? String(set.actual_weight ?? set.target_weight));
     setReps(String(set.actual_reps ?? set.target_reps));
-  }, [set.actual_weight, set.actual_reps, set.target_weight, set.target_reps]);
+  }, [set.actual_weight, set.actual_reps, set.target_weight, set.target_reps, weightOverride]);
 
   const handleCheckboxChange = (checked: boolean): void => {
     if (checked) {
@@ -104,7 +108,10 @@ export function SetRow({
           inputMode="decimal"
           pattern="[0-9]*\.?[0-9]*"
           value={weight}
-          onChange={(e) => setWeight(e.target.value)}
+          onChange={(e) => {
+            setWeight(e.target.value);
+            onWeightChange?.(e.target.value);
+          }}
           disabled={isDisabled || isSkipped}
           size="1"
           style={{ width: '56px' }}
