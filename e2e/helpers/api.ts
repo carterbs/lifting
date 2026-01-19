@@ -114,7 +114,8 @@ export class ApiHelper {
   constructor(
     private request: APIRequestContext,
     // E2E tests use port 3100 to match the Playwright webServer config
-    baseUrl = 'http://localhost:3100'
+    // Can be overridden via BASE_URL env var for custom test environments
+    baseUrl = process.env['BASE_URL'] ?? 'http://localhost:3100'
   ) {
     this.apiUrl = `${baseUrl}/api`;
   }

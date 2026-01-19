@@ -6,11 +6,13 @@ services:
       context: .
       dockerfile: docker/Dockerfile.prod
     ports:
-      - "3001:3001"
+      - "${PORT:-3000}:${PORT:-3000}"
     volumes:
       - lifting-data:/app/data
     environment:
       - NODE_ENV=production
+      - PORT=${PORT:-3000}
+      - DB_PATH=/app/data/lifting.db
     restart: unless-stopped
 
 volumes:

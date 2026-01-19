@@ -45,10 +45,10 @@ RUN mkdir -p /app/data
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=3001
+ENV PORT=3000
 ENV DB_PATH=/app/data/lifting.db
 
-EXPOSE 3001
+EXPOSE 3000
 
 # Start server
 CMD ["node", "packages/server/dist/index.js"]
