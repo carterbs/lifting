@@ -1,0 +1,22 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background -->
+  <rect width="512" height="512" fill="#111113"/>
+
+  <!-- Dumbbell in teal -->
+  <g fill="#14b8a6">
+    <!-- Left weight -->
+    <rect x="60" y="180" width="80" height="152" rx="8"/>
+
+    <!-- Left connector -->
+    <rect x="140" y="235" width="40" height="42" rx="4"/>
+
+    <!-- Bar -->
+    <rect x="180" y="244" width="152" height="24" rx="4"/>
+
+    <!-- Right connector -->
+    <rect x="332" y="235" width="40" height="42" rx="4"/>
+
+    <!-- Right weight -->
+    <rect x="372" y="180" width="80" height="152" rx="8"/>
+  </g>
+</svg>
