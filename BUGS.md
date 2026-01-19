@@ -102,7 +102,7 @@
 ---
 
 ### BUG #16: Sound Doesn't Work on Safari
-**Status:** Pending Verification (2026-01-19)
+**Status:** Fixed (2026-01-19)
 
 **Steps to reproduce:**
 1. Open app in Safari (macOS or iOS)
@@ -122,7 +122,7 @@
 ---
 
 ### BUG #8: Can Create Plan With No Workout Days
-**Status:** Open
+**Status:** Fixed (2026-01-19)
 
 **Steps to reproduce:**
 1. Navigate to Plans > Create Plan
@@ -139,6 +139,8 @@
 - Successfully creates a plan with 0 workout days
 
 **Impact:** Users can create useless plans that cannot be used for mesocycles.
+
+**Fix:** Added validation in PlanForm.tsx to require at least one workout day before proceeding from step 2 to step 3. Added `daysError` state that displays "Select at least one workout day" error message when user tries to proceed without selecting any days. Also updated `isStep3Valid` to explicitly check `formState.days.length > 0` as a safeguard (previously `.every()` on empty array returned `true`).
 
 ---
 
