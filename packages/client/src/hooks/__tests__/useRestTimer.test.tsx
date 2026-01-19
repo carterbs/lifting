@@ -379,4 +379,143 @@ describe('useRestTimer', () => {
       });
     });
   });
+
+  describe('background behavior (visibility change)', () => {
+    let visibilityState: DocumentVisibilityState = 'visible';
+
+    beforeEach(() => {
+      visibilityState = 'visible';
+      vi.spyOn(document, 'visibilityState', 'get').mockImplementation(
+        () => visibilityState
+      );
+    });
+
+    const simulateVisibilityChange = (state: DocumentVisibilityState): void => {
+      visibilityState = state;
+      act(() => {
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+    };
+
+    it('should update elapsed time correctly when returning from background', () => {
+      const { result } = renderHook(() => useRestTimer({ targetSeconds: 60 }));
+
+      act(() => {
+        result.current.start();
+      });
+
+      // Timer runs for 5 seconds
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+      expect(result.current.elapsedSeconds).toBe(5);
+
+      // Simulate going to background (tab hidden)
+      simulateVisibilityChange('hidden');
+
+      // Advance time by 30 seconds while in background
+      // (simulating browser throttling the interval)
+      act(() => {
+        vi.advanceTimersByTime(30000);
+      });
+
+      // Return from background - should immediately recalculate
+      simulateVisibilityChange('visible');
+
+      // Should show 35 seconds (5 + 30), not just 5 or 6
+      expect(result.current.elapsedSeconds).toBe(35);
+    });
+
+    it('should complete timer when returning from background if target exceeded', () => {
+      const onComplete = vi.fn();
+      const { result } = renderHook(() =>
+        useRestTimer({ targetSeconds: 10, onComplete })
+      );
+
+      act(() => {
+        result.current.start();
+      });
+
+      // Timer runs for 2 seconds
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+      expect(result.current.elapsedSeconds).toBe(2);
+
+      // Simulate going to background
+      simulateVisibilityChange('hidden');
+
+      // Advance time past target while in background
+      act(() => {
+        vi.advanceTimersByTime(15000);
+      });
+
+      // Return from background
+      simulateVisibilityChange('visible');
+
+      // Should be complete
+      expect(result.current.isComplete).toBe(true);
+      expect(result.current.elapsedSeconds).toBe(10);
+      expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not update when visibility changes but timer is not running', () => {
+      const { result } = renderHook(() => useRestTimer({ targetSeconds: 60 }));
+
+      // Don't start the timer
+      expect(result.current.elapsedSeconds).toBe(0);
+
+      // Simulate visibility change
+      simulateVisibilityChange('hidden');
+      act(() => {
+        vi.advanceTimersByTime(10000);
+      });
+      simulateVisibilityChange('visible');
+
+      // Should still be 0 since timer wasn't running
+      expect(result.current.elapsedSeconds).toBe(0);
+    });
+
+    it('should not update when visibility changes but timer is already complete', () => {
+      const onComplete = vi.fn();
+      const { result } = renderHook(() =>
+        useRestTimer({ targetSeconds: 5, onComplete })
+      );
+
+      act(() => {
+        result.current.start();
+      });
+
+      // Complete the timer
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+      expect(result.current.isComplete).toBe(true);
+      expect(onComplete).toHaveBeenCalledTimes(1);
+
+      // Simulate visibility change after completion
+      simulateVisibilityChange('hidden');
+      act(() => {
+        vi.advanceTimersByTime(10000);
+      });
+      simulateVisibilityChange('visible');
+
+      // Should not fire onComplete again
+      expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
+    it('should clean up visibility change listener on unmount', () => {
+      const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
+      const { unmount } = renderHook(() =>
+        useRestTimer({ targetSeconds: 60 })
+      );
+
+      unmount();
+
+      expect(removeEventListenerSpy).toHaveBeenCalledWith(
+        'visibilitychange',
+        expect.any(Function)
+      );
+    });
+  });
 });
