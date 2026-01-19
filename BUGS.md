@@ -24,7 +24,7 @@
 ## Medium Severity
 
 ### BUG #12: Rest Timer Stops When App Goes to Background
-**Status:** Open
+**Status:** Fixed (2026-01-19)
 
 **Steps to reproduce:**
 1. Start a workout and log a set (rest timer starts)
@@ -39,6 +39,8 @@
 **Technical note:** May require PWA with service worker, or Web Worker, or storing timer start time and calculating elapsed on focus.
 
 **Impact:** Users can't rely on the timer for actual rest periods. Core workout feature degraded.
+
+**Fix:** Changed useRestTimer hook from increment-based counting to timestamp-based calculation. Instead of incrementing elapsed seconds by 1 on each interval tick, the hook now stores the start timestamp and calculates elapsed time from `Date.now() - startedAt`. Added a visibility change listener that recalculates elapsed time immediately when the tab becomes visible again, ensuring the UI updates right away when returning from background.
 
 ---
 
