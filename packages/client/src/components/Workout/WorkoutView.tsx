@@ -13,6 +13,13 @@ import {
 } from '../../utils/timerStorage';
 import { useWorkoutStorage, type PendingSetEdit } from '../../hooks/useLocalStorage';
 import { initAudioContext } from '../../utils/audio';
+import { NotificationPrompt } from '../NotificationPrompt';
+import { NotificationError } from '../NotificationError';
+import { getNotificationPermission } from '../../utils/notifications';
+import {
+  scheduleTimerNotification,
+  cancelTimerNotification,
+} from '../../utils/timerNotifications';
 
 interface WorkoutViewProps {
   workout: WorkoutWithExercises;
@@ -103,6 +110,11 @@ export function WorkoutView({
   // Track if user dismissed the "all sets done" prompt to avoid showing it again
   const allSetsDonePromptDismissedRef = useRef(false);
 
+  // Notification state
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
+  const [notificationError, setNotificationError] = useState<string | null>(null);
+  const hasAskedForNotificationsRef = useRef(false);
+
   // Track the active exercise (the one the user is currently working on)
   // Defaults to the first exercise, updates when user logs a set
   const [activeExerciseId, setActiveExerciseId] = useState<number | null>(
@@ -184,6 +196,10 @@ export function WorkoutView({
     if (isDisabled) {
       clearTimerState();
       setActiveTimer(null);
+      // Cancel pending notifications
+      void cancelTimerNotification().catch((err) => {
+        console.error('Failed to cancel notification:', err);
+      });
     }
   }, [isDisabled]);
 
@@ -199,6 +215,10 @@ export function WorkoutView({
   const handleTimerDismiss = useCallback((): void => {
     clearTimerState();
     setActiveTimer(null);
+    // Cancel pending notification
+    void cancelTimerNotification().catch((err) => {
+      console.error('Failed to cancel notification:', err);
+    });
   }, []);
 
   // Wrapper for onSetLogged that starts the timer and updates active exercise
@@ -236,6 +256,24 @@ export function WorkoutView({
           targetSeconds,
           initialElapsed: 0,
         });
+
+        // Schedule push notification
+        const permission = getNotificationPermission();
+        if (permission === 'granted') {
+          // Schedule notification
+          void scheduleTimerNotification(
+            targetSeconds * 1000,
+            exercise.exercise_name,
+            setIndex + 1
+          ).catch((err) => {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            setNotificationError(`Notification error: ${errorMessage}`);
+          });
+        } else if (permission === 'default' && !hasAskedForNotificationsRef.current) {
+          // First time logging a set - ask for permission
+          hasAskedForNotificationsRef.current = true;
+          setShowNotificationPrompt(true);
+        }
       }
 
       // Call the original handler
@@ -436,6 +474,37 @@ export function WorkoutView({
           </Flex>
         </AlertDialog.Content>
       </AlertDialog.Root>
+
+      {/* Notification Permission Prompt */}
+      <NotificationPrompt
+        open={showNotificationPrompt}
+        onClose={() => setShowNotificationPrompt(false)}
+        onEnabled={() => {
+          // After enabling, try to schedule notification for current timer if active
+          if (activeTimer) {
+            const exercise = workout.exercises.find(
+              (ex) => ex.exercise_id === activeTimer.exerciseId
+            );
+            if (exercise) {
+              const remainingMs = (activeTimer.targetSeconds - activeTimer.initialElapsed) * 1000;
+              void scheduleTimerNotification(
+                remainingMs,
+                exercise.exercise_name,
+                activeTimer.setIndex + 1
+              ).catch((err) => {
+                const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+                setNotificationError(`Notification error: ${errorMessage}`);
+              });
+            }
+          }
+        }}
+      />
+
+      {/* Notification Error Display */}
+      <NotificationError
+        error={notificationError}
+        onDismiss={() => setNotificationError(null)}
+      />
     </Flex>
   );
 }

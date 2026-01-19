@@ -16,7 +16,11 @@ export class NotificationService {
     const privateKey = process.env['VAPID_PRIVATE_KEY'];
     const subject = process.env['VAPID_SUBJECT'];
 
-    if (publicKey && privateKey && subject) {
+    if (
+      publicKey !== null && publicKey !== undefined && publicKey !== '' &&
+      privateKey !== null && privateKey !== undefined && privateKey !== '' &&
+      subject !== null && subject !== undefined && subject !== ''
+    ) {
       webPush.setVapidDetails(subject, publicKey, privateKey);
     }
   }

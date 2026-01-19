@@ -147,18 +147,28 @@
 ## Feature Requests
 
 ### FEATURE #1: Improved Progressive Overload Algorithm
-**Status:** Open (Future Enhancement)
+**Status:** Implemented (2026-01-19)
 
-**Current behavior:** Progression is calculated at mesocycle creation based on week number. Peak performance now persists across weeks (BUG #10 fix ensures reps/weight never decrease once achieved).
+**Previous behavior:** Progression was calculated at mesocycle creation based on week number. Peak performance persisted across weeks but without true dynamic progression.
 
-**Desired behavior:** True progressive overload cycle:
-1. Start at base reps (e.g., 8)
-2. Next week: +1 rep (9)
-3. Next week: add weight, drop to lower rep range (6)
-4. Build back up: 7 → 8 → 9
-5. Add weight again, drop reps
-6. Repeat cycle
+**Implemented algorithm (hypertrophy-focused, 8-12 rep range):**
+1. Start at minReps (8) with base weight
+2. Hit target reps → next week: +1 rep
+3. Hit maxReps (12) → next week: add weight, drop to minReps (8)
+4. Miss target but >= minReps → hold (same weight/reps)
+5. Fail to hit minReps for 2 consecutive weeks at same weight → regress (drop weight)
+6. Week 7 is deload: 85% weight, 50% volume (sets), minReps
 
-**Impact:** Current system doesn't implement the full progressive overload model where you build reps, add weight, drop reps, and rebuild.
+**Implementation details:**
+- Added `min_reps` and `max_reps` columns to `plan_day_exercises` table (migration 008)
+- Created `DynamicProgressionService` with performance-based algorithm
+- Updated `WorkoutService` to apply dynamic targets when a workout is started
+- Previous week's actual performance is analyzed to determine next week's targets
+- Targets are persisted to workout_sets at workout start time
 
-**Notes:** This is a significant algorithm change. Current BUG #10 fix maintains peak performance which is an improvement, but the full progression model described above would be ideal.
+**Files changed:**
+- `packages/server/src/db/migrations/008_add_rep_range_columns.ts` (new)
+- `packages/server/src/services/dynamic-progression.service.ts` (new)
+- `packages/server/src/services/workout.service.ts` (updated)
+- `packages/shared/src/types/database.ts` (updated)
+- `packages/shared/src/types/progression.ts` (updated)

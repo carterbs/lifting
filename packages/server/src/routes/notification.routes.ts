@@ -19,7 +19,7 @@ notificationRouter.get(
       const service = getNotificationService();
       const publicKey = service.getVapidPublicKey();
 
-      if (!publicKey) {
+      if (publicKey === null) {
         res.status(503).json({
           success: false,
           error: {

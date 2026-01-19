@@ -22,7 +22,7 @@ export function usePwaInstallStatus(): UsePwaInstallStatusReturn {
     // Check if running in standalone mode (PWA installed)
     const standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
+      ('standalone' in window.navigator && (window.navigator as { standalone?: boolean }).standalone === true);
     setIsInstalled(standalone);
 
     // Detect iOS
@@ -32,7 +32,7 @@ export function usePwaInstallStatus(): UsePwaInstallStatusReturn {
     // Listen for display mode changes
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
     const handleChange = (e: MediaQueryListEvent): void => {
-      setIsInstalled(e.matches || (window.navigator as any).standalone === true);
+      setIsInstalled(e.matches || ('standalone' in window.navigator && (window.navigator as { standalone?: boolean }).standalone === true));
     };
 
     mediaQuery.addEventListener('change', handleChange);
