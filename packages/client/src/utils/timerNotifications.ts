@@ -146,3 +146,12 @@ export async function cancelTimerNotification(): Promise<void> {
 export function getInitializationError(): string | null {
   return initializationError;
 }
+
+/**
+ * Resets the module state.
+ * Primarily for testing purposes.
+ */
+export function resetTimerNotifications(): void {
+  currentSubscription = null;
+  initializationError = null;
+}
