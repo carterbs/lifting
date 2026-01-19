@@ -56,8 +56,12 @@ export class WorkoutService {
    * Looks from today onwards, so "Today" always shows the next workout to do
    */
   getTodaysWorkout(): WorkoutWithExercises | null {
-    const todayParts = new Date().toISOString().split('T');
-    const today = todayParts[0] ?? '';
+    // Format today's date in local timezone to avoid UTC conversion issues
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const today = `${year}-${month}-${day}`;
 
     // Find the next upcoming workout (today or future)
     const nextWorkout = this.workoutRepo.findNextUpcoming(today);

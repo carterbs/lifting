@@ -81,22 +81,31 @@ export const testData = {
   },
 
   /**
+   * Format a date as YYYY-MM-DD in local timezone.
+   * This avoids UTC conversion issues with toISOString().
+   */
+  formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  },
+
+  /**
    * Get a date string for the start of the current week (Sunday)
    */
   getWeekStartDate(): string {
     const today = new Date();
     const sunday = new Date(today);
     sunday.setDate(today.getDate() - today.getDay());
-    const [dateStr] = sunday.toISOString().split('T');
-    return dateStr ?? '';
+    return this.formatLocalDate(sunday);
   },
 
   /**
    * Get today's date as YYYY-MM-DD
    */
   getTodayDate(): string {
-    const [dateStr] = new Date().toISOString().split('T');
-    return dateStr ?? '';
+    return this.formatLocalDate(new Date());
   },
 
   /**

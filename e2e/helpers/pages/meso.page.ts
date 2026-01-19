@@ -154,16 +154,20 @@ export class MesoPage extends BasePage {
   }
 
   /**
-   * Get workout summary from a week card
+   * Get workout summary from a week card.
+   * Waits for the summary element to be visible before reading.
    */
   async getWeekWorkoutCount(weekNumber: number): Promise<{
     total: number;
     completed: number;
   }> {
     const weekCard = this.getWeekCard(weekNumber);
-    const summaryText = await weekCard
-      .locator('[data-testid="workout-summary"]')
-      .textContent();
+    const summaryLocator = weekCard.locator('[data-testid="workout-summary"]');
+
+    // Wait for the element to be visible
+    await expect(summaryLocator).toBeVisible();
+
+    const summaryText = await summaryLocator.textContent();
 
     // Parse "1 / 1 completed" (format: "completed / total completed")
     const match = summaryText?.match(/(\d+)\s*\/\s*(\d+)/);
@@ -177,6 +181,24 @@ export class MesoPage extends BasePage {
     }
 
     return { total: 0, completed: 0 };
+  }
+
+  /**
+   * Wait for a week to show at least the expected number of completed workouts.
+   * Useful after completing a workout to ensure the UI has updated.
+   */
+  async waitForCompletedWorkouts(
+    weekNumber: number,
+    minCompleted: number
+  ): Promise<void> {
+    const weekCard = this.getWeekCard(weekNumber);
+    const summaryLocator = weekCard.locator('[data-testid="workout-summary"]');
+
+    // Wait for the text to include at least minCompleted
+    await expect(summaryLocator).toContainText(
+      new RegExp(`^${minCompleted}\\s*/`),
+      { timeout: 10000 }
+    );
   }
 
   /**

@@ -113,8 +113,8 @@ export class ApiHelper {
 
   constructor(
     private request: APIRequestContext,
-    // E2E tests use port 3101 (server) to match test client port 3100
-    baseUrl = 'http://localhost:3101'
+    // E2E tests use port 3100 to match the Playwright webServer config
+    baseUrl = 'http://localhost:3100'
   ) {
     this.apiUrl = `${baseUrl}/api`;
   }
@@ -527,7 +527,11 @@ export class ApiHelper {
     // Start date should be the most recent occurrence of day 0 (Sunday)
     const startDate = new Date(today);
     startDate.setDate(today.getDate() - today.getDay());
-    const startDateStr = startDate.toISOString().split('T')[0] ?? '';
+    // Use local date format to avoid timezone issues with toISOString()
+    const year = startDate.getFullYear();
+    const month = String(startDate.getMonth() + 1).padStart(2, '0');
+    const day = String(startDate.getDate()).padStart(2, '0');
+    const startDateStr = `${year}-${month}-${day}`;
 
     // Create mesocycle (pending status)
     const pendingMesocycle = await this.createMesocycle(plan.id, startDateStr);

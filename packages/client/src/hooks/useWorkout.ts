@@ -13,6 +13,7 @@ import {
 } from '../api/workoutApi';
 import { useWorkoutStorage } from './useLocalStorage';
 import { useCallback } from 'react';
+import { mesocycleKeys } from './useMesocycles';
 
 export const workoutKeys = {
   all: ['workouts'] as const,
@@ -145,6 +146,9 @@ export function useCompleteWorkout(): UseMutationResult<
     onSettled: (_data, _error, id) => {
       void queryClient.invalidateQueries({ queryKey: workoutKeys.detail(id) });
       void queryClient.invalidateQueries({ queryKey: workoutKeys.today() });
+      // Also invalidate mesocycle data since workout completion affects week stats
+      void queryClient.invalidateQueries({ queryKey: mesocycleKeys.active() });
+      void queryClient.invalidateQueries({ queryKey: mesocycleKeys.lists() });
     },
   });
 }
@@ -203,6 +207,9 @@ export function useSkipWorkout(): UseMutationResult<
     onSettled: (_data, _error, id) => {
       void queryClient.invalidateQueries({ queryKey: workoutKeys.detail(id) });
       void queryClient.invalidateQueries({ queryKey: workoutKeys.today() });
+      // Also invalidate mesocycle data since skipping affects week stats
+      void queryClient.invalidateQueries({ queryKey: mesocycleKeys.active() });
+      void queryClient.invalidateQueries({ queryKey: mesocycleKeys.lists() });
     },
   });
 }

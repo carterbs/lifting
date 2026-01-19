@@ -124,7 +124,7 @@ describe('SetRow', () => {
     );
 
     const weightInput = screen.getByTestId('weight-input-1');
-    expect(weightInput).toHaveValue(135);
+    expect(weightInput).toHaveValue('135');
   });
 
   it('should have inline reps input with target value', () => {
@@ -139,7 +139,7 @@ describe('SetRow', () => {
     );
 
     const repsInput = screen.getByTestId('reps-input-1');
-    expect(repsInput).toHaveValue(10);
+    expect(repsInput).toHaveValue('10');
   });
 
   it('should have checkbox unchecked for pending sets', () => {
@@ -349,7 +349,7 @@ describe('SetRow', () => {
     const weightInput = screen.getByTestId('weight-input-2');
     const repsInput = screen.getByTestId('reps-input-2');
 
-    expect(weightInput).toHaveValue(140);
-    expect(repsInput).toHaveValue(8);
+    expect(weightInput).toHaveValue('140');
+    expect(repsInput).toHaveValue('8');
   });
 });

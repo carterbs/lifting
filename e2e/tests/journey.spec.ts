@@ -98,11 +98,18 @@ test.describe('Full User Journey', () => {
     // Complete the workout
     await todayPage.completeWorkout();
 
+    // Verify the workout was actually completed via API
+    const completedWorkout = await api.getWorkoutById(workout.id);
+    expect(completedWorkout.status).toBe('completed');
+    expect(completedWorkout.week_number).toBe(1); // Should be week 1
+
     // Note: After completion, the app shows the next upcoming workout (next week),
     // so we verify completion through the mesocycle page instead
 
     // ============ Step 5: Verify mesocycle reflects completion ============
     await mesoPage.goto();
+    // Force reload to clear React Query cache
+    await page.reload();
     await mesoPage.waitForLoad();
 
     // Week 1 should show 1 completed workout
