@@ -4,6 +4,10 @@ import { Theme } from '@radix-ui/themes';
 import '@radix-ui/themes/styles.css';
 import './global.css';
 import { App } from './components/App';
+import { registerServiceWorker } from './utils/serviceWorker';
+
+// Register service worker for push notifications (don't block rendering)
+void registerServiceWorker();
 
 const rootElement = document.getElementById('root');
 
