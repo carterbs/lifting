@@ -2,6 +2,18 @@
 
 A single-user weight training workout tracker with progressive overload.
 
+## Features
+
+### Workout Tracker
+Track your workouts with an intuitive interface. Log sets, adjust weights and reps on the fly, and mark exercises complete as you go.
+
+![Workout Tracker](docs/screenshots/workout-tracker.png)
+
+### Plan Creator
+Build custom workout plans with a step-by-step wizard. Configure exercises with sets, reps, starting weight, rest periods, and progressive overload increments.
+
+![Plan Creator](docs/screenshots/plan-creator.png)
+
 ## Development
 
 ```bash
