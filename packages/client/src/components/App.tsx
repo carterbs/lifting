@@ -12,6 +12,7 @@ import {
   EditPlanPage,
   TodayPage,
   WorkoutPage,
+  SettingsPage,
 } from '../pages';
 import { usePlans } from '../hooks/usePlans';
 import {
@@ -131,6 +132,7 @@ function AppContent(): JSX.Element {
           <Route path="/plans/:id" element={<PlanDetailPage />} />
           <Route path="/plans/:id/edit" element={<EditPlanPage />} />
           <Route path="/exercises" element={<ExerciseLibraryPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </Box>
       <BottomNav />
