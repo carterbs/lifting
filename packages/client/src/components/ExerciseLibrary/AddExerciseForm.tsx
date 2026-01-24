@@ -57,9 +57,9 @@ export function AddExerciseForm(): JSX.Element {
         <Flex direction="column" gap="3">
           <Text weight="medium" size="3">Add Custom Exercise</Text>
 
-          <Flex gap="3" wrap="wrap">
-            <Box style={{ flex: '1 1 200px' }}>
-              <Text as="label" size="2" weight="medium" htmlFor="exercise-name">
+          <Flex direction="column" gap="2">
+            <Box>
+              <Text as="label" size="2" color="gray" htmlFor="exercise-name">
                 Exercise Name
               </Text>
               <TextField.Root
@@ -78,8 +78,8 @@ export function AddExerciseForm(): JSX.Element {
               />
             </Box>
 
-            <Box style={{ flex: '0 0 120px' }}>
-              <Text as="label" size="2" weight="medium" htmlFor="weight-increment">
+            <Box>
+              <Text as="label" size="2" color="gray" htmlFor="weight-increment">
                 Weight Increment (lbs)
               </Text>
               <TextField.Root
@@ -95,11 +95,14 @@ export function AddExerciseForm(): JSX.Element {
               />
             </Box>
 
-            <Box style={{ flex: '0 0 auto', alignSelf: 'flex-end' }}>
-              <Button type="submit" disabled={isSubmitDisabled}>
-                {createExercise.isPending ? 'Adding...' : 'Add Exercise'}
-              </Button>
-            </Box>
+            <Button
+              type="submit"
+              disabled={isSubmitDisabled}
+              style={{ width: '100%' }}
+              mt="1"
+            >
+              {createExercise.isPending ? 'Adding...' : 'Add Exercise'}
+            </Button>
           </Flex>
 
           {validationError !== null && (

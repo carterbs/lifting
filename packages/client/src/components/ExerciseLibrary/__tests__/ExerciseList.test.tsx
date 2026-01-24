@@ -116,16 +116,6 @@ describe('ExerciseList', () => {
     });
   });
 
-  it('should show edit buttons for all exercises', async () => {
-    renderWithProviders(<ExerciseList />);
-
-    await waitFor(() => {
-      // Edit buttons should exist for all exercises (both built-in and custom)
-      const editButtons = screen.getAllByLabelText('Edit exercise');
-      expect(editButtons).toHaveLength(2);
-    });
-  });
-
   it('should show delete buttons for all exercises', async () => {
     renderWithProviders(<ExerciseList />);
 

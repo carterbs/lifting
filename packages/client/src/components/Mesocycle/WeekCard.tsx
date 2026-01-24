@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Heading, Badge } from '@radix-ui/themes';
+import { Box, Flex, Text, Heading } from '@radix-ui/themes';
 import type { WeekSummary, WorkoutStatus } from '@lifting/shared';
 
 interface WeekCardProps {
@@ -7,18 +7,12 @@ interface WeekCardProps {
   onWorkoutClick?: (workoutId: number) => void;
 }
 
-function getStatusColor(
-  status: WorkoutStatus
-): 'gray' | 'blue' | 'green' | 'orange' {
+function formatStatus(status: WorkoutStatus): string {
   switch (status) {
-    case 'pending':
-      return 'gray';
     case 'in_progress':
-      return 'blue';
-    case 'completed':
-      return 'green';
-    case 'skipped':
-      return 'orange';
+      return 'In Progress';
+    default:
+      return status.charAt(0).toUpperCase() + status.slice(1);
   }
 }
 
@@ -52,45 +46,39 @@ export function WeekCard({
     <Box
       p="4"
       style={{
-        backgroundColor: isCurrentWeek ? 'var(--blue-2)' : 'var(--gray-2)',
+        backgroundColor: 'var(--gray-2)',
         borderRadius: 'var(--radius-3)',
-        border: isCurrentWeek
-          ? '1px solid var(--blue-6)'
-          : '1px solid var(--gray-5)',
+        border: '1px solid var(--gray-4)',
+        borderLeft: isCurrentWeek
+          ? '3px solid var(--accent-9)'
+          : '1px solid var(--gray-4)',
       }}
       data-testid={`week-card-${week.week_number}`}
     >
       <Flex direction="column" gap="3">
         <Flex justify="between" align="center">
-          <Flex gap="2" align="center">
+          <Flex gap="2" align="baseline">
             <Heading size="3">Week {week.week_number}</Heading>
             {week.is_deload && (
-              <Badge color="purple" variant="soft" size="1" data-testid="deload-badge">
+              <Text size="1" color="gray" data-testid="deload-badge">
                 Deload
-              </Badge>
-            )}
-            {isCurrentWeek && (
-              <Badge color="blue" variant="solid" size="1" data-testid="current-week-badge">
-                Current
-              </Badge>
+              </Text>
             )}
           </Flex>
 
           <Text size="1" color="gray" data-testid="workout-summary">
-            {week.completed_workouts} / {week.total_workouts} completed
+            {week.completed_workouts}/{week.total_workouts} completed
           </Text>
         </Flex>
 
         {week.workouts.length > 0 ? (
-          <Flex direction="column" gap="2">
-            {week.workouts.map((workout) => (
+          <Flex direction="column" gap="0">
+            {week.workouts.map((workout, index) => (
               <Box
                 key={workout.id}
-                p="3"
+                py="3"
                 style={{
-                  backgroundColor: 'var(--gray-1)',
-                  borderRadius: 'var(--radius-2)',
-                  border: '1px solid var(--gray-4)',
+                  borderTop: index > 0 ? '1px solid var(--gray-4)' : undefined,
                   cursor: onWorkoutClick ? 'pointer' : 'default',
                 }}
                 onClick={() => onWorkoutClick?.(workout.id)}
@@ -112,20 +100,13 @@ export function WeekCard({
                     )}
                   </Flex>
 
-                  <Flex gap="2" align="center">
+                  <Flex gap="3" align="center">
                     <Text size="1" color="gray">
-                      {workout.completed_set_count} / {workout.set_count} sets
+                      {workout.completed_set_count}/{workout.set_count} sets
                     </Text>
-                    <Badge
-                      color={getStatusColor(workout.status)}
-                      variant="soft"
-                      size="1"
-                    >
-                      {workout.status === 'in_progress'
-                        ? 'In Progress'
-                        : workout.status.charAt(0).toUpperCase() +
-                          workout.status.slice(1)}
-                    </Badge>
+                    <Text size="1" color="gray">
+                      {formatStatus(workout.status)}
+                    </Text>
                   </Flex>
                 </Flex>
               </Box>

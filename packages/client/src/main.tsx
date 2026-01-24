@@ -17,7 +17,7 @@ if (rootElement === null) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <Theme accentColor="teal" grayColor="slate" radius="medium">
+    <Theme appearance="dark" accentColor="indigo" grayColor="slate" radius="medium">
       <App />
     </Theme>
   </StrictMode>

@@ -54,7 +54,7 @@ describe('WeekCard', () => {
   it('should render workout count', () => {
     renderWithTheme(<WeekCard week={mockWeek} />);
 
-    expect(screen.getByText('1 / 2 completed')).toBeInTheDocument();
+    expect(screen.getByText('1/2 completed')).toBeInTheDocument();
   });
 
   it('should render workout items', () => {
@@ -67,8 +67,8 @@ describe('WeekCard', () => {
   it('should render set counts for workouts', () => {
     renderWithTheme(<WeekCard week={mockWeek} />);
 
-    expect(screen.getByText('0 / 15 sets')).toBeInTheDocument();
-    expect(screen.getByText('15 / 15 sets')).toBeInTheDocument();
+    expect(screen.getByText('0/15 sets')).toBeInTheDocument();
+    expect(screen.getByText('15/15 sets')).toBeInTheDocument();
   });
 
   it('should render deload badge for deload week', () => {
@@ -83,16 +83,18 @@ describe('WeekCard', () => {
     expect(screen.getByText('Deload')).toBeInTheDocument();
   });
 
-  it('should render current badge when isCurrentWeek is true', () => {
+  it('should render accent border when isCurrentWeek is true', () => {
     renderWithTheme(<WeekCard week={mockWeek} isCurrentWeek={true} />);
 
-    expect(screen.getByText('Current')).toBeInTheDocument();
+    const weekCard = screen.getByTestId('week-card-1');
+    expect(weekCard).toHaveStyle({ borderLeft: '3px solid var(--accent-9)' });
   });
 
-  it('should not render current badge when isCurrentWeek is false', () => {
+  it('should not render accent border when isCurrentWeek is false', () => {
     renderWithTheme(<WeekCard week={mockWeek} isCurrentWeek={false} />);
 
-    expect(screen.queryByText('Current')).not.toBeInTheDocument();
+    const weekCard = screen.getByTestId('week-card-1');
+    expect(weekCard).toHaveStyle({ borderLeft: '1px solid var(--gray-4)' });
   });
 
   it('should call onWorkoutClick when workout is clicked', () => {

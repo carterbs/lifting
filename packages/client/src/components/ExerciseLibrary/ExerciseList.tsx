@@ -4,12 +4,10 @@ import { useExercises } from '../../hooks/useExercises';
 import { ExerciseListItem } from './ExerciseListItem';
 
 interface ExerciseListProps {
-  onEdit?: (exercise: Exercise) => void;
   onDelete?: (exercise: Exercise) => void;
 }
 
 export function ExerciseList({
-  onEdit,
   onDelete,
 }: ExerciseListProps): JSX.Element {
   const { data: exercises, isLoading, error } = useExercises();
@@ -44,7 +42,6 @@ export function ExerciseList({
         <ExerciseListItem
           key={exercise.id}
           exercise={exercise}
-          onEdit={onEdit}
           onDelete={onDelete}
         />
       ))}

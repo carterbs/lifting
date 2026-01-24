@@ -3,11 +3,10 @@ import {
   Flex,
   Text,
   Heading,
-  Badge,
   Button,
   Progress,
 } from '@radix-ui/themes';
-import type { MesocycleWithDetails, MesocycleStatus } from '@lifting/shared';
+import type { MesocycleWithDetails } from '@lifting/shared';
 
 interface MesocycleStatusCardProps {
   mesocycle: MesocycleWithDetails;
@@ -15,21 +14,6 @@ interface MesocycleStatusCardProps {
   onCancel?: () => void;
   isCompleting?: boolean;
   isCancelling?: boolean;
-}
-
-function getStatusColor(
-  status: MesocycleStatus
-): 'green' | 'gray' | 'red' | 'blue' {
-  switch (status) {
-    case 'pending':
-      return 'blue';
-    case 'active':
-      return 'green';
-    case 'completed':
-      return 'gray';
-    case 'cancelled':
-      return 'red';
-  }
 }
 
 function formatDate(dateString: string): string {
@@ -64,7 +48,7 @@ export function MesocycleStatusCard({
       style={{
         backgroundColor: 'var(--gray-2)',
         borderRadius: 'var(--radius-3)',
-        border: '1px solid var(--gray-5)',
+        border: '1px solid var(--gray-4)',
       }}
       data-testid="mesocycle-status-card"
     >
@@ -79,51 +63,39 @@ export function MesocycleStatusCard({
             </Text>
           </Flex>
 
-          <Badge
-            color={getStatusColor(mesocycle.status)}
-            variant="soft"
-            size="2"
+          <Text
+            size="1"
+            color="gray"
+            weight="medium"
             data-testid="mesocycle-status-badge"
           >
             {mesocycle.status.charAt(0).toUpperCase() +
               mesocycle.status.slice(1)}
-          </Badge>
+          </Text>
         </Flex>
 
         <Flex direction="column" gap="2">
           <Flex justify="between" align="center">
-            <Text size="2" weight="medium">
-              Progress
-            </Text>
             <Text size="2" color="gray" data-testid="mesocycle-progress-text">
-              {mesocycle.completed_workouts} / {mesocycle.total_workouts}{' '}
-              workouts ({progressPercent}%)
+              Week {mesocycle.current_week} of 7 · {mesocycle.completed_workouts}/{mesocycle.total_workouts} workouts
+            </Text>
+            <Text size="1" color="gray">
+              {progressPercent}%
             </Text>
           </Flex>
           <Progress
             value={progressPercent}
-            size="2"
-            color="green"
+            size="1"
             data-testid="mesocycle-progress-bar"
           />
         </Flex>
 
-        <Flex gap="3" wrap="wrap">
-          <Badge color="blue" variant="soft" size="1" data-testid="current-week">
-            Week {mesocycle.current_week} of 7
-          </Badge>
-          <Badge color="gray" variant="soft" size="1">
-            {mesocycle.total_workouts} total workouts
-          </Badge>
-        </Flex>
-
         {isActive && (onComplete != null || onCancel != null) && (
-          <Flex gap="2" mt="2">
+          <Flex gap="2" mt="1">
             {onComplete && (
               <Button
                 size="2"
-                variant="soft"
-                color="green"
+                variant="solid"
                 onClick={onComplete}
                 disabled={isCompleting || isCancelling}
                 data-testid="complete-mesocycle-button"
@@ -135,7 +107,7 @@ export function MesocycleStatusCard({
               <Button
                 size="2"
                 variant="soft"
-                color="red"
+                color="gray"
                 onClick={onCancel}
                 disabled={isCompleting || isCancelling}
                 data-testid="cancel-mesocycle-button"

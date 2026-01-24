@@ -38,42 +38,14 @@ describe('ExerciseListItem', () => {
     expect(screen.getByText('+5 lbs per progression')).toBeInTheDocument();
   });
 
-  it('should show edit button for custom exercises', () => {
-    renderWithTheme(<ExerciseListItem exercise={customExercise} />);
-    expect(screen.getByLabelText('Edit exercise')).toBeInTheDocument();
-  });
-
   it('should show delete button for all exercises', () => {
     renderWithTheme(<ExerciseListItem exercise={customExercise} />);
     expect(screen.getByLabelText('Delete exercise')).toBeInTheDocument();
   });
 
-  it('should show edit button for built-in exercises', () => {
-    renderWithTheme(<ExerciseListItem exercise={builtInExercise} />);
-    expect(screen.getByLabelText('Edit exercise')).toBeInTheDocument();
-  });
-
   it('should show delete button for built-in exercises', () => {
     renderWithTheme(<ExerciseListItem exercise={builtInExercise} />);
     expect(screen.getByLabelText('Delete exercise')).toBeInTheDocument();
-  });
-
-  it('should call onEdit when edit button clicked on built-in exercise', () => {
-    const onEdit = vi.fn();
-    renderWithTheme(
-      <ExerciseListItem exercise={builtInExercise} onEdit={onEdit} />
-    );
-    fireEvent.click(screen.getByLabelText('Edit exercise'));
-    expect(onEdit).toHaveBeenCalledWith(builtInExercise);
-  });
-
-  it('should call onEdit when edit button clicked', () => {
-    const onEdit = vi.fn();
-    renderWithTheme(
-      <ExerciseListItem exercise={customExercise} onEdit={onEdit} />
-    );
-    fireEvent.click(screen.getByLabelText('Edit exercise'));
-    expect(onEdit).toHaveBeenCalledWith(customExercise);
   });
 
   it('should call onDelete when delete button clicked', () => {
@@ -83,5 +55,24 @@ describe('ExerciseListItem', () => {
     );
     fireEvent.click(screen.getByLabelText('Delete exercise'));
     expect(onDelete).toHaveBeenCalledWith(customExercise);
+  });
+
+  it('should render a link to exercise history', () => {
+    renderWithTheme(<ExerciseListItem exercise={builtInExercise} />);
+    const link = screen.getByTestId('exercise-link');
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/exercises/1/history');
+  });
+
+  it('should render link with correct href for custom exercise', () => {
+    renderWithTheme(<ExerciseListItem exercise={customExercise} />);
+    const link = screen.getByTestId('exercise-link');
+    expect(link).toHaveAttribute('href', '/exercises/2/history');
+  });
+
+  it('should have cursor pointer style on the link', () => {
+    renderWithTheme(<ExerciseListItem exercise={builtInExercise} />);
+    const link = screen.getByTestId('exercise-link');
+    expect(link).toHaveStyle({ cursor: 'pointer' });
   });
 });

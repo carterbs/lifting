@@ -33,8 +33,9 @@ describe('MesocycleStatusCard', () => {
       'Active'
     );
     expect(screen.getByTestId('mesocycle-progress-text')).toHaveTextContent(
-      '4 / 14 workouts (29%)'
+      'Week 2 of 7 · 4/14 workouts'
     );
+    expect(screen.getByText('29%')).toBeInTheDocument();
   });
 
   it('should render start date', () => {
@@ -46,7 +47,9 @@ describe('MesocycleStatusCard', () => {
   it('should render week info', () => {
     renderWithTheme(<MesocycleStatusCard mesocycle={mockMesocycle} />);
 
-    expect(screen.getByText('Week 2 of 7')).toBeInTheDocument();
+    expect(screen.getByTestId('mesocycle-progress-text')).toHaveTextContent(
+      /Week 2 of 7/
+    );
   });
 
   it('should render complete button when callback provided', () => {

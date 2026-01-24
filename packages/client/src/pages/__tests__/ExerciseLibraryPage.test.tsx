@@ -139,25 +139,6 @@ describe('ExerciseLibraryPage', () => {
     });
   });
 
-  it('should open edit dialog when edit clicked', async () => {
-    renderWithProviders(<ExerciseLibraryPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Custom Squat')).toBeInTheDocument();
-    });
-
-    // Find the edit button within a specific exercise item
-    const customSquatItem = screen.getByText('Custom Squat').closest('[data-testid="exercise-item"]');
-    if (!customSquatItem) throw new Error('Exercise item not found');
-    const editButton = customSquatItem.querySelector('[aria-label="Edit exercise"]');
-    if (!editButton) throw new Error('Edit button not found');
-    fireEvent.click(editButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('Edit Exercise')).toBeInTheDocument();
-    });
-  });
-
   it('should open delete dialog when delete clicked', async () => {
     renderWithProviders(<ExerciseLibraryPage />);
 
@@ -192,36 +173,6 @@ describe('ExerciseLibraryPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('New Exercise')).toBeInTheDocument();
-    });
-  });
-
-  it('should update list after editing exercise', async () => {
-    renderWithProviders(<ExerciseLibraryPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Custom Squat')).toBeInTheDocument();
-    });
-
-    // Find the edit button within the Custom Squat exercise item
-    const customSquatItem = screen.getByText('Custom Squat').closest('[data-testid="exercise-item"]');
-    if (!customSquatItem) throw new Error('Exercise item not found');
-    const editButton = customSquatItem.querySelector('[aria-label="Edit exercise"]');
-    if (!editButton) throw new Error('Edit button not found');
-    fireEvent.click(editButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('Edit Exercise')).toBeInTheDocument();
-    });
-
-    // Select the edit dialog's input specifically by id
-    const nameInput = document.getElementById('edit-exercise-name') as HTMLInputElement;
-    await userEvent.clear(nameInput);
-    await userEvent.type(nameInput, 'Updated Squat');
-
-    fireEvent.click(screen.getByRole('button', { name: /Save/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Updated Squat')).toBeInTheDocument();
     });
   });
 

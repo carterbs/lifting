@@ -4,12 +4,10 @@ import type { Exercise } from '@lifting/shared';
 import {
   ExerciseList,
   AddExerciseForm,
-  EditExerciseDialog,
   DeleteExerciseDialog,
 } from '../components/ExerciseLibrary';
 
 export function ExerciseLibraryPage(): JSX.Element {
-  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [deletingExercise, setDeletingExercise] = useState<Exercise | null>(null);
 
   return (
@@ -20,13 +18,7 @@ export function ExerciseLibraryPage(): JSX.Element {
         <AddExerciseForm />
 
         <ExerciseList
-          onEdit={setEditingExercise}
           onDelete={setDeletingExercise}
-        />
-
-        <EditExerciseDialog
-          exercise={editingExercise}
-          onClose={() => setEditingExercise(null)}
         />
 
         <DeleteExerciseDialog

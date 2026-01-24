@@ -75,11 +75,18 @@ export class ExercisesPage extends BasePage {
   }
 
   /**
-   * Click edit button for a specific exercise
+   * Navigate to exercise history page by clicking the exercise link,
+   * then click the edit button on the history page.
    */
   async clickEditExercise(name: string): Promise<void> {
     const item = this.getExerciseItem(name);
-    await item.getByRole('button', { name: /edit/i }).click();
+    await item.locator('[data-testid="exercise-link"]').click();
+
+    // Wait for the history page to load
+    await this.page.waitForSelector('button[aria-label="Edit exercise"]');
+
+    // Click the edit button on the history page
+    await this.page.getByRole('button', { name: /edit exercise/i }).click();
     await expect(this.editExerciseDialog).toBeVisible();
   }
 
@@ -93,7 +100,9 @@ export class ExercisesPage extends BasePage {
   }
 
   /**
-   * Edit an exercise name and weight increment
+   * Edit an exercise name and weight increment.
+   * Navigates to the exercise history page, opens the edit dialog,
+   * then navigates back to the exercises list.
    */
   async editExercise(
     currentName: string,
@@ -118,6 +127,10 @@ export class ExercisesPage extends BasePage {
       .getByRole('button', { name: /save/i })
       .click();
     await expect(this.editExerciseDialog).not.toBeVisible();
+
+    // Navigate back to exercises list
+    await this.page.getByRole('button', { name: /back to exercises/i }).click();
+    await this.waitForLoad();
   }
 
   /**

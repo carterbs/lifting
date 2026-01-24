@@ -86,14 +86,15 @@ export class MesoPage extends BasePage {
   }
 
   /**
-   * Get the current week number from the status card
+   * Get the current week number from the status card progress text.
+   * The progress text format is: "Week {n} of 7 · {x}/{y} workouts"
    */
   async getCurrentWeek(): Promise<number> {
-    const weekText = await this.mesocycleStatusCard
-      .locator('[data-testid="current-week"]')
+    const progressText = await this.mesocycleStatusCard
+      .locator('[data-testid="mesocycle-progress-text"]')
       .textContent();
-    const match = weekText?.match(/\d+/);
-    return match ? parseInt(match[0], 10) : 0;
+    const match = progressText?.match(/Week (\d+) of/);
+    return match ? parseInt(match[1] ?? '0', 10) : 0;
   }
 
   /**
@@ -145,12 +146,15 @@ export class MesoPage extends BasePage {
   }
 
   /**
-   * Check if a specific week is marked as current
+   * Check if a specific week is marked as current (indicated by accent left border)
    */
   async isCurrentWeek(weekNumber: number): Promise<boolean> {
     const weekCard = this.getWeekCard(weekNumber);
-    const currentBadge = weekCard.locator('[data-testid="current-week-badge"]');
-    return currentBadge.isVisible();
+    const borderLeft = await weekCard.evaluate(
+      (el) => window.getComputedStyle(el).borderLeftWidth
+    );
+    // Current week has 3px border, non-current has 1px
+    return borderLeft === '3px';
   }
 
   /**
