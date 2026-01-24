@@ -20,7 +20,7 @@ export function ExerciseHistoryPage(): JSX.Element {
       {history.personal_record && (
         <div className="personal-record">
           <strong>Personal Record:</strong>{' '}
-          <span>{history.personal_record.weight} lbs x {history.personal_record.reps} reps ({history.personal_record.date})</span>
+          <span>{history.personal_record.weight} lbs x {history.personal_record.reps} reps ({new Date(history.personal_record.date).toLocaleDateString()})</span>
         </div>
       )}
 
