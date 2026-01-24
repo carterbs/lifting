@@ -4,7 +4,7 @@ import type { Express } from 'express';
 import type Database from 'better-sqlite3';
 import { setupTestApp, teardownTestApp, type TestContext } from '../../test/test-app.js';
 import { ExerciseRepository } from '../../repositories/exercise.repository.js';
-import type { ApiResult, Exercise } from '@lifting/shared';
+import type { ApiResult, Exercise, ExerciseHistory } from '@lifting/shared';
 
 describe('Exercise Routes', () => {
   let ctx: TestContext;
@@ -412,6 +412,131 @@ describe('Exercise Routes', () => {
       expect(body.success).toBe(false);
       if (!body.success) {
         expect(body.error.code).toBe('CONFLICT');
+      }
+    });
+  });
+
+  describe('GET /api/exercises/:id/history', () => {
+    function seedWorkoutHistory(exerciseId: number): void {
+      // Create a plan with a day
+      const planResult = db
+        .prepare('INSERT INTO plans (name, duration_weeks) VALUES (?, ?)')
+        .run('History Test Plan', 6);
+      const planId = planResult.lastInsertRowid;
+
+      const dayResult = db
+        .prepare(
+          'INSERT INTO plan_days (plan_id, day_of_week, name, sort_order) VALUES (?, ?, ?, ?)'
+        )
+        .run(planId, 1, 'Day 1', 0);
+      const planDayId = dayResult.lastInsertRowid;
+
+      // Create a mesocycle
+      const mesocycleResult = db
+        .prepare(
+          'INSERT INTO mesocycles (plan_id, start_date, current_week, status) VALUES (?, ?, ?, ?)'
+        )
+        .run(planId, '2025-01-06', 2, 'active');
+      const mesocycleId = mesocycleResult.lastInsertRowid;
+
+      // Create a completed workout
+      const workoutResult = db
+        .prepare(
+          'INSERT INTO workouts (mesocycle_id, plan_day_id, week_number, scheduled_date, status, completed_at) VALUES (?, ?, ?, ?, ?, ?)'
+        )
+        .run(mesocycleId, planDayId, 1, '2025-01-06', 'completed', '2025-01-06T18:00:00.000Z');
+      const workoutId = workoutResult.lastInsertRowid;
+
+      // Create completed workout sets
+      db.prepare(
+        'INSERT INTO workout_sets (workout_id, exercise_id, set_number, target_reps, target_weight, actual_reps, actual_weight, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).run(workoutId, exerciseId, 1, 8, 100, 8, 100, 'completed');
+
+      db.prepare(
+        'INSERT INTO workout_sets (workout_id, exercise_id, set_number, target_reps, target_weight, actual_reps, actual_weight, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).run(workoutId, exerciseId, 2, 8, 100, 7, 100, 'completed');
+
+      db.prepare(
+        'INSERT INTO workout_sets (workout_id, exercise_id, set_number, target_reps, target_weight, actual_reps, actual_weight, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).run(workoutId, exerciseId, 3, 8, 105, 6, 105, 'completed');
+    }
+
+    it('should return 200 with ExerciseHistory shape for valid exercise with sets', async () => {
+      const exercise = repository.findByName('Leg Extension');
+      expect(exercise).not.toBeNull();
+      if (!exercise) return;
+
+      seedWorkoutHistory(exercise.id);
+
+      const response = await request(app).get(
+        `/api/exercises/${exercise.id}/history`
+      );
+      const body = response.body as ApiResult<ExerciseHistory>;
+
+      expect(response.status).toBe(200);
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data.exercise_id).toBe(exercise.id);
+        expect(body.data.exercise_name).toBe('Leg Extension');
+        expect(Array.isArray(body.data.entries)).toBe(true);
+        expect(body.data.entries.length).toBe(1);
+
+        const entry = body.data.entries[0];
+        expect(entry).toBeDefined();
+        if (entry) {
+          expect(entry.sets.length).toBe(3);
+          expect(entry.best_weight).toBe(105);
+          expect(entry.best_set_reps).toBe(6);
+          expect(entry.week_number).toBe(1);
+        }
+
+        expect(body.data.personal_record).not.toBeNull();
+        if (body.data.personal_record) {
+          expect(body.data.personal_record.weight).toBe(105);
+          expect(body.data.personal_record.reps).toBe(6);
+        }
+      }
+    });
+
+    it('should return 404 for non-existent exercise ID', async () => {
+      const response = await request(app).get('/api/exercises/99999/history');
+      const body = response.body as ApiResult<ExerciseHistory>;
+
+      expect(response.status).toBe(404);
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('NOT_FOUND');
+      }
+    });
+
+    it('should return 404 for non-numeric ID', async () => {
+      const response = await request(app).get('/api/exercises/abc/history');
+      const body = response.body as ApiResult<ExerciseHistory>;
+
+      expect(response.status).toBe(404);
+      expect(body.success).toBe(false);
+      if (!body.success) {
+        expect(body.error.code).toBe('NOT_FOUND');
+      }
+    });
+
+    it('should return entries: [] and personal_record: null for exercise with no completed sets', async () => {
+      const exercise = repository.findByName('Leg Extension');
+      expect(exercise).not.toBeNull();
+      if (!exercise) return;
+
+      const response = await request(app).get(
+        `/api/exercises/${exercise.id}/history`
+      );
+      const body = response.body as ApiResult<ExerciseHistory>;
+
+      expect(response.status).toBe(200);
+      expect(body.success).toBe(true);
+      if (body.success) {
+        expect(body.data.exercise_id).toBe(exercise.id);
+        expect(body.data.exercise_name).toBe('Leg Extension');
+        expect(body.data.entries).toEqual([]);
+        expect(body.data.personal_record).toBeNull();
       }
     });
   });

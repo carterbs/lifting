@@ -4,12 +4,14 @@ import {
   updateExerciseSchema,
   type ApiResponse,
   type Exercise,
+  type ExerciseHistory,
   type CreateExerciseDTO,
   type UpdateExerciseDTO,
 } from '@lifting/shared';
 import { validate } from '../middleware/validate.js';
 import { NotFoundError, ConflictError } from '../middleware/error-handler.js';
 import { getExerciseRepository } from '../repositories/index.js';
+import { getExerciseHistoryService } from '../services/index.js';
 
 export const exerciseRouter = Router();
 
@@ -24,6 +26,35 @@ exerciseRouter.get(
       const response: ApiResponse<Exercise[]> = {
         success: true,
         data: exercises,
+      };
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// GET /api/exercises/:id/history
+exerciseRouter.get(
+  '/:id/history',
+  (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const id = parseInt(req.params['id'] ?? '', 10);
+
+      if (isNaN(id)) {
+        throw new NotFoundError('Exercise', req.params['id'] ?? 'unknown');
+      }
+
+      const exerciseHistoryService = getExerciseHistoryService();
+      const history = exerciseHistoryService.getHistory(id);
+
+      if (!history) {
+        throw new NotFoundError('Exercise', id);
+      }
+
+      const response: ApiResponse<ExerciseHistory> = {
+        success: true,
+        data: history,
       };
       res.json(response);
     } catch (error) {
