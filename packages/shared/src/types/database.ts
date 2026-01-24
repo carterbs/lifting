@@ -256,3 +256,32 @@ export interface ModifySetCountResult {
   futureWorkoutsAffected: number;
   futureSetsModified: number;
 }
+
+// ============ Exercise History Types ============
+
+/** A single historical data point for an exercise (one workout session) */
+export interface ExerciseHistoryEntry {
+  workout_id: number;
+  date: string;
+  week_number: number;
+  mesocycle_id: number;
+  sets: Array<{
+    set_number: number;
+    weight: number;
+    reps: number;
+  }>;
+  best_weight: number;
+  best_set_reps: number;
+}
+
+/** Full exercise history response */
+export interface ExerciseHistory {
+  exercise_id: number;
+  exercise_name: string;
+  entries: ExerciseHistoryEntry[];
+  personal_record: {
+    weight: number;
+    reps: number;
+    date: string;
+  } | null;
+}
