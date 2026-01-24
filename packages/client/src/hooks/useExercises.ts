@@ -14,6 +14,7 @@ export const exerciseKeys = {
   list: () => [...exerciseKeys.lists()] as const,
   details: () => [...exerciseKeys.all, 'detail'] as const,
   detail: (id: number) => [...exerciseKeys.details(), id] as const,
+  history: (id: number) => [...exerciseKeys.detail(id), 'history'] as const,
 };
 
 export function useExercises(): UseQueryResult<Exercise[], ApiClientError> {
@@ -27,6 +28,14 @@ export function useExercise(id: number): UseQueryResult<Exercise, ApiClientError
   return useQuery({
     queryKey: exerciseKeys.detail(id),
     queryFn: () => exerciseApi.getExercise(id),
+    enabled: id > 0,
+  });
+}
+
+export function useExerciseHistory(id: number): UseQueryResult<ExerciseHistory, ApiClientError> {
+  return useQuery({
+    queryKey: exerciseKeys.history(id),
+    queryFn: () => exerciseApi.getExerciseHistory(id),
     enabled: id > 0,
   });
 }
