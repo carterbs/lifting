@@ -79,7 +79,7 @@ describe('ActivityItem', () => {
       );
 
       const item = screen.getByTestId('activity-item-workout-1');
-      expect(item).toHaveClass('bg-indigo-50');
+      expect(item).toHaveStyle({ backgroundColor: 'rgba(99, 102, 241, 0.15)' });
     });
   });
 
@@ -106,7 +106,7 @@ describe('ActivityItem', () => {
       );
 
       const item = screen.getByTestId('activity-item-stretch-1');
-      expect(item).toHaveClass('bg-teal-50');
+      expect(item).toHaveStyle({ backgroundColor: 'rgba(20, 184, 166, 0.15)' });
     });
   });
 
@@ -133,7 +133,7 @@ describe('ActivityItem', () => {
       );
 
       const item = screen.getByTestId('activity-item-meditation-1');
-      expect(item).toHaveClass('bg-purple-50');
+      expect(item).toHaveStyle({ backgroundColor: 'rgba(168, 85, 247, 0.15)' });
     });
   });
 
