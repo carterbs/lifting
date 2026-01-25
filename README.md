@@ -1,6 +1,6 @@
-# Lifting - Workout Tracker
+# brad-os
 
-A mobile-first workout tracker with stretching and meditation. Track progressive overload across 6-week mesocycles.
+A personal operating system for tracking wellness and fitness. Built as a learning project that I actually use daily. Currently focused on workouts, stretching, and meditation—will expand as needed.
 
 ## Screenshots
 
