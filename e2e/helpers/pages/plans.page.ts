@@ -8,7 +8,7 @@ type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
  */
 export class PlansPage extends BasePage {
   async goto(): Promise<void> {
-    await this.page.goto('/plans');
+    await this.page.goto(this.getFullUrl('/plans'));
   }
 
   async waitForLoad(): Promise<void> {
@@ -215,30 +215,45 @@ export class PlansPage extends BasePage {
     const option = this.page.getByRole('option', { name: exerciseName });
     await expect(option).toBeVisible({ timeout: 10000 });
     await option.click();
+    // Wait for dropdown to close before continuing
+    await expect(option).not.toBeVisible();
 
     // Fill in config if provided - these are all Radix Select dropdowns
+    // Must wait for each dropdown to close before opening the next
     if (config?.sets !== undefined) {
       const setsSelect = lastRow.locator('[data-testid^="sets-select"]');
       await setsSelect.click();
-      await this.page.getByTestId(`sets-option-${config.sets}`).click();
+      const setsOption = this.page.getByTestId(`sets-option-${config.sets}`);
+      await expect(setsOption).toBeVisible();
+      await setsOption.click();
+      await expect(setsOption).not.toBeVisible();
     }
 
     if (config?.reps !== undefined) {
       const repsSelect = lastRow.locator('[data-testid^="reps-select"]');
       await repsSelect.click();
-      await this.page.getByTestId(`reps-option-${config.reps}`).click();
+      const repsOption = this.page.getByTestId(`reps-option-${config.reps}`);
+      await expect(repsOption).toBeVisible();
+      await repsOption.click();
+      await expect(repsOption).not.toBeVisible();
     }
 
     if (config?.weight !== undefined) {
       const weightSelect = lastRow.locator('[data-testid^="weight-select"]');
       await weightSelect.click();
-      await this.page.getByTestId(`weight-option-${config.weight}`).click();
+      const weightOption = this.page.getByTestId(`weight-option-${config.weight}`);
+      await expect(weightOption).toBeVisible();
+      await weightOption.click();
+      await expect(weightOption).not.toBeVisible();
     }
 
     if (config?.restSeconds !== undefined) {
       const restSelect = lastRow.locator('[data-testid^="rest-select"]');
       await restSelect.click();
-      await this.page.getByTestId(`rest-option-${config.restSeconds}`).click();
+      const restOption = this.page.getByTestId(`rest-option-${config.restSeconds}`);
+      await expect(restOption).toBeVisible();
+      await restOption.click();
+      await expect(restOption).not.toBeVisible();
     }
   }
 

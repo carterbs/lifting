@@ -1,10 +1,22 @@
 import { type Page, type Locator } from '@playwright/test';
 
 /**
- * Base page class with common functionality
+ * Base page class with common functionality.
+ * Accepts an optional baseUrl for worker-specific server instances.
  */
 export abstract class BasePage {
-  constructor(protected page: Page) {}
+  constructor(
+    protected page: Page,
+    protected baseUrl: string = 'http://localhost:3200'
+  ) {}
+
+  /**
+   * Build a full URL from a path.
+   * This ensures navigation goes to the correct worker-specific server.
+   */
+  protected getFullUrl(path: string): string {
+    return `${this.baseUrl}${path}`;
+  }
 
   /**
    * Navigate to this page

@@ -6,7 +6,7 @@ import { BasePage } from './base.page.js';
  */
 export class TodayPage extends BasePage {
   async goto(): Promise<void> {
-    await this.page.goto('/');
+    await this.page.goto(this.getFullUrl('/'));
   }
 
   async waitForLoad(): Promise<void> {

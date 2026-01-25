@@ -9,18 +9,27 @@
 mkdir -p ../lifting-worktrees
 git worktree add ../lifting-worktrees/<branch-name> -b <branch-name>
 
-# 2. Make changes in the worktree directory
+# 2. Set up the worktree (REQUIRED before running tests)
 cd ../lifting-worktrees/<branch-name>
-# ... make changes, commit ...
+npm install
+npm run build -w @lifting/shared
 
-# 3. Merge back to main (from main worktree)
+# 3. Make changes and verify
+# ... make changes ...
+npm run validate  # Run full test suite
+
+# 4. Commit and merge back to main (from main worktree)
 cd /Users/bradcarter/Documents/Dev/lifting
 git merge <branch-name>
 
-# 4. Clean up the worktree
+# 5. Clean up the worktree
 git worktree remove ../lifting-worktrees/<branch-name>
 git branch -d <branch-name>
 ```
+
+**Worktree Setup Requirements:**
+- `npm install` - Install dependencies (worktrees don't share node_modules)
+- `npm run build -w @lifting/shared` - Build shared package (required by server/client)
 
 This keeps main clean and allows easy rollback of changes.
 
@@ -52,12 +61,18 @@ The app uses separate SQLite databases based on `NODE_ENV`:
 | Database | NODE_ENV | Port | Usage |
 |----------|----------|------|-------|
 | `lifting.db` | (none) or `development` | 3000/3001 | Local development |
-| `lifting.test.db` | `test` | 3100/3101 | E2E tests only |
+| `lifting.test.{N}.db` | `test` | 3200+N*10 | E2E tests (parallel workers) |
 | `lifting.prod.db` | `production` | - | Production |
 
 **Never make direct API calls to test or manipulate data on the dev server.**
 
-The E2E test suite handles its own server startup with `NODE_ENV=test` on port 3100. Do not:
+The E2E test suite runs 4 parallel workers, each with its own server and database:
+- Worker 0: ports 3200/3201, database `lifting.test.0.db`
+- Worker 1: ports 3210/3211, database `lifting.test.1.db`
+- Worker 2: ports 3220/3221, database `lifting.test.2.db`
+- Worker 3: ports 3230/3231, database `lifting.test.3.db`
+
+Do not:
 - Call `/api/test/reset` on the development server
 - Create test data via API calls to `localhost:3001` when dev server is running
 - Run E2E-style tests manually against the dev server

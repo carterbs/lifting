@@ -6,7 +6,7 @@ import { BasePage } from './base.page.js';
  */
 export class MesoPage extends BasePage {
   async goto(): Promise<void> {
-    await this.page.goto('/meso');
+    await this.page.goto(this.getFullUrl('/meso'));
   }
 
   async waitForLoad(): Promise<void> {

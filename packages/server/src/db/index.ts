@@ -21,17 +21,22 @@ export function setTestDatabase(database: Database.Database | null): void {
 }
 
 /**
- * Get the database filename based on NODE_ENV.
- * - test: lifting.test.db (isolated for E2E tests)
+ * Get the database filename based on NODE_ENV and TEST_WORKER_ID.
+ * - test: lifting.test.db or lifting.test.{workerId}.db (isolated for E2E tests)
  * - production: lifting.prod.db (or DB_PATH env var)
  * - development (default): lifting.db
+ *
+ * When TEST_WORKER_ID is set, each worker gets its own database file
+ * to enable parallel test execution without conflicts.
  */
 export function getDatabaseFilename(): string {
   const env = process.env['NODE_ENV'] ?? 'development';
+  const workerId = process.env['TEST_WORKER_ID'];
 
   switch (env) {
     case 'test':
-      return 'lifting.test.db';
+      // Support per-worker database files for parallel testing
+      return workerId ? `lifting.test.${workerId}.db` : 'lifting.test.db';
     case 'production':
       return 'lifting.prod.db';
     default:

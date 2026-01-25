@@ -144,12 +144,17 @@ test.describe('Plan Management', () => {
     test('should delete a plan without active mesocycle', async ({
       plansPage,
       api,
+      page,
     }) => {
       // Create a plan via API
       await api.createPlan('Plan to Delete');
 
       await plansPage.goto();
       await plansPage.waitForLoad();
+
+      // Wait for the plan card to appear (API data takes time to show in UI)
+      await expect(page.locator('[data-testid^="plan-card"]').filter({ hasText: 'Plan to Delete' }))
+        .toBeVisible({ timeout: 10000 });
 
       // Verify plan exists
       const existsBefore = await plansPage.planExists('Plan to Delete');
@@ -158,7 +163,9 @@ test.describe('Plan Management', () => {
       // Delete the plan
       await plansPage.deletePlan('Plan to Delete');
 
-      // Verify plan is gone
+      // Navigate back to plans list and verify plan is gone
+      await plansPage.goto();
+      await plansPage.waitForLoad();
       const existsAfter = await plansPage.planExists('Plan to Delete');
       expect(existsAfter).toBe(false);
     });

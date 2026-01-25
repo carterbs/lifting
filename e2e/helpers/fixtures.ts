@@ -5,43 +5,75 @@ import { ExercisesPage } from './pages/exercises.page.js';
 import { PlansPage } from './pages/plans.page.js';
 import { MesoPage } from './pages/meso.page.js';
 import { CalendarPage } from './pages/calendar.page.js';
+import { BASE_PORT, PORT_SPACING } from '../global-setup.js';
+
+/**
+ * Get the base URL for a specific worker.
+ * Each worker gets its own client instance on PORT and server on PORT+1.
+ * The base URL points to the client which proxies API requests to the server.
+ */
+function getWorkerBaseUrl(workerIndex: number): string {
+  const port = BASE_PORT + (workerIndex * PORT_SPACING);
+  return `http://localhost:${port}`;
+}
 
 // Extend the base test with our custom fixtures
-export const test = base.extend<{
-  api: ApiHelper;
-  todayPage: TodayPage;
-  exercisesPage: ExercisesPage;
-  plansPage: PlansPage;
-  mesoPage: MesoPage;
-  calendarPage: CalendarPage;
-}>({
-  api: async ({ request }, use) => {
-    const api = new ApiHelper(request);
+// Using WorkerFixtures for worker-scoped fixtures and TestFixtures for test-scoped
+export const test = base.extend<
+  {
+    api: ApiHelper;
+    todayPage: TodayPage;
+    exercisesPage: ExercisesPage;
+    plansPage: PlansPage;
+    mesoPage: MesoPage;
+    calendarPage: CalendarPage;
+  },
+  {
+    workerBaseUrl: string;
+  }
+>({
+  // Worker-specific base URL based on parallel worker index (worker-scoped)
+  workerBaseUrl: [
+    async ({}, use, workerInfo) => {
+      const baseUrl = getWorkerBaseUrl(workerInfo.parallelIndex);
+      await use(baseUrl);
+    },
+    { scope: 'worker' },
+  ],
+
+  // Override baseURL to use worker-specific URL (test-scoped, depends on worker fixture)
+  baseURL: async ({ workerBaseUrl }, use) => {
+    await use(workerBaseUrl);
+  },
+
+  api: async ({ request, workerBaseUrl }, use) => {
+    const api = new ApiHelper(request, workerBaseUrl);
     await use(api);
   },
 
-  todayPage: async ({ page }, use) => {
-    const todayPage = new TodayPage(page);
+  // Pass workerBaseUrl to page objects so they can navigate to the correct server
+  todayPage: async ({ page, workerBaseUrl }, use) => {
+    const todayPage = new TodayPage(page, workerBaseUrl);
     await use(todayPage);
   },
 
-  exercisesPage: async ({ page }, use) => {
-    const exercisesPage = new ExercisesPage(page);
+  exercisesPage: async ({ page, workerBaseUrl }, use) => {
+    const exercisesPage = new ExercisesPage(page, workerBaseUrl);
     await use(exercisesPage);
   },
 
-  plansPage: async ({ page }, use) => {
-    const plansPage = new PlansPage(page);
+  plansPage: async ({ page, workerBaseUrl }, use) => {
+    const plansPage = new PlansPage(page, workerBaseUrl);
     await use(plansPage);
   },
 
-  mesoPage: async ({ page }, use) => {
-    const mesoPage = new MesoPage(page);
+  mesoPage: async ({ page, workerBaseUrl }, use) => {
+    const mesoPage = new MesoPage(page, workerBaseUrl);
     await use(mesoPage);
   },
 
-  calendarPage: async ({ page }, use) => {
-    const calendarPage = new CalendarPage(page);
+  calendarPage: async ({ page, workerBaseUrl }, use) => {
+    const calendarPage = new CalendarPage(page, workerBaseUrl);
     await use(calendarPage);
   },
 });

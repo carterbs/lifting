@@ -7,12 +7,20 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  workers: 1, // Run serially to avoid database conflicts
+  // Enable parallel execution with 4 workers
+  // Each worker gets its own server instance and database via global-setup
+  workers: 4,
   reporter: 'html',
 
+  // Global setup starts 4 server instances on ports 3200-3203
+  // Global teardown stops all servers and cleans up databases
+  globalSetup: './global-setup.ts',
+  globalTeardown: './global-teardown.ts',
+
   use: {
-    // E2E tests use port 3200 to avoid conflicts with dev server (port 3000) and other tests
-    baseURL: process.env['BASE_URL'] ?? 'http://localhost:3200',
+    // baseURL is set per-worker in fixtures.ts based on parallelIndex
+    // Default here is just a fallback, actual URL comes from workerBaseUrl fixture
+    baseURL: 'http://localhost:3200',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -30,16 +38,6 @@ export default defineConfig({
     timeout: 10000,
   },
 
-  // Start server with NODE_ENV=test on port 3200 to use isolated test database
-  // IMPORTANT: Never reuse existing server - always start fresh to ensure test isolation
-  webServer: {
-    command: 'NODE_ENV=test PORT=3200 npm run dev',
-    url: 'http://localhost:3200',
-    reuseExistingServer: false,
-    cwd: '..',
-    env: {
-      NODE_ENV: 'test',
-      PORT: '3200',
-    },
-  },
+  // Server startup is now handled by global-setup.ts for parallel execution
+  // Each worker gets its own server on port 3200 + workerIndex with isolated database
 });

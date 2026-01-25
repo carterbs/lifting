@@ -6,7 +6,7 @@ import { BasePage } from './base.page.js';
  */
 export class CalendarPage extends BasePage {
   async goto(): Promise<void> {
-    await this.page.goto('/calendar');
+    await this.page.goto(this.getFullUrl('/calendar'));
   }
 
   async waitForLoad(): Promise<void> {
