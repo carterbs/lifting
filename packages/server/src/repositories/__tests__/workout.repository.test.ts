@@ -458,4 +458,181 @@ describe('WorkoutRepository', () => {
       expect(repository.findById(workout.id)).toBeNull();
     });
   });
+
+  describe('findCompletedInDateRange', () => {
+    it('should return completed workouts within date range', () => {
+      // Create a workout and mark it completed
+      const workout = repository.create({
+        mesocycle_id: testMesocycleId,
+        plan_day_id: testPlanDayId,
+        week_number: 1,
+        scheduled_date: '2024-01-15',
+      });
+      repository.update(workout.id, {
+        status: 'completed',
+        completed_at: '2024-01-15T10:00:00.000Z',
+      });
+
+      const results = repository.findCompletedInDateRange(
+        '2024-01-01',
+        '2024-01-31'
+      );
+      expect(results).toHaveLength(1);
+      expect(results[0].id).toBe(workout.id);
+    });
+
+    it('should filter by completed_at not scheduled_date', () => {
+      // Workout scheduled in January but completed in February
+      const workout = repository.create({
+        mesocycle_id: testMesocycleId,
+        plan_day_id: testPlanDayId,
+        week_number: 1,
+        scheduled_date: '2024-01-15',
+      });
+      repository.update(workout.id, {
+        status: 'completed',
+        completed_at: '2024-02-01T10:00:00.000Z',
+      });
+
+      // Search in January - should not find it
+      const januaryResults = repository.findCompletedInDateRange(
+        '2024-01-01',
+        '2024-01-31'
+      );
+      expect(januaryResults).toHaveLength(0);
+
+      // Search in February - should find it
+      const februaryResults = repository.findCompletedInDateRange(
+        '2024-02-01',
+        '2024-02-29'
+      );
+      expect(februaryResults).toHaveLength(1);
+      expect(februaryResults[0].id).toBe(workout.id);
+    });
+
+    it('should be inclusive of start and end dates', () => {
+      // Create workout completed on the start date boundary
+      const startWorkout = repository.create({
+        mesocycle_id: testMesocycleId,
+        plan_day_id: testPlanDayId,
+        week_number: 1,
+        scheduled_date: '2024-01-15',
+      });
+      repository.update(startWorkout.id, {
+        status: 'completed',
+        completed_at: '2024-01-15T00:00:00.000Z',
+      });
+
+      // Create workout completed on the end date boundary
+      const endWorkout = repository.create({
+        mesocycle_id: testMesocycleId,
+        plan_day_id: testPlanDayId,
+        week_number: 2,
+        scheduled_date: '2024-01-22',
+      });
+      repository.update(endWorkout.id, {
+        status: 'completed',
+        completed_at: '2024-01-22T23:59:59.999Z',
+      });
+
+      const results = repository.findCompletedInDateRange(
+        '2024-01-15',
+        '2024-01-22'
+      );
+      expect(results).toHaveLength(2);
+    });
+
+    it('should exclude pending workouts', () => {
+      repository.create({
+        mesocycle_id: testMesocycleId,
+        plan_day_id: testPlanDayId,
+        week_number: 1,
+        scheduled_date: '2024-01-15',
+      });
+
+      const results = repository.findCompletedInDateRange(
+        '2024-01-01',
+        '2024-01-31'
+      );
+      expect(results).toHaveLength(0);
+    });
+
+    it('should exclude in_progress workouts', () => {
+      const workout = repository.create({
+        mesocycle_id: testMesocycleId,
+        plan_day_id: testPlanDayId,
+        week_number: 1,
+        scheduled_date: '2024-01-15',
+      });
+      repository.update(workout.id, {
+        status: 'in_progress',
+        started_at: '2024-01-15T10:00:00.000Z',
+      });
+
+      const results = repository.findCompletedInDateRange(
+        '2024-01-01',
+        '2024-01-31'
+      );
+      expect(results).toHaveLength(0);
+    });
+
+    it('should exclude skipped workouts', () => {
+      const workout = repository.create({
+        mesocycle_id: testMesocycleId,
+        plan_day_id: testPlanDayId,
+        week_number: 1,
+        scheduled_date: '2024-01-15',
+      });
+      repository.update(workout.id, { status: 'skipped' });
+
+      const results = repository.findCompletedInDateRange(
+        '2024-01-01',
+        '2024-01-31'
+      );
+      expect(results).toHaveLength(0);
+    });
+
+    it('should return empty array when no completed workouts in range', () => {
+      const results = repository.findCompletedInDateRange(
+        '2024-01-01',
+        '2024-01-31'
+      );
+      expect(results).toEqual([]);
+    });
+
+    it('should return multiple completed workouts ordered by completed_at', () => {
+      // Create and complete first workout
+      const workout1 = repository.create({
+        mesocycle_id: testMesocycleId,
+        plan_day_id: testPlanDayId,
+        week_number: 1,
+        scheduled_date: '2024-01-15',
+      });
+      repository.update(workout1.id, {
+        status: 'completed',
+        completed_at: '2024-01-20T10:00:00.000Z',
+      });
+
+      // Create and complete second workout (earlier completion time)
+      const workout2 = repository.create({
+        mesocycle_id: testMesocycleId,
+        plan_day_id: testPlanDayId,
+        week_number: 2,
+        scheduled_date: '2024-01-22',
+      });
+      repository.update(workout2.id, {
+        status: 'completed',
+        completed_at: '2024-01-10T10:00:00.000Z',
+      });
+
+      const results = repository.findCompletedInDateRange(
+        '2024-01-01',
+        '2024-01-31'
+      );
+      expect(results).toHaveLength(2);
+      // Should be ordered by completed_at ascending
+      expect(results[0].id).toBe(workout2.id);
+      expect(results[1].id).toBe(workout1.id);
+    });
+  });
 });

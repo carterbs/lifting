@@ -9,6 +9,7 @@ import { DeloadService } from './deload.service.js';
 import { PlanModificationService } from './plan-modification.service.js';
 import { NotificationService } from './notification.service.js';
 import { ExerciseHistoryService } from './exercise-history.service.js';
+import { CalendarService } from './calendar.service.js';
 import { createRepositories } from '../repositories/index.js';
 
 export { MesocycleService } from './mesocycle.service.js';
@@ -20,6 +21,7 @@ export { DeloadService } from './deload.service.js';
 export { PlanModificationService } from './plan-modification.service.js';
 export { NotificationService } from './notification.service.js';
 export { ExerciseHistoryService } from './exercise-history.service.js';
+export { CalendarService } from './calendar.service.js';
 export type {
   WorkoutWithExercises,
   WorkoutExerciseWithSets,
@@ -39,6 +41,7 @@ let deloadService: DeloadService | null = null;
 let planModificationService: PlanModificationService | null = null;
 let notificationService: NotificationService | null = null;
 let exerciseHistoryService: ExerciseHistoryService | null = null;
+let calendarService: CalendarService | null = null;
 
 // Reset all service singletons (for testing)
 export function resetServices(): void {
@@ -51,6 +54,7 @@ export function resetServices(): void {
   planModificationService = null;
   notificationService = null;
   exerciseHistoryService = null;
+  calendarService = null;
 }
 
 export function getMesocycleService(): MesocycleService {
@@ -124,6 +128,13 @@ export function getExerciseHistoryService(): ExerciseHistoryService {
   return exerciseHistoryService;
 }
 
+export function getCalendarService(): CalendarService {
+  if (!calendarService) {
+    calendarService = new CalendarService(getDatabase());
+  }
+  return calendarService;
+}
+
 // Helper to create services with a custom database (useful for testing)
 export function createServices(db: Database): {
   mesocycle: MesocycleService;
@@ -133,6 +144,7 @@ export function createServices(db: Database): {
   dynamicProgression: DynamicProgressionService;
   deload: DeloadService;
   planModification: PlanModificationService;
+  calendar: CalendarService;
 } {
   const repos = createRepositories(db);
   const progression = new ProgressionService();
@@ -144,5 +156,6 @@ export function createServices(db: Database): {
     dynamicProgression: new DynamicProgressionService(),
     deload: new DeloadService(),
     planModification: new PlanModificationService(repos, progression),
+    calendar: new CalendarService(db),
   };
 }

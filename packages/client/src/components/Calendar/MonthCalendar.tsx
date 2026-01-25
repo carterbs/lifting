@@ -1,0 +1,124 @@
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+import { Box } from '@radix-ui/themes';
+import type { CalendarDayData } from '@lifting/shared';
+
+interface MonthCalendarProps {
+  activities: CalendarDayData[];
+  currentDate: Date;
+  onDayClick: (date: Date) => void;
+  onMonthChange: (date: Date) => void;
+}
+
+function formatDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function MonthCalendar({
+  activities,
+  currentDate,
+  onDayClick,
+  onMonthChange,
+}: MonthCalendarProps): JSX.Element {
+  // Create a lookup map for quick access to day data
+  const activityMap = new Map<string, CalendarDayData>();
+  for (const dayData of activities) {
+    activityMap.set(dayData.date, dayData);
+  }
+
+  // Render colored dots for days with activities
+  const tileContent = ({ date, view }: { date: Date; view: string }): JSX.Element | null => {
+    if (view !== 'month') {
+      return null;
+    }
+
+    const dateKey = formatDateKey(date);
+    const dayData = activityMap.get(dateKey);
+
+    if (!dayData) {
+      return null;
+    }
+
+    const { hasWorkout, hasStretch, hasMeditation } = dayData.summary;
+
+    return (
+      <Box
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '2px',
+          marginTop: '2px',
+        }}
+      >
+        {hasWorkout && (
+          <span
+            data-testid={`workout-dot-${dateKey}`}
+            className="bg-indigo-500"
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              display: 'inline-block',
+            }}
+          />
+        )}
+        {hasStretch && (
+          <span
+            data-testid={`stretch-dot-${dateKey}`}
+            className="bg-teal-500"
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              display: 'inline-block',
+            }}
+          />
+        )}
+        {hasMeditation && (
+          <span
+            data-testid={`meditation-dot-${dateKey}`}
+            className="bg-purple-500"
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              display: 'inline-block',
+            }}
+          />
+        )}
+      </Box>
+    );
+  };
+
+  const handleClickDay = (value: Date): void => {
+    onDayClick(value);
+  };
+
+  const handleActiveStartDateChange = ({
+    activeStartDate,
+  }: {
+    activeStartDate: Date | null;
+  }): void => {
+    if (activeStartDate) {
+      onMonthChange(activeStartDate);
+    }
+  };
+
+  return (
+    <Box data-testid="month-calendar">
+      <Calendar
+        value={currentDate}
+        onClickDay={handleClickDay}
+        onActiveStartDateChange={handleActiveStartDateChange}
+        tileContent={tileContent}
+        prevLabel="< Prev"
+        nextLabel="Next >"
+        prev2Label={null}
+        next2Label={null}
+      />
+    </Box>
+  );
+}

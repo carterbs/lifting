@@ -15,6 +15,7 @@ import {
   WorkoutPage,
   SettingsPage,
   StretchPage,
+  CalendarPage,
 } from '../pages';
 import { usePlans } from '../hooks/usePlans';
 import {
@@ -136,6 +137,7 @@ function AppContent(): JSX.Element {
           <Route path="/exercises" element={<ExerciseLibraryPage />} />
           <Route path="/exercises/:id/history" element={<ExerciseHistoryPage />} />
           <Route path="/stretch" element={<StretchPage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </Box>

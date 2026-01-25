@@ -140,6 +140,27 @@ export class WorkoutRepository extends BaseRepository<
     return rows.map((row) => this.rowToWorkout(row));
   }
 
+  /**
+   * Find completed workouts where completed_at falls within the date range.
+   * Date range is inclusive of both start and end dates.
+   * @param startDate - Start date in YYYY-MM-DD format
+   * @param endDate - End date in YYYY-MM-DD format
+   */
+  findCompletedInDateRange(startDate: string, endDate: string): Workout[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM workouts
+      WHERE status = 'completed'
+        AND completed_at >= ?
+        AND completed_at <= ?
+      ORDER BY completed_at ASC
+    `);
+    // Use start of startDate and end of endDate for inclusive range
+    const startTimestamp = `${startDate}T00:00:00.000Z`;
+    const endTimestamp = `${endDate}T23:59:59.999Z`;
+    const rows = stmt.all(startTimestamp, endTimestamp) as WorkoutRow[];
+    return rows.map((row) => this.rowToWorkout(row));
+  }
+
   update(id: number, data: UpdateWorkoutDTO): Workout | null {
     const existing = this.findById(id);
     if (!existing) return null;

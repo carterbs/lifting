@@ -8,3 +8,4 @@ export { TodayPage } from './TodayPage';
 export { WorkoutPage } from './WorkoutPage';
 export { SettingsPage } from './SettingsPage';
 export { StretchPage } from './StretchPage';
+export { CalendarPage } from './CalendarPage';

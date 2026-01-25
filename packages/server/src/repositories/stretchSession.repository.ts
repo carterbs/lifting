@@ -98,4 +98,24 @@ export class StretchSessionRepository {
     const result = stmt.run(id);
     return result.changes > 0;
   }
+
+  /**
+   * Find stretch sessions where completedAt falls within the date range.
+   * Date range is inclusive of both start and end dates.
+   * @param startDate - Start date in YYYY-MM-DD format
+   * @param endDate - End date in YYYY-MM-DD format
+   */
+  findInDateRange(startDate: string, endDate: string): StretchSessionRecord[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM stretch_sessions
+      WHERE completed_at >= ?
+        AND completed_at <= ?
+      ORDER BY completed_at ASC
+    `);
+    // Use start of startDate and end of endDate for inclusive range
+    const startTimestamp = `${startDate}T00:00:00.000Z`;
+    const endTimestamp = `${endDate}T23:59:59.999Z`;
+    const rows = stmt.all(startTimestamp, endTimestamp) as StretchSessionRow[];
+    return rows.map((row) => this.rowToRecord(row));
+  }
 }
