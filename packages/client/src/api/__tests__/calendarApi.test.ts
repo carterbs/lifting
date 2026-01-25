@@ -58,7 +58,8 @@ describe('calendarApi', () => {
 
       const result = await calendarApi.getMonthData(2024, 1);
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/calendar/2024/1');
+      // URL includes timezone offset from browser (getTimezoneOffset returns 0 in test env)
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringMatching(/^\/api\/calendar\/2024\/1\?tz=-?\d+$/));
       expect(result).toEqual(calendarResponse);
       expect(result.days['2024-01-15']).toEqual(mockDayData);
     });
@@ -77,7 +78,7 @@ describe('calendarApi', () => {
 
       const result = await calendarApi.getMonthData(2024, 2);
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/calendar/2024/2');
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringMatching(/^\/api\/calendar\/2024\/2\?tz=-?\d+$/));
       expect(result.days).toEqual({});
     });
 
@@ -196,7 +197,7 @@ describe('calendarApi', () => {
 
       await calendarApi.getMonthData(2024, 12);
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/calendar/2024/12');
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringMatching(/^\/api\/calendar\/2024\/12\?tz=-?\d+$/));
     });
   });
 });

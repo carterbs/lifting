@@ -171,5 +171,79 @@ describe('StretchSessionRepository', () => {
       expect(results.map((s) => s.id)).toContain(session1.id);
       expect(results.map((s) => s.id)).toContain(session2.id);
     });
+
+    describe('timezone-aware date range queries', () => {
+      it('should include sessions at 10 PM EST when querying for that local date', () => {
+        // Session at 10 PM EST on Jan 25 = 3 AM UTC on Jan 26
+        const session = repository.create({
+          completedAt: '2024-01-26T03:00:00.000Z',
+          totalDurationSeconds: 300,
+          regionsCompleted: 3,
+          regionsSkipped: 0,
+          stretches: [],
+        });
+
+        // Query for Jan 25 with EST offset (300 minutes)
+        // Local Jan 25 00:00 EST = Jan 25 05:00 UTC
+        // Local Jan 25 23:59 EST = Jan 26 04:59 UTC
+        const results = repository.findInDateRange('2024-01-25', '2024-01-25', 300);
+
+        expect(results).toHaveLength(1);
+        expect(results[0].id).toBe(session.id);
+      });
+
+      it('should exclude sessions outside local date range when using timezone', () => {
+        // Session at 3 AM EST on Jan 26 = 8 AM UTC on Jan 26
+        repository.create({
+          completedAt: '2024-01-26T08:00:00.000Z',
+          totalDurationSeconds: 300,
+          regionsCompleted: 3,
+          regionsSkipped: 0,
+          stretches: [],
+        });
+
+        // Query for Jan 25 with EST offset (300 minutes)
+        // This session at 3 AM EST Jan 26 should NOT be included
+        const results = repository.findInDateRange('2024-01-25', '2024-01-25', 300);
+
+        expect(results).toHaveLength(0);
+      });
+
+      it('should handle UTC+2 timezone correctly', () => {
+        // Session at 1 AM UTC+2 on Jan 26 = 11 PM UTC on Jan 25
+        const session = repository.create({
+          completedAt: '2024-01-25T23:00:00.000Z',
+          totalDurationSeconds: 300,
+          regionsCompleted: 3,
+          regionsSkipped: 0,
+          stretches: [],
+        });
+
+        // Query for Jan 26 with UTC+2 offset (-120 minutes)
+        // Local Jan 26 00:00 UTC+2 = Jan 25 22:00 UTC
+        // Local Jan 26 23:59 UTC+2 = Jan 26 21:59 UTC
+        const results = repository.findInDateRange('2024-01-26', '2024-01-26', -120);
+
+        expect(results).toHaveLength(1);
+        expect(results[0].id).toBe(session.id);
+      });
+
+      it('should default to UTC when no timezone offset provided', () => {
+        // Session at 3 AM UTC on Jan 26
+        repository.create({
+          completedAt: '2024-01-26T03:00:00.000Z',
+          totalDurationSeconds: 300,
+          regionsCompleted: 3,
+          regionsSkipped: 0,
+          stretches: [],
+        });
+
+        // Query for Jan 25 without timezone offset (defaults to UTC)
+        const results = repository.findInDateRange('2024-01-25', '2024-01-25');
+
+        // Should NOT include the session since it's on Jan 26 UTC
+        expect(results).toHaveLength(0);
+      });
+    });
   });
 });

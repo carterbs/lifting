@@ -100,21 +100,56 @@ export class StretchSessionRepository {
   }
 
   /**
-   * Find stretch sessions where completedAt falls within the date range.
-   * Date range is inclusive of both start and end dates.
-   * @param startDate - Start date in YYYY-MM-DD format
-   * @param endDate - End date in YYYY-MM-DD format
+   * Convert local date boundaries to UTC timestamp boundaries.
+   * @param localDate - Local date in YYYY-MM-DD format
+   * @param isEndOfDay - Whether this is end of day (23:59:59.999) or start (00:00:00.000)
+   * @param timezoneOffsetMinutes - Timezone offset from JS getTimezoneOffset()
+   * @returns UTC ISO timestamp
    */
-  findInDateRange(startDate: string, endDate: string): StretchSessionRecord[] {
+  private localDateToUtcBoundary(
+    localDate: string,
+    isEndOfDay: boolean,
+    timezoneOffsetMinutes: number
+  ): string {
+    // Parse the local date
+    const parts = localDate.split('-').map(Number);
+    const year = parts[0] ?? 0;
+    const month = parts[1] ?? 1;
+    const day = parts[2] ?? 1;
+
+    // Create local time boundary (start or end of day)
+    const localTime = isEndOfDay
+      ? new Date(year, month - 1, day, 23, 59, 59, 999)
+      : new Date(year, month - 1, day, 0, 0, 0, 0);
+
+    // Convert to UTC by adding the timezone offset
+    // (getTimezoneOffset returns minutes behind UTC, so we add to get UTC)
+    const utcTime = new Date(localTime.getTime() + timezoneOffsetMinutes * 60 * 1000);
+
+    return utcTime.toISOString();
+  }
+
+  /**
+   * Find stretch sessions where completedAt falls within the date range.
+   * Date range is inclusive of both start and end dates in the user's local timezone.
+   * @param startDate - Start date in YYYY-MM-DD format (local timezone)
+   * @param endDate - End date in YYYY-MM-DD format (local timezone)
+   * @param timezoneOffsetMinutes - Timezone offset from JS getTimezoneOffset() (default 0 = UTC)
+   */
+  findInDateRange(
+    startDate: string,
+    endDate: string,
+    timezoneOffsetMinutes: number = 0
+  ): StretchSessionRecord[] {
     const stmt = this.db.prepare(`
       SELECT * FROM stretch_sessions
       WHERE completed_at >= ?
         AND completed_at <= ?
       ORDER BY completed_at ASC
     `);
-    // Use start of startDate and end of endDate for inclusive range
-    const startTimestamp = `${startDate}T00:00:00.000Z`;
-    const endTimestamp = `${endDate}T23:59:59.999Z`;
+    // Convert local date boundaries to UTC timestamps
+    const startTimestamp = this.localDateToUtcBoundary(startDate, false, timezoneOffsetMinutes);
+    const endTimestamp = this.localDateToUtcBoundary(endDate, true, timezoneOffsetMinutes);
     const rows = stmt.all(startTimestamp, endTimestamp) as StretchSessionRow[];
     return rows.map((row) => this.rowToRecord(row));
   }

@@ -192,5 +192,75 @@ describe('Calendar Routes', () => {
         }
       });
     });
+
+    describe('timezone offset parameter', () => {
+      it('should accept valid timezone offset (EST = 300)', async () => {
+        const response = await request(app).get('/api/calendar/2024/1?tz=300');
+        const body = response.body as ApiResult<CalendarDataResponse>;
+
+        expect(response.status).toBe(200);
+        expect(body.success).toBe(true);
+      });
+
+      it('should accept valid negative timezone offset (UTC+2 = -120)', async () => {
+        const response = await request(app).get('/api/calendar/2024/1?tz=-120');
+        const body = response.body as ApiResult<CalendarDataResponse>;
+
+        expect(response.status).toBe(200);
+        expect(body.success).toBe(true);
+      });
+
+      it('should accept timezone offset of 0 (UTC)', async () => {
+        const response = await request(app).get('/api/calendar/2024/1?tz=0');
+        const body = response.body as ApiResult<CalendarDataResponse>;
+
+        expect(response.status).toBe(200);
+        expect(body.success).toBe(true);
+      });
+
+      it('should work without timezone offset (defaults to UTC)', async () => {
+        const response = await request(app).get('/api/calendar/2024/1');
+        const body = response.body as ApiResult<CalendarDataResponse>;
+
+        expect(response.status).toBe(200);
+        expect(body.success).toBe(true);
+      });
+
+      it('should return 400 for invalid timezone offset (too low)', async () => {
+        const response = await request(app).get('/api/calendar/2024/1?tz=-800');
+        const body = response.body as ApiResult<never>;
+
+        expect(response.status).toBe(400);
+        expect(body.success).toBe(false);
+        if (!body.success) {
+          expect(body.error.code).toBe('VALIDATION_ERROR');
+          expect(body.error.message).toContain('tz');
+        }
+      });
+
+      it('should return 400 for invalid timezone offset (too high)', async () => {
+        const response = await request(app).get('/api/calendar/2024/1?tz=900');
+        const body = response.body as ApiResult<never>;
+
+        expect(response.status).toBe(400);
+        expect(body.success).toBe(false);
+        if (!body.success) {
+          expect(body.error.code).toBe('VALIDATION_ERROR');
+          expect(body.error.message).toContain('tz');
+        }
+      });
+
+      it('should return 400 for non-numeric timezone offset', async () => {
+        const response = await request(app).get('/api/calendar/2024/1?tz=abc');
+        const body = response.body as ApiResult<never>;
+
+        expect(response.status).toBe(400);
+        expect(body.success).toBe(false);
+        if (!body.success) {
+          expect(body.error.code).toBe('VALIDATION_ERROR');
+          expect(body.error.message).toContain('tz');
+        }
+      });
+    });
   });
 });
