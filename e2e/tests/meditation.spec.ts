@@ -253,13 +253,16 @@ test.describe('Meditation Feature', () => {
       await page.getByRole('button', { name: /5 minutes/i }).click();
       await page.getByRole('button', { name: 'Begin Meditation' }).click();
 
+      // Wait for session UI to be ready
+      await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+
       // Fast-forward entire 5 minutes (300 seconds) in chunks
-      for (let i = 0; i < 31; i++) {
-        await page.clock.runFor(10000);
+      for (let i = 0; i < 65; i++) {
+        await page.clock.runFor(5000);
       }
 
       // Should show completion screen
-      await expect(page.getByText('Session Complete!')).toBeVisible();
+      await expect(page.getByText('Session Complete!')).toBeVisible({ timeout: 10000 });
       await expect(page.getByRole('button', { name: 'Done' })).toBeVisible();
     });
 
@@ -270,13 +273,16 @@ test.describe('Meditation Feature', () => {
       await page.getByRole('button', { name: /5 minutes/i }).click();
       await page.getByRole('button', { name: 'Begin Meditation' }).click();
 
-      // Complete full session in chunks
-      for (let i = 0; i < 31; i++) {
-        await page.clock.runFor(10000);
+      // Wait for session UI to be ready
+      await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+
+      // Fast-forward 5+ minutes in chunks
+      for (let i = 0; i < 65; i++) {
+        await page.clock.runFor(5000);
       }
 
       // Should show completion screen with stats
-      await expect(page.getByText('Session Complete!')).toBeVisible();
+      await expect(page.getByText('Session Complete!')).toBeVisible({ timeout: 10000 });
     });
 
     test('should return to setup after clicking Done', async ({ page }) => {
@@ -286,13 +292,16 @@ test.describe('Meditation Feature', () => {
       await page.getByRole('button', { name: /5 minutes/i }).click();
       await page.getByRole('button', { name: 'Begin Meditation' }).click();
 
-      // Complete session in chunks
-      for (let i = 0; i < 31; i++) {
-        await page.clock.runFor(10000);
+      // Wait for session UI to be ready
+      await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+
+      // Fast-forward 5+ minutes in chunks
+      for (let i = 0; i < 65; i++) {
+        await page.clock.runFor(5000);
       }
 
       // Click Done
-      await page.getByRole('button', { name: 'Done' }).click();
+      await page.getByRole('button', { name: 'Done' }).click({ timeout: 10000 });
 
       // Should return to setup
       await expect(page.getByText('Select Duration')).toBeVisible();

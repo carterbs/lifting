@@ -225,17 +225,15 @@ export function useMeditationSession({
 
   // Handle session completion
   const handleSessionComplete = useCallback(
-    async (wasFullyCompleted: boolean): Promise<void> => {
+    (wasFullyCompleted: boolean): void => {
       clearTimer();
       setCompletedFully(wasFullyCompleted);
 
       if (wasFullyCompleted) {
-        // Play closing bell
-        try {
-          await playMeditationBell();
-        } catch {
+        // Play closing bell (fire and forget - don't block completion)
+        playMeditationBell().catch(() => {
           // Ignore bell error at end
-        }
+        });
       }
 
       setState((prev) => ({
