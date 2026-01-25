@@ -196,13 +196,79 @@ describe('WorkoutService', () => {
 
 ### E2E Tests
 
-Puppeteer tests for critical user flows:
+Playwright tests for critical user flows. **Target: All E2E tests must complete in under 45 seconds.**
 
-- Workout tracking (logging sets, modifying weight/reps)
-- Automated progression verification
-- Plan creation flow
+Current test count: ~76 tests across 9 files.
 
-E2E tests should be able to start from arbitrary states using seed data.
+#### E2E Performance Guidelines (CRITICAL)
+
+**1. NEVER use `waitForTimeout()`** - Use proper assertions instead:
+```typescript
+// BAD - arbitrary wait
+await page.waitForTimeout(1000);
+await calendarPage.clickDate(date);
+
+// GOOD - wait for specific condition
+await calendarPage.waitForActivityDot(date, 'workout');
+await calendarPage.clickDate(date);
+```
+
+**2. Use API for setup, UI for verification** - Only test UI interactions you're actually verifying:
+```typescript
+// BAD - slow UI setup for every test
+await plansPage.createPlan(config);
+await mesoPage.startMesocycle(planName, startDate);
+await todayPage.trackAllSets();
+
+// GOOD - API setup, UI verification
+await api.setupWorkoutScenario('Bench Press');
+await todayPage.goto();
+expect(await todayPage.hasWorkoutScheduled()).toBe(true);
+```
+
+**3. Hybrid approach for long journeys** - Mix UI and API to cover both:
+```typescript
+// For a 7-week mesocycle with 14 workouts:
+// - UI tracking for key weeks (1, 6, 7) - tests real interactions
+// - API tracking for weeks 2-5 - tests progression logic without UI overhead
+const useUI = (week === 1 || week === 6 || week === 7) && i === 0;
+if (useUI) {
+  await trackWorkout(workout.id, ...);
+} else {
+  await api.completeWorkoutViaApi(workout.id);
+}
+```
+
+**4. Avoid fake timers for React state** - Playwright's `clock.runFor()` doesn't sync reliably with React:
+```typescript
+// BAD - unreliable with React state updates
+await page.clock.runFor(300000); // Fast-forward 5 minutes
+await expect(page.getByText('Complete')).toBeVisible(); // Often fails
+
+// GOOD - test the behavior directly
+await page.getByRole('button', { name: 'End' }).click();
+await page.getByRole('button', { name: 'End Session' }).click();
+```
+
+**5. Use page objects with smart waiting** - Encapsulate wait logic:
+```typescript
+// In calendar.page.ts
+async waitForActivityDot(date: Date, type: 'workout' | 'stretch'): Promise<void> {
+  const dateStr = this.formatDateKey(date);
+  await expect(this.page.locator(`[data-testid="${type}-dot-${dateStr}"]`))
+    .toBeVisible({ timeout: 5000 });
+}
+```
+
+**6. Keep individual test files under 10 seconds**:
+| File | Target | Tests |
+|------|--------|-------|
+| smoke.spec.ts | <3s | 3 |
+| calendar.spec.ts | <8s | 16 |
+| meditation.spec.ts | <10s | 18 |
+| complete-mesocycle-journey.spec.ts | <10s | 1 |
+
+E2E tests should be able to start from arbitrary states using seed data via the `ApiHelper` class.
 
 ## Business Logic Reference
 
