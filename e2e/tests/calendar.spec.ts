@@ -125,12 +125,12 @@ test.describe('Calendar View', () => {
       await calendarPage.goto();
       await calendarPage.waitForLoad();
 
-      // Give React Query time to fetch and render
-      await page.waitForTimeout(1000);
-
       // Click on the date that has the workout (parse the date string)
       const [year, month, day] = (workoutDate ?? '').split('-').map(Number);
       const dateToClick = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+
+      // Wait for workout dot to appear before clicking
+      await calendarPage.waitForActivityDot(dateToClick, 'workout');
       await calendarPage.clickDate(dateToClick);
 
       expect(await calendarPage.hasWorkoutActivity()).toBe(true);
@@ -153,11 +153,13 @@ test.describe('Calendar View', () => {
 
       await calendarPage.goto();
       await calendarPage.waitForLoad();
-      await page.waitForTimeout(1000);
 
       // Click on the date that has the workout
       const [year, month, day] = (workoutDate ?? '').split('-').map(Number);
       const dateToClick = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+
+      // Wait for workout dot to appear before clicking
+      await calendarPage.waitForActivityDot(dateToClick, 'workout');
       await calendarPage.clickDate(dateToClick);
 
       // Click the first activity (should be the workout)
@@ -185,10 +187,12 @@ test.describe('Calendar View', () => {
 
       await calendarPage.goto();
       await calendarPage.waitForLoad();
-      await page.waitForTimeout(1000);
 
       const [year, month, day] = (stretchDate ?? '').split('-').map(Number);
       const dateToClick = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+
+      // Wait for stretch dot to appear before clicking
+      await calendarPage.waitForActivityDot(dateToClick, 'stretch');
       await calendarPage.clickDate(dateToClick);
 
       expect(await calendarPage.hasStretchActivity()).toBe(true);
@@ -210,10 +214,12 @@ test.describe('Calendar View', () => {
 
       await calendarPage.goto();
       await calendarPage.waitForLoad();
-      await page.waitForTimeout(1000);
 
       const [year, month, day] = (stretchDate ?? '').split('-').map(Number);
       const dateToClick = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+
+      // Wait for stretch dot to appear before clicking
+      await calendarPage.waitForActivityDot(dateToClick, 'stretch');
       await calendarPage.clickDate(dateToClick);
 
       await calendarPage.clickActivityItem(0);
@@ -248,10 +254,13 @@ test.describe('Calendar View', () => {
 
       await calendarPage.goto();
       await calendarPage.waitForLoad();
-      await page.waitForTimeout(1000);
 
       const [year, month, day] = (activityDate ?? '').split('-').map(Number);
       const dateToClick = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+
+      // Wait for both activity dots to appear before clicking
+      await calendarPage.waitForActivityDot(dateToClick, 'workout');
+      await calendarPage.waitForActivityDot(dateToClick, 'stretch');
       await calendarPage.clickDate(dateToClick);
 
       expect(await calendarPage.hasWorkoutActivity()).toBe(true);

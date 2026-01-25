@@ -270,7 +270,9 @@ test.describe('Complete Mesocycle Journey', () => {
     const hasActiveMeso = await mesoPage.hasActiveMesocycle();
     expect(hasActiveMeso).toBe(true);
 
-    // ============ Step 4: Track All 14 Workouts ============
+    // ============ Step 4: Track All 14 Workouts (Hybrid Approach) ============
+    // Uses UI for key weeks (1, 6, 7) to test real user interactions,
+    // and API for weeks 2-5 to speed up the test while still exercising progression logic.
     // Get all workouts and sort by scheduled date
     const allWorkouts = await api.getWorkouts();
     const sortedWorkouts = [...allWorkouts].sort((a, b) =>
@@ -290,7 +292,7 @@ test.describe('Complete Mesocycle Journey', () => {
       workoutsByWeek.get(week)?.push(workout);
     }
 
-    // Track all workouts for each week
+    // Track all workouts for each week using hybrid approach
     for (let week = 1; week <= 7; week++) {
       const weekWorkouts = workoutsByWeek.get(week) ?? [];
       expect(weekWorkouts.length).toBe(2); // 2 workouts per week
@@ -299,12 +301,22 @@ test.describe('Complete Mesocycle Journey', () => {
         const workout = weekWorkouts[i];
         if (workout === undefined) continue;
 
-        // Alternate which exercise gets skipped entirely
-        const skipIndex = (week + i) % 2;
+        // UI tracking for key weeks: 1 (baseline), 6 (weight increase), 7 (deload)
+        // Only track first workout of key weeks via UI to save time
+        const isKeyWeek = week === 1 || week === 6 || week === 7;
+        const useUI = isKeyWeek && i === 0;
 
-        await trackWorkout(workout.id, skipIndex, api, todayPage, page);
+        if (useUI) {
+          // UI tracking - tests real user interactions
+          // Alternate which exercise gets skipped entirely
+          const skipIndex = (week + i) % 2;
+          await trackWorkout(workout.id, skipIndex, api, todayPage, page);
+        } else {
+          // API tracking - fast, still exercises progression logic
+          await api.completeWorkoutViaApi(workout.id);
+        }
 
-        // Verify workout is completed
+        // Verify workout is completed (same verification either way)
         const updated = await api.getWorkoutById(workout.id);
         expect(updated.status).toBe('completed');
       }

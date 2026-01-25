@@ -172,8 +172,6 @@ export class CalendarPage extends BasePage {
    * Check if a workout activity is in the dialog
    */
   async hasWorkoutActivity(): Promise<boolean> {
-    // Wait a moment for dialog content to load
-    await this.page.waitForTimeout(500);
     const workoutBadge = this.dayDetailDialog.getByText('Workout');
     return workoutBadge.isVisible();
   }
@@ -182,9 +180,32 @@ export class CalendarPage extends BasePage {
    * Check if a stretch activity is in the dialog
    */
   async hasStretchActivity(): Promise<boolean> {
-    // Wait a moment for dialog content to load
-    await this.page.waitForTimeout(500);
     const stretchBadge = this.dayDetailDialog.getByText('Stretch');
     return stretchBadge.isVisible();
+  }
+
+  /**
+   * Wait for activity dot to appear on a specific date
+   */
+  async waitForActivityDot(date: Date, activityType: 'workout' | 'stretch' | 'meditation'): Promise<void> {
+    const dateStr = this.formatDateKey(date);
+    const dot = this.page.locator(`[data-testid="${activityType}-dot-${dateStr}"]`);
+    await expect(dot).toBeVisible({ timeout: 5000 });
+  }
+
+  /**
+   * Wait for any activity indicators to load on the calendar (after data fetch)
+   */
+  async waitForCalendarDataLoaded(): Promise<void> {
+    // Wait for loading state to complete - calendar shows dots after React Query fetches
+    // We wait for either an activity dot OR confirm the calendar tiles are interactive
+    await this.page.waitForFunction(() => {
+      // Check if any activity dots exist OR if the calendar is done loading
+      const dots = document.querySelectorAll('[data-testid$="-dot-"]');
+      const calendar = document.querySelector('.react-calendar');
+      return dots.length > 0 || (calendar && !document.querySelector('[data-loading="true"]'));
+    }, { timeout: 5000 }).catch(() => {
+      // If no dots appear, that's fine - might be empty calendar
+    });
   }
 }
