@@ -46,5 +46,6 @@ tmp/
 temp/
 .playwright-mcp/
 
-# Generated audio assets (TTS)
-packages/client/public/audio/
+# Generated audio assets (TTS) - ignore wav files but keep json manifest
+packages/client/public/audio/**/*.wav
+packages/client/public/audio/**/*.mp3
