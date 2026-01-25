@@ -60,7 +60,7 @@ export function MonthCalendar({
               height: '6px',
               borderRadius: '50%',
               display: 'inline-block',
-              backgroundColor: '#6366f1', // indigo-500
+              backgroundColor: 'var(--accent-9)',
             }}
           />
         )}
@@ -72,7 +72,7 @@ export function MonthCalendar({
               height: '6px',
               borderRadius: '50%',
               display: 'inline-block',
-              backgroundColor: '#14b8a6', // teal-500
+              backgroundColor: 'var(--teal-9)',
             }}
           />
         )}
@@ -84,7 +84,7 @@ export function MonthCalendar({
               height: '6px',
               borderRadius: '50%',
               display: 'inline-block',
-              backgroundColor: '#a855f7', // purple-500
+              backgroundColor: 'var(--purple-9)',
             }}
           />
         )}
