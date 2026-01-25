@@ -63,10 +63,12 @@ export function BottomNav(): JSX.Element {
         bottom: 0,
         left: 0,
         right: 0,
-        height: '64px',
+        minHeight: '64px',
         backgroundColor: 'var(--gray-1)',
         borderTop: '1px solid var(--gray-5)',
         paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
       }}
     >
       <nav aria-label="Main navigation">
