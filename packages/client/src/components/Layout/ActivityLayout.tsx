@@ -13,7 +13,10 @@ export function ActivityLayout({
 }: ActivityLayoutProps): JSX.Element {
   return (
     <>
-      <Box style={{ paddingBottom: '80px' }}>
+      <Box style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'calc(68px + env(safe-area-inset-bottom))',
+      }}>
         <Outlet />
       </Box>
       <ActivityBottomNav backPath={backPath} activityName={activityName} />

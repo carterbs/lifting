@@ -5,7 +5,10 @@ import { LiftingBottomNav } from '../Navigation';
 export function LiftingLayout(): JSX.Element {
   return (
     <>
-      <Box style={{ paddingBottom: '80px' }}>
+      <Box style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'calc(68px + env(safe-area-inset-bottom))',
+      }}>
         <Outlet />
       </Box>
       <LiftingBottomNav />
