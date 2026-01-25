@@ -37,16 +37,16 @@ function getActivityBadgeLabel(type: CalendarActivity['type']): string {
   }
 }
 
-function getBackgroundClass(type: CalendarActivity['type']): string {
+function getBackgroundColor(type: CalendarActivity['type']): string {
   switch (type) {
     case 'workout':
-      return 'bg-indigo-50';
+      return 'rgba(99, 102, 241, 0.15)'; // indigo with transparency for dark theme
     case 'stretch':
-      return 'bg-teal-50';
+      return 'rgba(20, 184, 166, 0.15)'; // teal with transparency for dark theme
     case 'meditation':
-      return 'bg-purple-50';
+      return 'rgba(168, 85, 247, 0.15)'; // purple with transparency for dark theme
     default:
-      return 'bg-gray-50';
+      return 'rgba(107, 114, 128, 0.15)'; // gray with transparency
   }
 }
 
@@ -89,7 +89,7 @@ export function ActivityItem({ activity, onClick }: ActivityItemProps): JSX.Elem
     }
   };
 
-  const backgroundClass = getBackgroundClass(activity.type);
+  const backgroundColor = getBackgroundColor(activity.type);
   const badgeColor = getActivityBadgeColor(activity.type);
   const badgeLabel = getActivityBadgeLabel(activity.type);
   const summaryText = getSummaryText(activity);
@@ -97,7 +97,6 @@ export function ActivityItem({ activity, onClick }: ActivityItemProps): JSX.Elem
   return (
     <Box
       data-testid={`activity-item-${activity.id}`}
-      className={backgroundClass}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
@@ -106,6 +105,7 @@ export function ActivityItem({ activity, onClick }: ActivityItemProps): JSX.Elem
         padding: '12px',
         borderRadius: '8px',
         cursor: 'pointer',
+        backgroundColor,
       }}
     >
       <Flex justify="between" align="center" gap="2">

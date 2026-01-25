@@ -147,7 +147,7 @@ describe('MonthCalendar', () => {
       // Day 15 has a workout
       const dot = screen.getByTestId('workout-dot-2024-01-15');
       expect(dot).toBeInTheDocument();
-      expect(dot).toHaveClass('bg-indigo-500');
+      expect(dot).toHaveStyle({ backgroundColor: '#6366f1' });
     });
 
     it('should render teal dot for days with stretches', () => {
@@ -163,7 +163,7 @@ describe('MonthCalendar', () => {
       // Day 16 has a stretch
       const dot = screen.getByTestId('stretch-dot-2024-01-16');
       expect(dot).toBeInTheDocument();
-      expect(dot).toHaveClass('bg-teal-500');
+      expect(dot).toHaveStyle({ backgroundColor: '#14b8a6' });
     });
 
     it('should render multiple dots for days with multiple activity types', () => {

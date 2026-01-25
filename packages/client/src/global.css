@@ -21,3 +21,95 @@
   text-indent: 0 !important;
   font-size: 16px !important;
 }
+
+/* Dark theme overrides for react-calendar */
+.react-calendar {
+  background-color: var(--gray-2);
+  border: 1px solid var(--gray-5);
+  border-radius: 8px;
+  font-family: inherit;
+  width: 100%;
+  max-width: 100%;
+}
+
+.react-calendar__navigation {
+  background-color: var(--gray-3);
+  border-radius: 8px 8px 0 0;
+  margin-bottom: 0;
+}
+
+.react-calendar__navigation button {
+  color: #e2e8f0;
+  min-width: 44px;
+  background: none;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+  background-color: var(--gray-4);
+}
+
+.react-calendar__navigation button:disabled {
+  background-color: transparent;
+  color: var(--gray-6);
+}
+
+.react-calendar__month-view__weekdays {
+  background-color: var(--gray-3);
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  padding: 8px;
+  color: #94a3b8;
+}
+
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
+}
+
+.react-calendar__tile {
+  background-color: transparent;
+  color: #e2e8f0;
+  padding: 10px 6px;
+  font-size: 14px;
+}
+
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+  background-color: var(--gray-4);
+  border-radius: 4px;
+}
+
+.react-calendar__tile--now {
+  background-color: var(--gray-4);
+  border-radius: 4px;
+}
+
+.react-calendar__tile--now:enabled:hover,
+.react-calendar__tile--now:enabled:focus {
+  background-color: var(--gray-5);
+}
+
+.react-calendar__tile--active {
+  background-color: #6366f1 !important;
+  border-radius: 4px;
+  color: white;
+}
+
+.react-calendar__tile--active:enabled:hover,
+.react-calendar__tile--active:enabled:focus {
+  background-color: #4f46e5 !important;
+}
+
+.react-calendar__month-view__days__day--neighboringMonth {
+  color: var(--gray-6);
+}
+
+.react-calendar__month-view__days__day--weekend {
+  color: #e2e8f0;
+}
