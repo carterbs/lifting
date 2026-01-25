@@ -76,7 +76,8 @@ rsync $RSYNC_OPTS \
     --exclude 'test-results' \
     --exclude '.env.local' \
     --exclude '*.log' \
-    --exclude 'plans' \
+    --exclude '/plans' \
+    --exclude 'thoughts' \
     --exclude 'BUGS.md' \
     --exclude 'CLAUDE.md' \
     "$LOCAL_DIR/" "$REMOTE_HOST:$REMOTE_DIR/"
