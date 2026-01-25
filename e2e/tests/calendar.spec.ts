@@ -109,12 +109,29 @@ test.describe('Calendar View', () => {
       }
     });
 
-    test('should show workout in day dialog', async ({ calendarPage }) => {
+    test('should show workout in day dialog', async ({ calendarPage, api, page }) => {
+      // Get calendar data and find which date has the workout
+      // (Use UTC date since server stores completed_at in UTC)
+      const now = new Date();
+      const calendarData = await api.getCalendarMonth(now.getFullYear(), now.getMonth() + 1);
+
+      // Find the date that has workout activity
+      const workoutDate = Object.keys(calendarData.days).find(dateKey => {
+        const day = calendarData.days[dateKey] as { activities?: Array<{ type: string }> };
+        return day.activities?.some(a => a.type === 'workout');
+      });
+      expect(workoutDate).toBeDefined();
+
       await calendarPage.goto();
       await calendarPage.waitForLoad();
 
-      const today = new Date();
-      await calendarPage.clickDate(today);
+      // Give React Query time to fetch and render
+      await page.waitForTimeout(1000);
+
+      // Click on the date that has the workout (parse the date string)
+      const [year, month, day] = (workoutDate ?? '').split('-').map(Number);
+      const dateToClick = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+      await calendarPage.clickDate(dateToClick);
 
       expect(await calendarPage.hasWorkoutActivity()).toBe(true);
       expect(await calendarPage.getActivityCount()).toBeGreaterThanOrEqual(1);
@@ -123,12 +140,25 @@ test.describe('Calendar View', () => {
     test('should navigate to workout detail when clicking workout activity', async ({
       calendarPage,
       page,
+      api,
     }) => {
+      // Get calendar data and find which date has the workout (UTC date)
+      const now = new Date();
+      const calendarData = await api.getCalendarMonth(now.getFullYear(), now.getMonth() + 1);
+      const workoutDate = Object.keys(calendarData.days).find(dateKey => {
+        const day = calendarData.days[dateKey] as { activities?: Array<{ type: string }> };
+        return day.activities?.some(a => a.type === 'workout');
+      });
+      expect(workoutDate).toBeDefined();
+
       await calendarPage.goto();
       await calendarPage.waitForLoad();
+      await page.waitForTimeout(1000);
 
-      const today = new Date();
-      await calendarPage.clickDate(today);
+      // Click on the date that has the workout
+      const [year, month, day] = (workoutDate ?? '').split('-').map(Number);
+      const dateToClick = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+      await calendarPage.clickDate(dateToClick);
 
       // Click the first activity (should be the workout)
       await calendarPage.clickActivityItem(0);
@@ -144,12 +174,22 @@ test.describe('Calendar View', () => {
       await api.createQuickStretchSession();
     });
 
-    test('should show stretch in day dialog', async ({ calendarPage }) => {
+    test('should show stretch in day dialog', async ({ calendarPage, api, page }) => {
+      const now = new Date();
+      const calendarData = await api.getCalendarMonth(now.getFullYear(), now.getMonth() + 1);
+      const stretchDate = Object.keys(calendarData.days).find(dateKey => {
+        const day = calendarData.days[dateKey] as { activities?: Array<{ type: string }> };
+        return day.activities?.some(a => a.type === 'stretch');
+      });
+      expect(stretchDate).toBeDefined();
+
       await calendarPage.goto();
       await calendarPage.waitForLoad();
+      await page.waitForTimeout(1000);
 
-      const today = new Date();
-      await calendarPage.clickDate(today);
+      const [year, month, day] = (stretchDate ?? '').split('-').map(Number);
+      const dateToClick = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+      await calendarPage.clickDate(dateToClick);
 
       expect(await calendarPage.hasStretchActivity()).toBe(true);
       expect(await calendarPage.getActivityCount()).toBeGreaterThanOrEqual(1);
@@ -158,18 +198,27 @@ test.describe('Calendar View', () => {
     test('should close dialog when clicking stretch activity (no detail page)', async ({
       calendarPage,
       page,
+      api,
     }) => {
+      const now = new Date();
+      const calendarData = await api.getCalendarMonth(now.getFullYear(), now.getMonth() + 1);
+      const stretchDate = Object.keys(calendarData.days).find(dateKey => {
+        const day = calendarData.days[dateKey] as { activities?: Array<{ type: string }> };
+        return day.activities?.some(a => a.type === 'stretch');
+      });
+      expect(stretchDate).toBeDefined();
+
       await calendarPage.goto();
       await calendarPage.waitForLoad();
+      await page.waitForTimeout(1000);
 
-      const today = new Date();
-      await calendarPage.clickDate(today);
+      const [year, month, day] = (stretchDate ?? '').split('-').map(Number);
+      const dateToClick = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+      await calendarPage.clickDate(dateToClick);
 
-      const urlBefore = page.url();
       await calendarPage.clickActivityItem(0);
 
-      // Dialog should close but we stay on calendar
-      // (stretch has no detail page)
+      // Dialog should close but we stay on calendar (stretch has no detail page)
       await expect(page).toHaveURL(/\/calendar/);
     });
   });
@@ -187,12 +236,23 @@ test.describe('Calendar View', () => {
       await api.createQuickStretchSession();
     });
 
-    test('should show both workout and stretch in day dialog', async ({ calendarPage }) => {
+    test('should show both workout and stretch in day dialog', async ({ calendarPage, api, page }) => {
+      const now = new Date();
+      const calendarData = await api.getCalendarMonth(now.getFullYear(), now.getMonth() + 1);
+      // Find a date with both activities
+      const activityDate = Object.keys(calendarData.days).find(dateKey => {
+        const day = calendarData.days[dateKey] as { activities?: Array<{ type: string }> };
+        return day.activities && day.activities.length >= 2;
+      });
+      expect(activityDate).toBeDefined();
+
       await calendarPage.goto();
       await calendarPage.waitForLoad();
+      await page.waitForTimeout(1000);
 
-      const today = new Date();
-      await calendarPage.clickDate(today);
+      const [year, month, day] = (activityDate ?? '').split('-').map(Number);
+      const dateToClick = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+      await calendarPage.clickDate(dateToClick);
 
       expect(await calendarPage.hasWorkoutActivity()).toBe(true);
       expect(await calendarPage.hasStretchActivity()).toBe(true);
