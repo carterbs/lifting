@@ -96,18 +96,27 @@ export function StretchPage(): JSX.Element | null {
     saveStretchConfig(newConfig);
   }, []);
 
-  // Ref to track if we're waiting for user to return from Spotify
-  const waitingForSpotifyReturnRef = useRef(false);
+  // Ref to track Spotify launch state machine:
+  // - 'idle': not waiting for anything
+  // - 'waiting-for-hide': waiting for app to lose focus (Spotify opened)
+  // - 'waiting-for-visible': waiting for app to regain focus (user returned)
+  const spotifyStateRef = useRef<'idle' | 'waiting-for-hide' | 'waiting-for-visible'>('idle');
 
-  // Handle visibility change for Spotify return
+  // Handle visibility change for Spotify return (two-phase detection)
   useEffect(() => {
     const handleVisibilityChange = (): void => {
       if (
-        document.visibilityState === 'visible' &&
-        waitingForSpotifyReturnRef.current
+        document.visibilityState === 'hidden' &&
+        spotifyStateRef.current === 'waiting-for-hide'
       ) {
-        waitingForSpotifyReturnRef.current = false;
+        // App lost focus - Spotify has opened
+        spotifyStateRef.current = 'waiting-for-visible';
+      } else if (
+        document.visibilityState === 'visible' &&
+        spotifyStateRef.current === 'waiting-for-visible'
+      ) {
         // User returned from Spotify, start the session
+        spotifyStateRef.current = 'idle';
         void session.start();
       }
     };
@@ -131,8 +140,8 @@ export function StretchPage(): JSX.Element | null {
       const playlistMatch = url.match(/playlist\/([a-zA-Z0-9]+)/);
       if (playlistMatch) {
         const playlistId = playlistMatch[1];
-        // Mark that we're waiting for return from Spotify
-        waitingForSpotifyReturnRef.current = true;
+        // Mark that we're waiting for app to lose focus (Spotify opening)
+        spotifyStateRef.current = 'waiting-for-hide';
         // Try deep link first, which opens Spotify app
         window.open(`spotify:playlist:${playlistId}`, '_blank');
         // Session will start when user returns (visibilitychange handler)
