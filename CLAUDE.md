@@ -228,7 +228,26 @@ await calendarPage.waitForActivityDot(date, 'workout');
 await calendarPage.clickDate(date);
 ```
 
-**2. Use API for setup, UI for verification** - Only test UI interactions you're actually verifying:
+**2. NEVER use `isVisible()` for assertions** - It returns immediately without waiting:
+```typescript
+// BAD - no retry, fails if data still loading
+async planExists(name: string): Promise<boolean> {
+  return this.getPlanCard(name).isVisible(); // Returns immediately!
+}
+
+// GOOD - auto-retries until visible or timeout
+async planExists(name: string): Promise<boolean> {
+  try {
+    await expect(this.getPlanCard(name)).toBeVisible({ timeout: 5000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+```
+Also applies to: `isEnabled()`, `isChecked()`, `isHidden()` - use `expect()` assertions instead.
+
+**3. Use API for setup, UI for verification** - Only test UI interactions you're actually verifying:
 ```typescript
 // BAD - slow UI setup for every test
 await plansPage.createPlan(config);
@@ -241,7 +260,7 @@ await todayPage.goto();
 expect(await todayPage.hasWorkoutScheduled()).toBe(true);
 ```
 
-**3. Hybrid approach for long journeys** - Mix UI and API to cover both:
+**4. Hybrid approach for long journeys** - Mix UI and API to cover both:
 ```typescript
 // For a 7-week mesocycle with 14 workouts:
 // - UI tracking for key weeks (1, 6, 7) - tests real interactions
@@ -254,7 +273,7 @@ if (useUI) {
 }
 ```
 
-**4. Avoid fake timers for React state** - Playwright's `clock.runFor()` doesn't sync reliably with React:
+**5. Avoid fake timers for React state** - Playwright's `clock.runFor()` doesn't sync reliably with React:
 ```typescript
 // BAD - unreliable with React state updates
 await page.clock.runFor(300000); // Fast-forward 5 minutes
@@ -265,7 +284,7 @@ await page.getByRole('button', { name: 'End' }).click();
 await page.getByRole('button', { name: 'End Session' }).click();
 ```
 
-**5. Use page objects with smart waiting** - Encapsulate wait logic:
+**6. Use page objects with smart waiting** - Encapsulate wait logic:
 ```typescript
 // In calendar.page.ts
 async waitForActivityDot(date: Date, type: 'workout' | 'stretch'): Promise<void> {
@@ -275,7 +294,7 @@ async waitForActivityDot(date: Date, type: 'workout' | 'stretch'): Promise<void>
 }
 ```
 
-**6. Keep individual test files under 10 seconds**:
+**7. Keep individual test files under 10 seconds**:
 | File | Target | Tests |
 |------|--------|-------|
 | smoke.spec.ts | <3s | 3 |
