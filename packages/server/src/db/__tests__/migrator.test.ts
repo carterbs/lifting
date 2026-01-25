@@ -53,14 +53,14 @@ describe('Migrator', () => {
     it('should return the highest applied migration version', () => {
       const migrator = new Migrator(db, migrations);
       migrator.up();
-      expect(migrator.getCurrentVersion()).toBe(9);
+      expect(migrator.getCurrentVersion()).toBe(10);
     });
   });
 
   describe('getPendingMigrations', () => {
     it('should return all migrations when none applied', () => {
       const migrator = new Migrator(db, migrations);
-      expect(migrator.getPendingMigrations()).toHaveLength(9);
+      expect(migrator.getPendingMigrations()).toHaveLength(10);
     });
 
     it('should return empty array when all migrations applied', () => {
@@ -101,9 +101,10 @@ describe('Migrator', () => {
         .prepare('SELECT * FROM _migrations ORDER BY version')
         .all() as { version: number; name: string }[];
 
-      expect(appliedMigrations).toHaveLength(9);
+      expect(appliedMigrations).toHaveLength(10);
       expect(appliedMigrations[0].name).toBe('create_exercises');
       expect(appliedMigrations[6].name).toBe('create_workout_sets');
+      expect(appliedMigrations[9].name).toBe('create_meditation_sessions');
     });
 
     it('should be idempotent', () => {
@@ -115,7 +116,7 @@ describe('Migrator', () => {
         .prepare('SELECT * FROM _migrations')
         .all() as { version: number }[];
 
-      expect(appliedMigrations).toHaveLength(9);
+      expect(appliedMigrations).toHaveLength(10);
     });
   });
 
@@ -124,15 +125,15 @@ describe('Migrator', () => {
       const migrator = new Migrator(db, migrations);
       migrator.up();
 
-      expect(migrator.getCurrentVersion()).toBe(9);
+      expect(migrator.getCurrentVersion()).toBe(10);
 
       migrator.down();
 
-      expect(migrator.getCurrentVersion()).toBe(8);
+      expect(migrator.getCurrentVersion()).toBe(9);
 
-      // Verify stretch_sessions table is removed (migration 9 rolled back)
-      const stretchSessionsTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='stretch_sessions'").get();
-      expect(stretchSessionsTable).toBeUndefined();
+      // Verify meditation_sessions table is removed (migration 10 rolled back)
+      const meditationSessionsTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='meditation_sessions'").get();
+      expect(meditationSessionsTable).toBeUndefined();
     });
 
     it('should do nothing when no migrations applied', () => {
@@ -147,7 +148,7 @@ describe('Migrator', () => {
       const migrator = new Migrator(db, migrations);
       migrator.up();
 
-      expect(migrator.getCurrentVersion()).toBe(9);
+      expect(migrator.getCurrentVersion()).toBe(10);
 
       migrator.reset();
 

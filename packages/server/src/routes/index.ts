@@ -9,6 +9,7 @@ import { testRouter } from './test.routes.js';
 import { notificationRouter } from './notification.routes.js';
 import { stretchSessionRouter } from './stretchSession.routes.js';
 import { calendarRouter } from './calendar.routes.js';
+import { meditationSessionRouter } from './meditationSession.routes.js';
 
 export const apiRouter = Router();
 
@@ -22,3 +23,4 @@ apiRouter.use('/test', testRouter);
 apiRouter.use('/notifications', notificationRouter);
 apiRouter.use('/stretch-sessions', stretchSessionRouter);
 apiRouter.use('/calendar', calendarRouter);
+apiRouter.use('/meditation-sessions', meditationSessionRouter);

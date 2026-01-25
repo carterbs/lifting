@@ -196,8 +196,10 @@ describe('meditationData', () => {
         const absoluteEarliest = 30 + 80;
         const absoluteLatest = 30 + 120;
 
-        expect(reminderCue!.atSeconds).toBeGreaterThanOrEqual(absoluteEarliest);
-        expect(reminderCue!.atSeconds).toBeLessThanOrEqual(absoluteLatest);
+        if (reminderCue !== undefined) {
+          expect(reminderCue.atSeconds).toBeGreaterThanOrEqual(absoluteEarliest);
+          expect(reminderCue.atSeconds).toBeLessThanOrEqual(absoluteLatest);
+        }
       }
     });
 
@@ -227,7 +229,9 @@ describe('meditationData', () => {
         const currentCue = cues[i];
         expect(prevCue).toBeDefined();
         expect(currentCue).toBeDefined();
-        expect(currentCue!.atSeconds).toBeGreaterThanOrEqual(prevCue!.atSeconds);
+        if (prevCue !== undefined && currentCue !== undefined) {
+          expect(currentCue.atSeconds).toBeGreaterThanOrEqual(prevCue.atSeconds);
+        }
       }
     });
 

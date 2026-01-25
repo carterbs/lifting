@@ -137,51 +137,51 @@ describe('useMeditationSession', () => {
   });
 
   describe('start', () => {
-    it('should transition to active status when started', async () => {
+    it('should transition to active status when started', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       expect(result.current.status).toBe('active');
     });
 
-    it('should set the selected duration', async () => {
+    it('should set the selected duration', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       expect(result.current.durationMinutes).toBe(5);
     });
 
-    it('should calculate total seconds from variant', async () => {
+    it('should calculate total seconds from variant', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       // 5 min = 30 + 240 + 30 = 300 seconds
       expect(result.current.totalSeconds).toBe(300);
     });
 
-    it('should not start without manifest', async () => {
+    it('should not start without manifest', () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: null })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       expect(result.current.status).toBe('idle');
@@ -192,13 +192,13 @@ describe('useMeditationSession', () => {
   });
 
   describe('pause / resume', () => {
-    it('should pause an active session', async () => {
+    it('should pause an active session', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       act(() => {
@@ -208,13 +208,13 @@ describe('useMeditationSession', () => {
       expect(result.current.status).toBe('paused');
     });
 
-    it('should resume a paused session', async () => {
+    it('should resume a paused session', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       act(() => {
@@ -228,13 +228,13 @@ describe('useMeditationSession', () => {
       expect(result.current.status).toBe('active');
     });
 
-    it('should preserve elapsed time across pause/resume', async () => {
+    it('should preserve elapsed time across pause/resume', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       // Advance 10 seconds
@@ -263,13 +263,13 @@ describe('useMeditationSession', () => {
   });
 
   describe('end', () => {
-    it('should reset to idle state', async () => {
+    it('should reset to idle state', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       act(() => {
@@ -282,13 +282,13 @@ describe('useMeditationSession', () => {
   });
 
   describe('timer', () => {
-    it('should count elapsed seconds', async () => {
+    it('should count elapsed seconds', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       expect(result.current.elapsedSeconds).toBe(0);
@@ -300,13 +300,13 @@ describe('useMeditationSession', () => {
       expect(result.current.elapsedSeconds).toBeGreaterThanOrEqual(4);
     });
 
-    it('should calculate remaining seconds correctly', async () => {
+    it('should calculate remaining seconds correctly', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       // Total is 300 seconds
@@ -321,25 +321,25 @@ describe('useMeditationSession', () => {
   });
 
   describe('phase tracking', () => {
-    it('should identify intro phase at start', async () => {
+    it('should identify intro phase at start', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       expect(result.current.currentPhase).toBe('intro');
     });
 
-    it('should transition to breathing phase', async () => {
+    it('should transition to breathing phase', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       // Advance past intro phase (30 seconds)
@@ -352,13 +352,13 @@ describe('useMeditationSession', () => {
   });
 
   describe('session name', () => {
-    it('should return session name from manifest', async () => {
+    it('should return session name from manifest', () => {
       const { result } = renderHook(() =>
         useMeditationSession({ manifest: mockManifest })
       );
 
-      await act(async () => {
-        await result.current.start(5);
+      act(() => {
+        result.current.start(5);
       });
 
       expect(result.current.sessionName).toBe('Basic Breathing');

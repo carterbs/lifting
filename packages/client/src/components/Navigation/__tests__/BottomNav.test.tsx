@@ -31,6 +31,11 @@ describe('BottomNav', () => {
     expect(screen.getByText('Exercises')).toBeInTheDocument();
   });
 
+  it('should render Meditate tab', () => {
+    renderWithRouter(<BottomNav />);
+    expect(screen.getByText('Meditate')).toBeInTheDocument();
+  });
+
   it('should highlight active tab', () => {
     renderWithRouter(<BottomNav />, { route: '/exercises' });
 

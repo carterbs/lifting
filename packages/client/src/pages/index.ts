@@ -9,3 +9,4 @@ export { WorkoutPage } from './WorkoutPage';
 export { SettingsPage } from './SettingsPage';
 export { StretchPage } from './StretchPage';
 export { CalendarPage } from './CalendarPage';
+export { MeditationPage } from './MeditationPage';

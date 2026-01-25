@@ -1,0 +1,42 @@
+/**
+ * Meditation Setup Styles
+ *
+ * Calm, muted color scheme with blues/greens for a relaxing feel.
+ */
+
+.durationCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 100px;
+  padding: 16px;
+  border: 2px solid var(--gray-5);
+  border-radius: 12px;
+  background-color: var(--gray-2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: center;
+}
+
+.durationCard:hover {
+  border-color: var(--gray-7);
+  background-color: var(--gray-3);
+}
+
+.durationCard:focus {
+  outline: none;
+  border-color: var(--teal-8);
+  box-shadow: 0 0 0 2px var(--teal-4);
+}
+
+.durationCard.selected {
+  border-color: var(--teal-8);
+  background-color: var(--teal-3);
+}
+
+.durationCard.selected:hover {
+  background-color: var(--teal-4);
+}

@@ -68,7 +68,7 @@ export interface UseMeditationSessionReturn {
   hasSavedSession: boolean;
 
   // Actions
-  start: (duration: MeditationDuration) => Promise<void>;
+  start: (duration: MeditationDuration) => void;
   pause: () => void;
   resume: () => void;
   end: () => void;
@@ -194,10 +194,12 @@ export function useMeditationSession({
 
       if (cuesToPlay.length === 0) return;
 
+      console.log(`[MeditationSession] Processing ${cuesToPlay.length} cue(s) at ${currentElapsed}s`);
       isPlayingCueRef.current = true;
 
       // Play each cue that needs to be played
       for (const cue of cuesToPlay) {
+        console.log(`[MeditationSession] Triggering cue: ${cue.audioFile} (scheduled at ${cue.atSeconds}s)`);
         const success = await playNarrationSafe(cue.audioFile);
 
         // Mark as played regardless of success (to avoid infinite retry)
@@ -250,7 +252,7 @@ export function useMeditationSession({
 
   // Start a new session
   const start = useCallback(
-    async (duration: MeditationDuration): Promise<void> => {
+    (duration: MeditationDuration): void => {
       if (manifest === null) {
         console.warn('Cannot start session: manifest not loaded');
         return;
@@ -264,6 +266,7 @@ export function useMeditationSession({
 
       // Generate randomized cue schedule
       const scheduledCues = generateScheduledCues(sessionVariant);
+      console.log('[MeditationSession] Starting session with cues:', scheduledCues.map(c => `${c.atSeconds}s: ${c.audioFile}`));
 
       const now = Date.now();
       setCompletedFully(false);
@@ -287,14 +290,8 @@ export function useMeditationSession({
       setMeditationMediaSessionPlaybackState('playing');
       setMeditationMediaSessionMetadata(sessionName, 'Introduction');
 
-      // Play opening bell
-      try {
-        await playMeditationBell();
-      } catch {
-        // Continue even if bell fails
-      }
-
       // Note: First cues will be picked up by the timer
+      // Bell only plays at session end, not at start
     },
     [manifest, sessionName]
   );

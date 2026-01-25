@@ -8,6 +8,7 @@ import { MesocycleRepository } from './mesocycle.repository.js';
 import { WorkoutRepository } from './workout.repository.js';
 import { WorkoutSetRepository } from './workout-set.repository.js';
 import { StretchSessionRepository } from './stretchSession.repository.js';
+import { MeditationSessionRepository } from './meditationSession.repository.js';
 
 export { BaseRepository } from './base.repository.js';
 export { ExerciseRepository } from './exercise.repository.js';
@@ -18,6 +19,7 @@ export { MesocycleRepository } from './mesocycle.repository.js';
 export { WorkoutRepository } from './workout.repository.js';
 export { WorkoutSetRepository } from './workout-set.repository.js';
 export { StretchSessionRepository } from './stretchSession.repository.js';
+export { MeditationSessionRepository } from './meditationSession.repository.js';
 
 // Singleton instances for use with the default database
 let exerciseRepository: ExerciseRepository | null = null;
@@ -28,6 +30,7 @@ let mesocycleRepository: MesocycleRepository | null = null;
 let workoutRepository: WorkoutRepository | null = null;
 let workoutSetRepository: WorkoutSetRepository | null = null;
 let stretchSessionRepository: StretchSessionRepository | null = null;
+let meditationSessionRepository: MeditationSessionRepository | null = null;
 
 // Reset all repository singletons (for testing)
 export function resetRepositories(): void {
@@ -39,6 +42,7 @@ export function resetRepositories(): void {
   workoutRepository = null;
   workoutSetRepository = null;
   stretchSessionRepository = null;
+  meditationSessionRepository = null;
 }
 
 export function getExerciseRepository(): ExerciseRepository {
@@ -97,6 +101,13 @@ export function getStretchSessionRepository(): StretchSessionRepository {
   return stretchSessionRepository;
 }
 
+export function getMeditationSessionRepository(): MeditationSessionRepository {
+  if (!meditationSessionRepository) {
+    meditationSessionRepository = new MeditationSessionRepository(getDatabase());
+  }
+  return meditationSessionRepository;
+}
+
 // Helper to create repositories with a custom database (useful for testing)
 export function createRepositories(db: Database): {
   exercise: ExerciseRepository;
@@ -107,6 +118,7 @@ export function createRepositories(db: Database): {
   workout: WorkoutRepository;
   workoutSet: WorkoutSetRepository;
   stretchSession: StretchSessionRepository;
+  meditationSession: MeditationSessionRepository;
 } {
   return {
     exercise: new ExerciseRepository(db),
@@ -117,5 +129,6 @@ export function createRepositories(db: Database): {
     workout: new WorkoutRepository(db),
     workoutSet: new WorkoutSetRepository(db),
     stretchSession: new StretchSessionRepository(db),
+    meditationSession: new MeditationSessionRepository(db),
   };
 }

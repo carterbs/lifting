@@ -44,8 +44,10 @@ export class MeditationAudioPlaybackError extends Error {
  */
 export function initMeditationAudio(): void {
   if (isInitialized) {
+    console.log('[MeditationAudio] Already initialized, skipping');
     return;
   }
+  console.log('[MeditationAudio] Initializing audio system...');
 
   // Create narration audio element
   narrationAudio = new Audio();
@@ -75,6 +77,7 @@ export function initMeditationAudio(): void {
   }
 
   isInitialized = true;
+  console.log('[MeditationAudio] Audio system initialized');
 }
 
 /**
@@ -107,6 +110,7 @@ export function setMeditationMediaSessionCallbacks(callbacks: {
  * @returns Promise that resolves when playback completes
  */
 export async function playMeditationNarration(clipPath: string): Promise<void> {
+  console.log(`[MeditationAudio] Playing narration: ${clipPath}`);
   if (!narrationAudio) {
     throw new Error('Audio not initialized. Call initMeditationAudio() first.');
   }
@@ -118,6 +122,7 @@ export async function playMeditationNarration(clipPath: string): Promise<void> {
   }
 
   const url = getMeditationAssetUrl(clipPath);
+  console.log(`[MeditationAudio] Narration URL: ${url}`);
 
   return new Promise((resolve, reject) => {
     if (!narrationAudio) {
@@ -134,6 +139,7 @@ export async function playMeditationNarration(clipPath: string): Promise<void> {
     };
 
     narrationAudio.onended = (): void => {
+      console.log(`[MeditationAudio] Narration ended: ${clipPath}`);
       cleanup();
       // Resume keepalive after narration
       if (wasKeepaliveRunning) {
@@ -143,6 +149,7 @@ export async function playMeditationNarration(clipPath: string): Promise<void> {
     };
 
     narrationAudio.onerror = (): void => {
+      console.error(`[MeditationAudio] Narration error: ${clipPath}`, narrationAudio?.error);
       cleanup();
       // Resume keepalive even on error
       if (wasKeepaliveRunning) {
@@ -175,6 +182,7 @@ export async function playMeditationNarration(clipPath: string): Promise<void> {
  * @returns Promise that resolves when the bell finishes playing
  */
 export async function playMeditationBell(): Promise<void> {
+  console.log('[MeditationAudio] Playing bell');
   if (!bellAudio) {
     throw new Error('Audio not initialized. Call initMeditationAudio() first.');
   }
@@ -186,6 +194,7 @@ export async function playMeditationBell(): Promise<void> {
   }
 
   const url = getMeditationAssetUrl('shared/bell.wav');
+  console.log(`[MeditationAudio] Bell URL: ${url}`);
 
   return new Promise((resolve, reject) => {
     if (!bellAudio) {
@@ -201,6 +210,7 @@ export async function playMeditationBell(): Promise<void> {
     };
 
     bellAudio.onended = (): void => {
+      console.log('[MeditationAudio] Bell ended');
       cleanup();
       if (wasKeepaliveRunning) {
         startMeditationKeepalive();
@@ -209,6 +219,7 @@ export async function playMeditationBell(): Promise<void> {
     };
 
     bellAudio.onerror = (): void => {
+      console.error('[MeditationAudio] Bell error', bellAudio?.error);
       cleanup();
       if (wasKeepaliveRunning) {
         startMeditationKeepalive();
@@ -238,9 +249,11 @@ export async function playMeditationBell(): Promise<void> {
  */
 export function startMeditationKeepalive(): void {
   if (!keepaliveAudio || isKeepaliveRunning) {
+    console.log('[MeditationAudio] Keepalive already running or not available');
     return;
   }
 
+  console.log('[MeditationAudio] Starting keepalive');
   const silenceUrl = getMeditationAssetUrl('shared/silence-1s.wav');
   keepaliveAudio.src = silenceUrl;
   keepaliveAudio.load();
@@ -273,6 +286,7 @@ function pauseKeepalive(): void {
  * Call this when ending a session.
  */
 export function stopMeditationKeepalive(): void {
+  console.log('[MeditationAudio] Stopping keepalive');
   if (!keepaliveAudio) {
     return;
   }
