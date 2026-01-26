@@ -1,4 +1,5 @@
 import Foundation
+import BradOSCore
 
 /// Service for persisting stretch session configuration to UserDefaults
 class StretchConfigStorage {

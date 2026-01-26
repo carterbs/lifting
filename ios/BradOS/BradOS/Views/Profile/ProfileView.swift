@@ -1,8 +1,9 @@
 import SwiftUI
+import BradOSCore
 
 /// User profile and settings view
 struct ProfileView: View {
-    @StateObject private var viewModel = ProfileViewModel()
+    @StateObject private var viewModel = ProfileViewModel(apiClient: APIClient.shared)
 
     var body: some View {
         NavigationStack {

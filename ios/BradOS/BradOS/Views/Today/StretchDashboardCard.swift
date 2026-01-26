@@ -1,4 +1,5 @@
 import SwiftUI
+import BradOSCore
 
 /// Dashboard card displaying stretch status with urgency states
 struct StretchDashboardCard: View {

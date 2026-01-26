@@ -6,6 +6,10 @@ options:
   xcodeVersion: "15.0"
   groupSortPosition: top
 
+packages:
+  BradOSCore:
+    path: BradOSCore
+
 settings:
   base:
     SWIFT_VERSION: "5.9"
@@ -28,6 +32,8 @@ targets:
       - path: BradOS/Resources/Audio
         type: folder
         buildPhase: resources
+    dependencies:
+      - package: BradOSCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.bradcarter.brad-os

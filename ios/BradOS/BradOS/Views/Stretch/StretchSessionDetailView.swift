@@ -1,4 +1,5 @@
 import SwiftUI
+import BradOSCore
 
 /// Detail view for a completed stretch session accessed from history
 struct StretchSessionDetailView: View {

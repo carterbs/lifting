@@ -1,4 +1,5 @@
 import Foundation
+import BradOSCore
 
 /// Individual stretch within a body region
 struct Stretch: Codable, Identifiable, Hashable {

@@ -1,17 +1,29 @@
 import SwiftUI
+import BradOSCore
 
 /// View displaying workout plans library
 struct PlansView: View {
     @Binding var navigationPath: NavigationPath
+    @Environment(\.apiClient) private var apiClient
 
-    // Placeholder state - will be replaced with actual data
-    @State private var plans: [Plan] = Plan.mockPlans
+    @State private var plans: [Plan] = []
+    @State private var isLoading: Bool = true
+    @State private var error: String?
     @State private var showingNewPlanSheet: Bool = false
 
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.md) {
-                if plans.isEmpty {
+                if isLoading {
+                    LoadingView()
+                        .frame(maxWidth: .infinity, minHeight: 200)
+                } else if let error = error {
+                    ErrorStateView(
+                        message: error,
+                        retryAction: { Task { await loadPlans() } }
+                    )
+                    .frame(maxWidth: .infinity, minHeight: 200)
+                } else if plans.isEmpty {
                     EmptyStateView(
                         iconName: "list.bullet.clipboard",
                         title: "No Plans Yet",
@@ -42,9 +54,26 @@ struct PlansView: View {
             }
         }
         .sheet(isPresented: $showingNewPlanSheet) {
-            CreatePlanSheet()
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
+            CreatePlanSheet(onPlanCreated: { newPlan in
+                plans.append(newPlan)
+            })
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
+        .task {
+            await loadPlans()
+        }
+    }
+
+    private func loadPlans() async {
+        isLoading = true
+        error = nil
+        do {
+            plans = try await apiClient.getPlans()
+            isLoading = false
+        } catch {
+            self.error = "Failed to load plans: \(error.localizedDescription)"
+            isLoading = false
         }
     }
 }
@@ -116,15 +145,28 @@ struct PlanCard: View {
 /// Detail view for a single plan
 struct PlanDetailView: View {
     let planId: Int
+    @Environment(\.apiClient) private var apiClient
+    @Environment(\.dismiss) private var dismiss
 
-    // Placeholder - will be fetched from API
-    @State private var plan: Plan? = Plan.mockPlans.first
+    @State private var plan: Plan?
+    @State private var isLoading: Bool = true
+    @State private var error: String?
     @State private var showingEditSheet: Bool = false
     @State private var showingDeleteAlert: Bool = false
+    @State private var isDeleting: Bool = false
 
     var body: some View {
         ScrollView {
-            if let plan = plan {
+            if isLoading {
+                LoadingView()
+                    .frame(maxWidth: .infinity, minHeight: 300)
+            } else if let error = error {
+                ErrorStateView(
+                    message: error,
+                    retryAction: { Task { await loadPlan() } }
+                )
+                .frame(maxWidth: .infinity, minHeight: 300)
+            } else if let plan = plan {
                 VStack(spacing: Theme.Spacing.lg) {
                     // Plan Info
                     planInfoSection(plan)
@@ -138,8 +180,6 @@ struct PlanDetailView: View {
                     actionsSection
                 }
                 .padding(Theme.Spacing.md)
-            } else {
-                LoadingView()
             }
         }
         .background(Theme.background)
@@ -157,15 +197,42 @@ struct PlanDetailView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
+                .disabled(isDeleting)
             }
         }
         .alert("Delete Plan?", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
-                // Delete plan action
+                Task { await deletePlan() }
             }
         } message: {
             Text("This will permanently delete this plan. Any mesocycles using this plan will not be affected.")
+        }
+        .task {
+            await loadPlan()
+        }
+    }
+
+    private func loadPlan() async {
+        isLoading = true
+        error = nil
+        do {
+            plan = try await apiClient.getPlan(id: planId)
+            isLoading = false
+        } catch {
+            self.error = "Failed to load plan: \(error.localizedDescription)"
+            isLoading = false
+        }
+    }
+
+    private func deletePlan() async {
+        isDeleting = true
+        do {
+            try await apiClient.deletePlan(id: planId)
+            dismiss()
+        } catch {
+            self.error = "Failed to delete plan: \(error.localizedDescription)"
+            isDeleting = false
         }
     }
 
@@ -319,9 +386,14 @@ struct PlanDayCard: View {
 /// Sheet for creating a new plan
 struct CreatePlanSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.apiClient) private var apiClient
+
+    var onPlanCreated: ((Plan) -> Void)?
 
     @State private var planName: String = ""
     @State private var durationWeeks: Int = 6
+    @State private var isCreating: Bool = false
+    @State private var error: String?
 
     var body: some View {
         NavigationStack {
@@ -339,6 +411,14 @@ struct CreatePlanSheet: View {
                         .font(.caption)
                         .foregroundColor(Theme.textSecondary)
                 }
+
+                if let error = error {
+                    Section {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
             }
             .scrollContentBackground(.hidden)
             .background(Theme.background)
@@ -349,16 +429,33 @@ struct CreatePlanSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .disabled(isCreating)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Create") {
-                        // Create plan action
-                        dismiss()
+                    if isCreating {
+                        ProgressView()
+                    } else {
+                        Button("Create") {
+                            Task { await createPlan() }
+                        }
+                        .fontWeight(.semibold)
+                        .disabled(planName.isEmpty)
                     }
-                    .fontWeight(.semibold)
-                    .disabled(planName.isEmpty)
                 }
             }
+        }
+    }
+
+    private func createPlan() async {
+        isCreating = true
+        error = nil
+        do {
+            let newPlan = try await apiClient.createPlan(name: planName, durationWeeks: durationWeeks)
+            onPlanCreated?(newPlan)
+            dismiss()
+        } catch {
+            self.error = "Failed to create plan: \(error.localizedDescription)"
+            isCreating = false
         }
     }
 }
@@ -367,5 +464,6 @@ struct CreatePlanSheet: View {
     NavigationStack {
         PlansView(navigationPath: .constant(NavigationPath()))
     }
+    .environment(\.apiClient, MockAPIClient())
     .preferredColorScheme(.dark)
 }

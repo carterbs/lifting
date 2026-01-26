@@ -1,4 +1,5 @@
 import Foundation
+import BradOSCore
 
 /// Service for meditation-related API operations
 /// Wraps APIClient for meditation-specific functionality

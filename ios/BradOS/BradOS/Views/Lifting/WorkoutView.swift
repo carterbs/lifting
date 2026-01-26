@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import BradOSCore
 
 /// Full workout tracking view with API integration
 struct WorkoutView: View {

@@ -1,4 +1,5 @@
 import SwiftUI
+import BradOSCore
 
 /// Calendar view showing activity history without filtering
 /// This is the standalone calendar page that shows all activities

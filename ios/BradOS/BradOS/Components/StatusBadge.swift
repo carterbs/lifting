@@ -1,4 +1,5 @@
 import SwiftUI
+import BradOSCore
 
 /// A badge displaying workout status with appropriate color
 struct StatusBadge: View {

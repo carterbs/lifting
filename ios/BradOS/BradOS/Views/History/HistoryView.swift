@@ -1,4 +1,5 @@
 import SwiftUI
+import BradOSCore
 
 /// Calendar view showing activity history with filtering
 struct HistoryView: View {

@@ -29,6 +29,10 @@ lsof -ti:3100 | xargs kill 2>/dev/null || true
 (CI=true PLAYWRIGHT_HTML_OPEN=never npm run test:e2e > "$TMPDIR/e2e.out" 2>&1; echo $? > "$TMPDIR/e2e.exit") &
 e2e_pid=$!
 
+# Start iOS Tests in background (fast, runs in parallel)
+(cd ios/BradOS/BradOSCore && swift test > "$TMPDIR/ios.out" 2>&1; echo $? > "$TMPDIR/ios.exit") &
+ios_pid=$!
+
 # Run fast checks sequentially while E2E runs in background
 # TypeScript (~0.2s)
 echo -n "Checking TypeScript... "
@@ -73,6 +77,23 @@ else
     failed=$(echo "$test_output" | grep -E "[0-9]+ failed" | head -1 | sed 's/.*\([0-9]*\) failed.*/\1/')
     passed=$(echo "$test_output" | grep -E "[0-9]+ passed" | tail -1 | sed 's/.*\([0-9]*\) passed.*/\1/')
     unit_detail="$failed failed / $passed passed"
+    echo -e "${RED}FAILED${NC}"
+    all_passed=false
+fi
+
+# Wait for iOS Tests to complete (fast, should finish before E2E)
+echo -n "Running iOS Tests... "
+wait $ios_pid
+
+ios_exit=$(cat "$TMPDIR/ios.exit")
+ios_output=$(cat "$TMPDIR/ios.out")
+if [ "$ios_exit" -eq 0 ]; then
+    ios_status="PASSED"
+    ios_detail=$(echo "$ios_output" | grep -E "[0-9]+ tests" | tail -1 | sed 's/.*with \([0-9]*\) tests.*/\1 passed/')
+    echo -e "${GREEN}PASSED${NC}"
+else
+    ios_status="FAILED"
+    ios_detail="Tests failed"
     echo -e "${RED}FAILED${NC}"
     all_passed=false
 fi
@@ -123,6 +144,8 @@ echo "├────────────┼──────────�
 print_row "Lint" "$lint_status" "$lint_detail"
 echo "├────────────┼───────────┼───────────────────────────┤"
 print_row "Unit Tests" "$unit_status" "$unit_detail"
+echo "├────────────┼───────────┼───────────────────────────┤"
+print_row "iOS Tests" "$ios_status" "$ios_detail"
 echo "├────────────┼───────────┼───────────────────────────┤"
 print_row "E2E Tests" "$e2e_status" "$e2e_detail"
 echo "└────────────┴───────────┴───────────────────────────┘"

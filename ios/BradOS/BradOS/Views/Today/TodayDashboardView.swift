@@ -1,9 +1,10 @@
 import SwiftUI
+import BradOSCore
 
 /// Main dashboard showing today's scheduled activities
 struct TodayDashboardView: View {
     @EnvironmentObject var appState: AppState
-    @StateObject private var viewModel = DashboardViewModel()
+    @StateObject private var viewModel = DashboardViewModel(apiClient: APIClient.shared)
 
     var body: some View {
         NavigationStack {

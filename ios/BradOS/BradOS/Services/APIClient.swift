@@ -1,4 +1,5 @@
 import Foundation
+import BradOSCore
 
 /// Empty body for POST/PUT requests that don't need a body
 private struct EmptyBody: Encodable {}
@@ -198,8 +199,7 @@ final class APIClient: APIClientProtocol {
             throw APIError(
                 code: code,
                 message: errorResponse.error.message,
-                statusCode: httpResponse.statusCode,
-                details: errorResponse.error.details?.value
+                statusCode: httpResponse.statusCode
             )
         }
 

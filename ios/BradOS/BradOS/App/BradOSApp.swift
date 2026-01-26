@@ -1,4 +1,5 @@
 import SwiftUI
+import BradOSCore
 
 @main
 struct BradOSApp: App {

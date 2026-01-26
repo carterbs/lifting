@@ -1,4 +1,5 @@
 import SwiftUI
+import BradOSCore
 
 /// Dashboard card displaying meditation status with duration
 struct MeditationDashboardCard: View {

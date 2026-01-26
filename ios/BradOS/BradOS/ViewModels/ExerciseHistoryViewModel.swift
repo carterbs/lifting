@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import BradOSCore
 
 /// ViewModel for the Exercise History view
 @MainActor

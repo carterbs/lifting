@@ -1,4 +1,5 @@
 import Foundation
+import BradOSCore
 
 /// Errors that can occur during manifest loading
 enum StretchManifestError: Error, LocalizedError {

@@ -1,4 +1,5 @@
 import SwiftUI
+import BradOSCore
 
 /// Dashboard card displaying today's workout with proper states
 struct WorkoutDashboardCard: View {

@@ -1,4 +1,5 @@
 import SwiftUI
+import BradOSCore
 
 /// Main stretch view managing session lifecycle
 struct StretchView: View {
@@ -448,6 +449,8 @@ struct RegionToggleCard: View {
                 Text(region.displayName)
                     .font(.subheadline)
                     .foregroundColor(isEnabled ? Theme.textPrimary : Theme.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
 
                 Spacer()
 

@@ -1,9 +1,10 @@
 import SwiftUI
 import Charts
+import BradOSCore
 
 /// View displaying exercise library with API integration
 struct ExercisesView: View {
-    @StateObject private var viewModel = ExercisesViewModel()
+    @StateObject private var viewModel = ExercisesViewModel(apiClient: APIClient.shared)
     @State private var searchText = ""
 
     private var filteredExercises: [Exercise] {
