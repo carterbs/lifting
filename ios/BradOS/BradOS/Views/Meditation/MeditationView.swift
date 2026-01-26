@@ -348,10 +348,15 @@ struct MeditationActiveView: View {
     @State private var displayTimer: Timer?
     @State private var breathingTimer: Timer?
 
+    // Audio cue scheduling
+    @State private var scheduledCues: [ScheduledCue] = []
+    @State private var isPlayingCue: Bool = false
+
     // Audio and storage
     private let storage = MeditationStorage.shared
     private let audioEngine = MeditationAudioEngine.shared
     private let nowPlaying = NowPlayingManager.shared
+    private let manifestService = MeditationManifestService.shared
 
     init(
         duration: MeditationDuration,
@@ -511,11 +516,21 @@ struct MeditationActiveView: View {
             isPaused = false
         }
 
-        // Initialize audio
+        // Initialize audio and load cues
         Task {
             do {
                 try await audioEngine.initialize()
                 audioEngine.startKeepalive()
+
+                // Load scheduled cues from recovered state or generate new ones
+                if let recovered = recoveredState, !recovered.scheduledCues.isEmpty {
+                    scheduledCues = recovered.scheduledCues
+                } else {
+                    scheduledCues = try await manifestService.generateScheduledCues(
+                        sessionId: "basic-breathing",
+                        duration: duration.rawValue
+                    )
+                }
             } catch {
                 print("Failed to initialize audio: \(error)")
             }
@@ -561,8 +576,49 @@ struct MeditationActiveView: View {
         let remaining = max(0, Double(duration.seconds) - elapsed)
         displayedTimeRemaining = Int(remaining)
 
+        // Check for pending audio cues
+        if !isPaused {
+            checkPendingCues(elapsedSeconds: Int(elapsed))
+        }
+
         if remaining <= 0 {
             completeSession(fully: true)
+        }
+    }
+
+    // MARK: - Audio Cue Scheduling
+
+    private func checkPendingCues(elapsedSeconds: Int) {
+        guard !isPlayingCue else { return }
+
+        // Find the next unplayed cue that should have played by now
+        if let index = scheduledCues.firstIndex(where: { !$0.played && $0.atSeconds <= elapsedSeconds }) {
+            playCue(at: index)
+        }
+    }
+
+    private func playCue(at index: Int) {
+        guard index < scheduledCues.count else { return }
+
+        let cue = scheduledCues[index]
+        isPlayingCue = true
+
+        Task {
+            do {
+                try await audioEngine.playNarration(file: cue.audioFile)
+                // Mark cue as played
+                await MainActor.run {
+                    scheduledCues[index].played = true
+                    isPlayingCue = false
+                    saveSessionState()
+                }
+            } catch {
+                print("Failed to play cue: \(error)")
+                await MainActor.run {
+                    scheduledCues[index].played = true  // Skip failed cues
+                    isPlayingCue = false
+                }
+            }
         }
     }
 
@@ -714,7 +770,7 @@ struct MeditationActiveView: View {
             sessionStartedAt: sessionStartTime,
             pausedAt: pausedAt,
             pausedElapsed: pausedElapsed,
-            scheduledCues: [],  // Will be populated in Phase 5
+            scheduledCues: scheduledCues,
             currentPhaseIndex: 0
         )
         storage.saveMeditationState(state)
