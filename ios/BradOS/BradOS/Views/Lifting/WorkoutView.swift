@@ -280,9 +280,9 @@ struct WorkoutView: View {
                     workoutId: workoutId,
                     isEditable: workoutStatus == .inProgress,
                     localEdits: localSetEditsForExercise(exercise.exerciseId),
-                    onSetEdited: { setId, weight, reps in
+                    onSetEdited: { setId, weight, reps, editedField in
                         updateLocalEdit(setId: setId, weight: weight, reps: reps)
-                        cascadeWeight(setId: setId, weight: weight, in: exercise)
+                        cascadeValue(setId: setId, weight: weight, reps: reps, editedField: editedField, in: exercise)
                     },
                     onLogSet: { set in
                         Task { await logSet(set, exercise: exercise) }
@@ -550,22 +550,36 @@ struct WorkoutView: View {
         stateManager.updatePendingEdit(setId: setId, weight: weight, reps: reps)
     }
 
-    private func cascadeWeight(setId: Int, weight: Double, in exercise: WorkoutExercise) {
+    private func cascadeValue(setId: Int, weight: Double, reps: Int, editedField: EditedField, in exercise: WorkoutExercise) {
         guard let setIndex = exercise.sets.firstIndex(where: { $0.id == setId }) else { return }
         let currentSet = exercise.sets[setIndex]
 
-        // Update subsequent pending sets with the same weight
+        // Update subsequent pending sets with the edited value
         for subsequentSet in exercise.sets where subsequentSet.setNumber > currentSet.setNumber {
             if subsequentSet.status == .pending {
                 let existingEdit = localSetEdits[subsequentSet.id]
+
+                // Cascade only the field that was edited, preserve the other
+                let newWeight: Double
+                let newReps: Double
+
+                switch editedField {
+                case .weight:
+                    newWeight = weight
+                    newReps = existingEdit?.reps ?? Double(subsequentSet.targetReps)
+                case .reps:
+                    newWeight = existingEdit?.weight ?? subsequentSet.targetWeight
+                    newReps = Double(reps)
+                }
+
                 localSetEdits[subsequentSet.id] = SetEditState(
-                    weight: weight,
-                    reps: existingEdit?.reps ?? Double(subsequentSet.targetReps)
+                    weight: newWeight,
+                    reps: newReps
                 )
                 stateManager.updatePendingEdit(
                     setId: subsequentSet.id,
-                    weight: weight,
-                    reps: existingEdit?.reps != nil ? Int(existingEdit!.reps) : nil
+                    weight: newWeight,
+                    reps: Int(newReps)
                 )
             }
         }
@@ -651,13 +665,19 @@ struct SetEditState: Equatable {
     var reps: Double
 }
 
+/// Indicates which field was edited (for cascading)
+enum EditedField {
+    case weight
+    case reps
+}
+
 /// Card displaying an exercise with its sets
 struct ExerciseCard: View {
     let exercise: WorkoutExercise
     let workoutId: Int
     let isEditable: Bool
     let localEdits: [Int: SetEditState]
-    let onSetEdited: (Int, Double, Int) -> Void
+    let onSetEdited: (Int, Double, Int, EditedField) -> Void
     let onLogSet: (WorkoutSet) -> Void
     let onUnlogSet: (WorkoutSet) -> Void
     let onSkipSet: (WorkoutSet) -> Void
@@ -711,8 +731,8 @@ struct ExerciseCard: View {
                         isEditable: isEditable,
                         canLog: canLogSet(workoutSet),
                         localEdit: localEdits[workoutSet.id],
-                        onEdited: { weight, reps in
-                            onSetEdited(workoutSet.id, weight, reps)
+                        onEdited: { weight, reps, editedField in
+                            onSetEdited(workoutSet.id, weight, reps, editedField)
                         },
                         onLog: { onLogSet(workoutSet) },
                         onUnlog: { onUnlogSet(workoutSet) },
@@ -784,7 +804,7 @@ struct SetRow: View {
     let isEditable: Bool
     let canLog: Bool
     let localEdit: SetEditState?
-    let onEdited: (Double, Int) -> Void
+    let onEdited: (Double, Int, EditedField) -> Void
     let onLog: () -> Void
     let onUnlog: () -> Void
     let onSkip: () -> Void
@@ -792,6 +812,9 @@ struct SetRow: View {
     @State private var weightText: String = ""
     @State private var repsText: String = ""
     @State private var showingActions = false
+    // Track if user is actively editing to avoid overwriting their input with cascaded values
+    @State private var isUserEditingWeight = false
+    @State private var isUserEditingReps = false
 
     var body: some View {
         HStack {
@@ -809,7 +832,9 @@ struct SetRow: View {
             .frame(width: 40)
 
             // Weight input
-            TextField("Weight", text: $weightText)
+            TextField("Weight", text: $weightText, onEditingChanged: { editing in
+                isUserEditingWeight = editing
+            })
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.center)
                 .padding(Theme.Spacing.sm)
@@ -818,13 +843,15 @@ struct SetRow: View {
                 .disabled(!canEdit)
                 .frame(maxWidth: .infinity)
                 .onChange(of: weightText) { _, newValue in
-                    if let weight = Double(newValue) {
-                        onEdited(weight, Int(repsText) ?? workoutSet.targetReps)
+                    if isUserEditingWeight, let weight = Double(newValue) {
+                        onEdited(weight, Int(repsText) ?? workoutSet.targetReps, .weight)
                     }
                 }
 
             // Reps input
-            TextField("Reps", text: $repsText)
+            TextField("Reps", text: $repsText, onEditingChanged: { editing in
+                isUserEditingReps = editing
+            })
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
                 .padding(Theme.Spacing.sm)
@@ -833,8 +860,8 @@ struct SetRow: View {
                 .disabled(!canEdit)
                 .frame(maxWidth: .infinity)
                 .onChange(of: repsText) { _, newValue in
-                    if let reps = Int(newValue) {
-                        onEdited(Double(weightText) ?? workoutSet.targetWeight, reps)
+                    if isUserEditingReps, let reps = Int(newValue) {
+                        onEdited(Double(weightText) ?? workoutSet.targetWeight, reps, .reps)
                     }
                 }
 
@@ -844,6 +871,18 @@ struct SetRow: View {
         .opacity(workoutSet.status == .skipped ? 0.5 : (workoutSet.status == .completed ? 0.8 : 1))
         .onAppear {
             initializeTextFields()
+        }
+        .onChange(of: localEdit) { _, newEdit in
+            // Update text fields when localEdit changes externally (from cascading)
+            // Only update if user is not actively editing this field
+            if let edit = newEdit {
+                if !isUserEditingWeight {
+                    weightText = formatWeight(edit.weight)
+                }
+                if !isUserEditingReps {
+                    repsText = "\(Int(edit.reps))"
+                }
+            }
         }
         .confirmationDialog("Set Actions", isPresented: $showingActions) {
             if workoutSet.status == .completed {
