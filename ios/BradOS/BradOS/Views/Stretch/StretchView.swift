@@ -7,8 +7,11 @@ struct StretchView: View {
 
     @State private var config: StretchSessionConfig = StretchConfigStorage.shared.load()
     @State private var showCancelConfirmation = false
+    @State private var showRecoveryPrompt = false
+    @State private var recoveryInfo: (stretchName: String, regionName: String, progress: String)?
 
     private let configStorage = StretchConfigStorage.shared
+    private let sessionStorage = StretchSessionStorage.shared
 
     var body: some View {
         NavigationStack {
@@ -34,10 +37,12 @@ struct StretchView: View {
                     StretchCompleteView(
                         sessionManager: sessionManager,
                         onDone: {
+                            sessionStorage.clear()
                             sessionManager.reset()
                             appState.isShowingStretch = false
                         },
                         onStartAnother: {
+                            sessionStorage.clear()
                             sessionManager.reset()
                         }
                     )
@@ -60,15 +65,66 @@ struct StretchView: View {
                     }
                 }
             }
+            .onAppear {
+                checkForRecoverableSession()
+            }
             .alert("End Session?", isPresented: $showCancelConfirmation) {
                 Button("Continue Stretching", role: .cancel) {}
                 Button("End Session", role: .destructive) {
+                    sessionStorage.clear()
                     sessionManager.endSession()
                 }
             } message: {
                 Text("Are you sure you want to end this stretch session?")
             }
+            .alert("Resume Session?", isPresented: $showRecoveryPrompt) {
+                Button("Resume", role: nil) {
+                    resumeSession()
+                }
+                Button("Start Over", role: .destructive) {
+                    sessionStorage.clear()
+                }
+            } message: {
+                if let info = recoveryInfo {
+                    Text("You have an unfinished stretch session (\(info.progress) stretches, currently on \(info.stretchName)). Would you like to resume?")
+                } else {
+                    Text("You have an unfinished stretch session. Would you like to resume?")
+                }
+            }
+            .onChange(of: sessionManager.status) { _, newStatus in
+                // Save state when session is active or paused
+                if newStatus == .active || newStatus == .paused {
+                    saveSessionState()
+                }
+            }
+            .onChange(of: sessionManager.currentStretchIndex) { _, _ in
+                if sessionManager.status == .active || sessionManager.status == .paused {
+                    saveSessionState()
+                }
+            }
+            .onChange(of: sessionManager.currentSegment) { _, _ in
+                if sessionManager.status == .active || sessionManager.status == .paused {
+                    saveSessionState()
+                }
+            }
         }
+    }
+
+    private func checkForRecoverableSession() {
+        if let info = sessionStorage.getRecoveryInfo() {
+            recoveryInfo = info
+            showRecoveryPrompt = true
+        }
+    }
+
+    private func resumeSession() {
+        guard let state = sessionStorage.load() else { return }
+        sessionManager.restore(from: state)
+    }
+
+    private func saveSessionState() {
+        let state = sessionManager.exportState()
+        sessionStorage.save(state)
     }
 
     private func startSession() {
