@@ -116,38 +116,7 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             SectionHeader(title: "Settings")
 
-            // Notification Settings Component (will be replaced with NotificationSettingsView)
             NotificationSettingsView()
-
-            // Other Settings
-            VStack(spacing: 0) {
-                // Data Management
-                SettingsRow(
-                    title: "Export Data",
-                    subtitle: "Download your workout history",
-                    iconName: "square.and.arrow.up.fill",
-                    iconColor: Theme.accent
-                ) {
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(Theme.textSecondary)
-                }
-
-                Divider()
-                    .background(Theme.border)
-
-                // Clear Data (destructive)
-                SettingsRow(
-                    title: "Clear All Data",
-                    subtitle: "This cannot be undone",
-                    iconName: "trash.fill",
-                    iconColor: Theme.error
-                ) {
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(Theme.textSecondary)
-                }
-            }
-            .background(Theme.backgroundSecondary)
-            .cornerRadius(Theme.CornerRadius.md)
         }
     }
 
@@ -167,32 +136,6 @@ struct ProfileView: View {
                 ) {
                     Text("1.0.0")
                         .font(.subheadline)
-                        .foregroundColor(Theme.textSecondary)
-                }
-
-                Divider()
-                    .background(Theme.border)
-
-                SettingsRow(
-                    title: "Privacy Policy",
-                    subtitle: nil,
-                    iconName: "lock.fill",
-                    iconColor: Theme.textSecondary
-                ) {
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(Theme.textSecondary)
-                }
-
-                Divider()
-                    .background(Theme.border)
-
-                SettingsRow(
-                    title: "Terms of Service",
-                    subtitle: nil,
-                    iconName: "doc.text.fill",
-                    iconColor: Theme.textSecondary
-                ) {
-                    Image(systemName: "chevron.right")
                         .foregroundColor(Theme.textSecondary)
                 }
             }
