@@ -3,10 +3,13 @@ import SwiftUI
 /// View displaying active mesocycle and history
 struct MesoView: View {
     @Binding var navigationPath: NavigationPath
+    @Environment(\.apiClient) private var apiClient
 
-    // Placeholder state - will be replaced with actual data
-    @State private var activeMesocycle: Mesocycle? = Mesocycle.mockActiveMesocycle
-    @State private var completedMesocycles: [Mesocycle] = Mesocycle.mockCompletedMesocycles
+    // Data state
+    @State private var activeMesocycle: Mesocycle?
+    @State private var completedMesocycles: [Mesocycle] = []
+    @State private var isLoading = true
+    @State private var error: Error?
     @State private var showingNewMesocycleSheet: Bool = false
 
     var body: some View {
@@ -39,6 +42,36 @@ struct MesoView: View {
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
+        .task {
+            await loadMesocycleData()
+        }
+        .refreshable {
+            await loadMesocycleData()
+        }
+    }
+
+    // MARK: - Data Loading
+
+    private func loadMesocycleData() async {
+        isLoading = true
+        error = nil
+
+        do {
+            // Fetch active mesocycle and all mesocycles in parallel
+            async let activeTask = apiClient.getActiveMesocycle()
+            async let allTask = apiClient.getMesocycles()
+
+            let (active, all) = try await (activeTask, allTask)
+            activeMesocycle = active
+            completedMesocycles = all.filter { $0.status == .completed || $0.status == .cancelled }
+        } catch {
+            self.error = error
+            #if DEBUG
+            print("[MesoView] Failed to load mesocycle data: \(error)")
+            #endif
+        }
+
+        isLoading = false
     }
 
     // MARK: - Active Mesocycle Section
@@ -48,12 +81,57 @@ struct MesoView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             SectionHeader(title: "Active Mesocycle")
 
-            if let meso = activeMesocycle {
-                ActiveMesocycleCard(mesocycle: meso, navigationPath: $navigationPath)
+            if isLoading {
+                loadingCard
+            } else if let error = error {
+                errorCard(error)
+            } else if let meso = activeMesocycle {
+                ActiveMesocycleCard(mesocycle: meso, navigationPath: $navigationPath, onRefresh: {
+                    Task { await loadMesocycleData() }
+                })
             } else {
                 noActiveMesocycleCard
             }
         }
+    }
+
+    private var loadingCard: some View {
+        VStack(spacing: Theme.Spacing.md) {
+            ProgressView()
+                .scaleEffect(1.2)
+
+            Text("Loading mesocycle...")
+                .font(.subheadline)
+                .foregroundColor(Theme.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(Theme.Spacing.lg)
+        .cardStyle()
+    }
+
+    private func errorCard(_ error: Error) -> some View {
+        VStack(spacing: Theme.Spacing.md) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 32))
+                .foregroundColor(Theme.error)
+
+            Text("Failed to load")
+                .font(.headline)
+                .foregroundColor(Theme.textPrimary)
+
+            Text(error.localizedDescription)
+                .font(.caption)
+                .foregroundColor(Theme.textSecondary)
+                .multilineTextAlignment(.center)
+
+            Button("Retry") {
+                Task { await loadMesocycleData() }
+            }
+            .buttonStyle(SecondaryButtonStyle())
+        }
+        .frame(maxWidth: .infinity)
+        .padding(Theme.Spacing.lg)
+        .cardStyle()
     }
 
     private var noActiveMesocycleCard: some View {
@@ -101,8 +179,11 @@ struct MesoView: View {
 struct ActiveMesocycleCard: View {
     let mesocycle: Mesocycle
     @Binding var navigationPath: NavigationPath
+    let onRefresh: () -> Void
+    @Environment(\.apiClient) private var apiClient
 
     @State private var showingCancelAlert: Bool = false
+    @State private var isCancelling = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
@@ -175,11 +256,12 @@ struct ActiveMesocycleCard: View {
         .alert("Cancel Mesocycle?", isPresented: $showingCancelAlert) {
             Button("Keep Going", role: .cancel) {}
             Button("Cancel Mesocycle", role: .destructive) {
-                // Cancel mesocycle action
+                Task { await cancelMesocycle() }
             }
         } message: {
             Text("This will end your current mesocycle. Your progress will be saved but the mesocycle will be marked as cancelled.")
         }
+        .disabled(isCancelling)
     }
 
     private var formattedStartDate: String {
@@ -188,45 +270,94 @@ struct ActiveMesocycleCard: View {
         return formatter.string(from: mesocycle.startDate)
     }
 
+    private func cancelMesocycle() async {
+        isCancelling = true
+        do {
+            _ = try await apiClient.cancelMesocycle(id: mesocycle.id)
+            onRefresh()
+        } catch {
+            #if DEBUG
+            print("[ActiveMesocycleCard] Failed to cancel mesocycle: \(error)")
+            #endif
+        }
+        isCancelling = false
+    }
+
     @ViewBuilder
     private var weekOverview: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("This Week")
+            Text("Week \(mesocycle.currentWeek)")
                 .font(.subheadline)
                 .fontWeight(.medium)
                 .foregroundColor(Theme.textPrimary)
 
-            // Placeholder workout rows
-            ForEach(0..<3, id: \.self) { index in
-                HStack {
-                    Circle()
-                        .fill(index == 0 ? Theme.statusCompleted : Theme.backgroundTertiary)
-                        .frame(width: 8, height: 8)
-
-                    Text(["Push Day", "Pull Day", "Leg Day"][index])
-                        .font(.subheadline)
-                        .foregroundColor(Theme.textPrimary)
-
-                    Spacer()
-
-                    Text(index == 0 ? "Completed" : "Scheduled")
-                        .font(.caption)
-                        .foregroundColor(index == 0 ? Theme.success : Theme.textSecondary)
-
-                    if index != 0 {
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundColor(Theme.textSecondary)
-                    }
+            // Show actual workouts from weeks data if available
+            if let weeks = mesocycle.weeks,
+               let currentWeekData = weeks.first(where: { $0.weekNumber == mesocycle.currentWeek }) {
+                ForEach(currentWeekData.workouts) { workout in
+                    workoutRow(workout)
                 }
-                .padding(.vertical, 4)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    if index != 0 {
-                        navigationPath.append(WorkoutDestination(workoutId: index))
-                    }
-                }
+            } else {
+                Text("No workouts scheduled")
+                    .font(.caption)
+                    .foregroundColor(Theme.textSecondary)
+                    .padding(.vertical, 4)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func workoutRow(_ workout: WorkoutSummary) -> some View {
+        let isCompleted = workout.status == .completed
+        let isSkipped = workout.status == .skipped
+        let isPending = workout.status == .pending
+        let isInProgress = workout.status == .inProgress
+
+        HStack {
+            Circle()
+                .fill(statusColor(for: workout.status))
+                .frame(width: 8, height: 8)
+
+            Text(workout.dayName)
+                .font(.subheadline)
+                .foregroundColor(Theme.textPrimary)
+
+            Spacer()
+
+            Text(statusText(for: workout.status))
+                .font(.caption)
+                .foregroundColor(statusColor(for: workout.status))
+
+            if isPending || isInProgress {
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(Theme.textSecondary)
+            }
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if isPending || isInProgress {
+                navigationPath.append(WorkoutDestination(workoutId: workout.id))
+            }
+        }
+    }
+
+    private func statusColor(for status: WorkoutStatus) -> Color {
+        switch status {
+        case .completed: return Theme.statusCompleted
+        case .skipped: return Theme.statusSkipped
+        case .inProgress: return Theme.accent
+        case .pending: return Theme.backgroundTertiary
+        }
+    }
+
+    private func statusText(for status: WorkoutStatus) -> String {
+        switch status {
+        case .completed: return "Completed"
+        case .skipped: return "Skipped"
+        case .inProgress: return "In Progress"
+        case .pending: return "Scheduled"
         }
     }
 }
