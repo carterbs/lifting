@@ -488,6 +488,73 @@ struct ExerciseHistoryView: View {
     }
 }
 
+/// Sheet for editing an exercise's name and weight increment
+struct EditExerciseSheet: View {
+    @ObservedObject var viewModel: ExerciseHistoryViewModel
+    @Binding var isPresented: Bool
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Exercise Name") {
+                    TextField("Name", text: $viewModel.editName)
+                        .foregroundColor(Theme.textPrimary)
+                }
+
+                Section("Weight Increment") {
+                    HStack {
+                        TextField("5", text: $viewModel.editWeightIncrement)
+                            .keyboardType(.decimalPad)
+                            .foregroundColor(Theme.textPrimary)
+                        Text("lbs per progression")
+                            .foregroundColor(Theme.textSecondary)
+                    }
+                }
+
+                if let error = viewModel.editValidationError {
+                    Section {
+                        Text(error)
+                            .foregroundColor(Theme.error)
+                    }
+                }
+
+                if let error = viewModel.updateError {
+                    Section {
+                        Text(error)
+                            .foregroundColor(Theme.error)
+                    }
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(Theme.background)
+            .navigationTitle("Edit Exercise")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        viewModel.clearUpdateError()
+                        isPresented = false
+                    }
+                    .foregroundColor(Theme.accent)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        Task {
+                            if await viewModel.updateExercise() {
+                                isPresented = false
+                            }
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundColor(Theme.accent)
+                    .disabled(viewModel.isUpdating || viewModel.editName.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+            .interactiveDismissDisabled(viewModel.isUpdating)
+        }
+    }
+}
+
 #Preview {
     NavigationStack {
         ExercisesView()
