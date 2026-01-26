@@ -18,14 +18,28 @@ struct MeditationStats: Codable {
 
 /// Exercise history from API
 struct ExerciseHistory: Codable {
-    let exercise: Exercise
+    let exerciseId: Int
+    let exerciseName: String
     let entries: [ExerciseHistoryEntry]
     let personalRecord: PersonalRecord?
 
     enum CodingKeys: String, CodingKey {
-        case exercise
+        case exerciseId = "exercise_id"
+        case exerciseName = "exercise_name"
         case entries
         case personalRecord = "personal_record"
+    }
+
+    /// Creates a minimal Exercise object from the history data
+    var exercise: Exercise {
+        Exercise(
+            id: exerciseId,
+            name: exerciseName,
+            weightIncrement: 5, // Default, not provided by history endpoint
+            isCustom: false,    // Default, not provided by history endpoint
+            createdAt: Date(),
+            updatedAt: Date()
+        )
     }
 }
 
@@ -35,46 +49,32 @@ struct ExerciseHistoryEntry: Codable, Identifiable {
     let workoutId: Int
     let date: Date
     let weekNumber: Int
+    let mesocycleId: Int
     let sets: [HistorySet]
+    let bestWeight: Double
+    let bestSetReps: Int
 
     enum CodingKeys: String, CodingKey {
         case workoutId = "workout_id"
         case date
         case weekNumber = "week_number"
+        case mesocycleId = "mesocycle_id"
         case sets
-    }
-
-    /// Best weight achieved in this entry (max actual_weight from completed sets)
-    var bestWeight: Double {
-        sets.compactMap { $0.actualWeight }.max() ?? sets.first?.targetWeight ?? 0
-    }
-
-    /// Best reps achieved at best weight
-    var bestSetReps: Int {
-        let maxWeight = bestWeight
-        return sets
-            .filter { $0.actualWeight == maxWeight }
-            .compactMap { $0.actualReps }
-            .max() ?? sets.first?.targetReps ?? 0
+        case bestWeight = "best_weight"
+        case bestSetReps = "best_set_reps"
     }
 }
 
-/// A set within exercise history
+/// A set within exercise history (simplified format from server)
 struct HistorySet: Codable {
     let setNumber: Int
-    let targetReps: Int
-    let targetWeight: Double
-    let actualReps: Int?
-    let actualWeight: Double?
-    let status: SetStatus
+    let weight: Double
+    let reps: Int
 
     enum CodingKeys: String, CodingKey {
         case setNumber = "set_number"
-        case targetReps = "target_reps"
-        case targetWeight = "target_weight"
-        case actualReps = "actual_reps"
-        case actualWeight = "actual_weight"
-        case status
+        case weight
+        case reps
     }
 }
 
@@ -104,7 +104,8 @@ extension MeditationStats {
 
 extension ExerciseHistory {
     static let mockHistory = ExerciseHistory(
-        exercise: Exercise.mockExercises[0],
+        exerciseId: 1,
+        exerciseName: "Bench Press",
         entries: [],
         personalRecord: PersonalRecord(
             weight: 185,

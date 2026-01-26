@@ -177,7 +177,8 @@ extension ExerciseHistoryViewModel {
     static func empty(exerciseId: Int = 1) -> ExerciseHistoryViewModel {
         let viewModel = ExerciseHistoryViewModel(exerciseId: exerciseId, apiClient: MockAPIClient.empty)
         viewModel.historyState = .loaded(ExerciseHistory(
-            exercise: Exercise.mockExercises[0],
+            exerciseId: 1,
+            exerciseName: "Bench Press",
             entries: [],
             personalRecord: nil
         ))
