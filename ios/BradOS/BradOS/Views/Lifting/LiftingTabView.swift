@@ -1,0 +1,83 @@
+import SwiftUI
+
+/// Tab selection within lifting context
+enum LiftingTab: Hashable {
+    case meso
+    case plans
+    case exercises
+}
+
+/// Tab navigation for lifting context (Meso, Plans, Exercises)
+struct LiftingTabView: View {
+    @EnvironmentObject var appState: AppState
+    @State private var selectedTab: LiftingTab = .meso
+    @State private var navigationPath = NavigationPath()
+
+    var body: some View {
+        NavigationStack(path: $navigationPath) {
+            TabView(selection: $selectedTab) {
+                MesoView(navigationPath: $navigationPath)
+                    .tabItem {
+                        Label("Meso", systemImage: "calendar.badge.clock")
+                    }
+                    .tag(LiftingTab.meso)
+
+                PlansView(navigationPath: $navigationPath)
+                    .tabItem {
+                        Label("Plans", systemImage: "list.bullet.clipboard")
+                    }
+                    .tag(LiftingTab.plans)
+
+                ExercisesView()
+                    .tabItem {
+                        Label("Exercises", systemImage: "dumbbell")
+                    }
+                    .tag(LiftingTab.exercises)
+            }
+            .tint(Theme.accent)
+            .navigationDestination(for: WorkoutDestination.self) { destination in
+                WorkoutView(workoutId: destination.workoutId)
+            }
+            .navigationDestination(for: PlanDestination.self) { destination in
+                PlanDetailView(planId: destination.planId)
+            }
+            .navigationDestination(for: ExerciseHistoryDestination.self) { destination in
+                ExerciseHistoryView(exerciseId: destination.exerciseId, exerciseName: destination.exerciseName)
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        appState.isShowingLiftingContext = false
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            Text("Back")
+                        }
+                        .foregroundColor(Theme.accent)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Navigation Destinations
+
+struct WorkoutDestination: Hashable {
+    let workoutId: Int
+}
+
+struct PlanDestination: Hashable {
+    let planId: Int
+}
+
+struct ExerciseHistoryDestination: Hashable {
+    let exerciseId: Int
+    let exerciseName: String
+}
+
+#Preview {
+    LiftingTabView()
+        .environmentObject(AppState())
+        .preferredColorScheme(.dark)
+}
