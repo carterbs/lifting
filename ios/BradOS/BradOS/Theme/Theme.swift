@@ -1,0 +1,130 @@
+import SwiftUI
+
+/// App theme colors matching the web app's dark blue-gray palette
+struct Theme {
+    // MARK: - Background Colors
+    static let background = Color(hex: "2c363d")
+    static let backgroundSecondary = Color(hex: "333d44")
+    static let backgroundTertiary = Color(hex: "3a454c")
+    static let backgroundHover = Color(hex: "424d55")
+
+    // MARK: - Border & Disabled
+    static let border = Color(hex: "4a565e")
+    static let disabled = Color(hex: "525f67")
+
+    // MARK: - Text Colors
+    static let textPrimary = Color(hex: "c5d0d8")
+    static let textSecondary = Color(hex: "9ca3af")
+    static let textOnDark = Color(hex: "e2e8f0")
+
+    // MARK: - Accent Colors
+    static let accent = Color(hex: "6366f1") // Indigo
+    static let accentLight = Color(hex: "818cf8")
+
+    // MARK: - Activity Colors
+    static let lifting = Color(hex: "6366f1") // Indigo
+    static let stretch = Color(hex: "14b8a6") // Teal
+    static let meditation = Color(hex: "a855f7") // Purple
+
+    // MARK: - Status Colors
+    static let statusScheduled = Color(hex: "3b82f6") // Blue
+    static let statusInProgress = Color(hex: "f97316") // Orange
+    static let statusCompleted = Color(hex: "22c55e") // Green
+    static let statusSkipped = Color(hex: "6b7280") // Gray
+
+    // MARK: - Semantic Colors
+    static let error = Color(hex: "dc2626")
+    static let success = Color(hex: "16a34a")
+    static let warning = Color(hex: "ea580c")
+
+    // MARK: - Spacing
+    struct Spacing {
+        static let xs: CGFloat = 4
+        static let sm: CGFloat = 8
+        static let md: CGFloat = 16
+        static let lg: CGFloat = 24
+        static let xl: CGFloat = 32
+    }
+
+    // MARK: - Corner Radius
+    struct CornerRadius {
+        static let sm: CGFloat = 4
+        static let md: CGFloat = 8
+        static let lg: CGFloat = 12
+        static let xl: CGFloat = 16
+    }
+}
+
+// MARK: - Color Extension for Hex Support
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
+}
+
+// MARK: - View Modifiers
+struct CardStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(Theme.Spacing.md)
+            .background(Theme.backgroundSecondary)
+            .cornerRadius(Theme.CornerRadius.md)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.md)
+                    .stroke(Theme.border, lineWidth: 1)
+            )
+    }
+}
+
+struct PrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.sm)
+            .background(configuration.isPressed ? Theme.accentLight : Theme.accent)
+            .foregroundColor(.white)
+            .cornerRadius(Theme.CornerRadius.md)
+    }
+}
+
+struct SecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.sm)
+            .background(configuration.isPressed ? Theme.backgroundHover : Theme.backgroundTertiary)
+            .foregroundColor(Theme.textPrimary)
+            .cornerRadius(Theme.CornerRadius.md)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.md)
+                    .stroke(Theme.border, lineWidth: 1)
+            )
+    }
+}
+
+extension View {
+    func cardStyle() -> some View {
+        modifier(CardStyle())
+    }
+}
