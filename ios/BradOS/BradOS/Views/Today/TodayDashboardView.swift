@@ -3,11 +3,14 @@ import SwiftUI
 /// Main dashboard showing today's scheduled activities
 struct TodayDashboardView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.apiClient) private var apiClient
 
-    // Placeholder state - will be replaced with actual data
-    @State private var todayWorkout: Workout? = Workout.mockTodayWorkout
-    @State private var lastStretchSession: StretchSession? = StretchSession.mockRecentSession
-    @State private var lastMeditationSession: MeditationSession? = MeditationSession.mockRecentSession
+    // Data state
+    @State private var todayWorkout: Workout?
+    @State private var lastStretchSession: StretchSession?
+    @State private var lastMeditationSession: MeditationSession?
+    @State private var isLoading = true
+    @State private var error: Error?
 
     var body: some View {
         NavigationStack {
@@ -24,7 +27,39 @@ struct TodayDashboardView: View {
             .background(Theme.background)
             .navigationTitle("Today")
             .navigationBarTitleDisplayMode(.large)
+            .task {
+                await loadTodayData()
+            }
+            .refreshable {
+                await loadTodayData()
+            }
         }
+    }
+
+    // MARK: - Data Loading
+
+    private func loadTodayData() async {
+        isLoading = true
+        error = nil
+
+        do {
+            // Fetch all data in parallel
+            async let workoutTask = apiClient.getTodaysWorkout()
+            async let stretchTask = apiClient.getLatestStretchSession()
+            async let meditationTask = apiClient.getLatestMeditationSession()
+
+            let (workout, stretch, meditation) = try await (workoutTask, stretchTask, meditationTask)
+            todayWorkout = workout
+            lastStretchSession = stretch
+            lastMeditationSession = meditation
+        } catch {
+            self.error = error
+            #if DEBUG
+            print("[TodayDashboardView] Failed to load today data: \(error)")
+            #endif
+        }
+
+        isLoading = false
     }
 
     // MARK: - Today's Workout Section
@@ -34,15 +69,58 @@ struct TodayDashboardView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             SectionHeader(title: "Today's Workout")
 
-            if let workout = todayWorkout {
+            if isLoading {
+                workoutLoadingCard
+            } else if let error = error {
+                workoutErrorCard(error)
+            } else if let workout = todayWorkout {
                 TodayWorkoutCard(workout: workout) {
-                    // Navigate to workout - placeholder
+                    // Navigate to workout
                     appState.isShowingLiftingContext = true
                 }
             } else {
                 noWorkoutCard
             }
         }
+    }
+
+    private var workoutLoadingCard: some View {
+        VStack(spacing: Theme.Spacing.md) {
+            ProgressView()
+                .scaleEffect(1.2)
+
+            Text("Loading today's workout...")
+                .font(.subheadline)
+                .foregroundColor(Theme.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(Theme.Spacing.lg)
+        .cardStyle()
+    }
+
+    private func workoutErrorCard(_ error: Error) -> some View {
+        VStack(spacing: Theme.Spacing.md) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 32))
+                .foregroundColor(Theme.error)
+
+            Text("Failed to load")
+                .font(.headline)
+                .foregroundColor(Theme.textPrimary)
+
+            Text(error.localizedDescription)
+                .font(.caption)
+                .foregroundColor(Theme.textSecondary)
+                .multilineTextAlignment(.center)
+
+            Button("Retry") {
+                Task { await loadTodayData() }
+            }
+            .buttonStyle(SecondaryButtonStyle())
+        }
+        .frame(maxWidth: .infinity)
+        .padding(Theme.Spacing.lg)
+        .cardStyle()
     }
 
     private var noWorkoutCard: some View {
