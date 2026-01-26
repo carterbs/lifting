@@ -5,8 +5,10 @@ struct StretchView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var sessionManager = StretchSessionManager()
 
-    @State private var config: StretchSessionConfig = .defaultConfig
+    @State private var config: StretchSessionConfig = StretchConfigStorage.shared.load()
     @State private var showCancelConfirmation = false
+
+    private let configStorage = StretchConfigStorage.shared
 
     var body: some View {
         NavigationStack {
@@ -18,7 +20,8 @@ struct StretchView: View {
                 case .idle:
                     StretchSetupView(
                         config: $config,
-                        onStart: startSession
+                        onStart: startSession,
+                        onConfigChange: saveConfig
                     )
 
                 case .active, .paused:
@@ -69,9 +72,16 @@ struct StretchView: View {
     }
 
     private func startSession() {
+        // Save config before starting
+        configStorage.save(config)
+
         Task {
             await sessionManager.start(with: config)
         }
+    }
+
+    private func saveConfig() {
+        configStorage.save(config)
     }
 }
 
@@ -79,25 +89,29 @@ struct StretchView: View {
 struct StretchSetupView: View {
     @Binding var config: StretchSessionConfig
     let onStart: () -> Void
+    var onConfigChange: (() -> Void)? = nil
 
     @State private var spotifyUrl: String = ""
+    @State private var editMode: EditMode = .inactive
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: Theme.Spacing.lg) {
-                // Region Selection
-                regionSelectionSection
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: Theme.Spacing.lg) {
+                    // Region Selection with reordering
+                    regionSelectionSection
 
-                // Duration Selection
-                durationSection
+                    // Duration Selection
+                    durationSection
 
-                // Spotify Integration
-                spotifySection
+                    // Spotify Integration
+                    spotifySection
 
-                // Start Button
-                startButton
+                    // Start Button
+                    startButton
+                }
+                .padding(Theme.Spacing.md)
             }
-            .padding(Theme.Spacing.md)
         }
         .onAppear {
             spotifyUrl = config.spotifyPlaylistUrl ?? ""
@@ -114,6 +128,14 @@ struct StretchSetupView: View {
 
                 Spacer()
 
+                Button(action: {
+                    editMode = editMode == .active ? .inactive : .active
+                }) {
+                    Text(editMode == .active ? "Done" : "Reorder")
+                        .font(.caption)
+                        .foregroundColor(Theme.accent)
+                }
+
                 Button(action: toggleAll) {
                     Text(allSelected ? "Deselect All" : "Select All")
                         .font(.caption)
@@ -121,20 +143,53 @@ struct StretchSetupView: View {
                 }
             }
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
-                ForEach(config.regions.indices, id: \.self) { index in
-                    RegionToggleCard(
-                        region: config.regions[index].region,
-                        isEnabled: config.regions[index].enabled,
-                        durationSeconds: config.regions[index].durationSeconds,
-                        onToggle: {
-                            config.regions[index].enabled.toggle()
-                        },
-                        onDurationToggle: {
-                            config.regions[index].durationSeconds = config.regions[index].durationSeconds == 60 ? 120 : 60
-                        }
-                    )
+            if editMode == .active {
+                // List mode for drag-drop reordering
+                reorderableRegionList
+            } else {
+                // Grid mode for normal viewing
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
+                    ForEach(config.regions.indices, id: \.self) { index in
+                        RegionToggleCard(
+                            region: config.regions[index].region,
+                            isEnabled: config.regions[index].enabled,
+                            durationSeconds: config.regions[index].durationSeconds,
+                            onToggle: {
+                                config.regions[index].enabled.toggle()
+                                onConfigChange?()
+                            },
+                            onDurationToggle: {
+                                config.regions[index].durationSeconds = config.regions[index].durationSeconds == 60 ? 120 : 60
+                                onConfigChange?()
+                            }
+                        )
+                    }
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var reorderableRegionList: some View {
+        VStack(spacing: Theme.Spacing.xs) {
+            ForEach(config.regions.indices, id: \.self) { index in
+                ReorderableRegionRow(
+                    config: $config.regions[index],
+                    index: index,
+                    totalCount: config.regions.count,
+                    onMoveUp: {
+                        if index > 0 {
+                            config.regions.swapAt(index, index - 1)
+                            onConfigChange?()
+                        }
+                    },
+                    onMoveDown: {
+                        if index < config.regions.count - 1 {
+                            config.regions.swapAt(index, index + 1)
+                            onConfigChange?()
+                        }
+                    }
+                )
             }
         }
     }
@@ -148,6 +203,7 @@ struct StretchSetupView: View {
         for index in config.regions.indices {
             config.regions[index].enabled = newValue
         }
+        onConfigChange?()
     }
 
     // MARK: - Duration Section
@@ -181,6 +237,7 @@ struct StretchSetupView: View {
         for index in config.regions.indices {
             config.regions[index].durationSeconds = seconds
         }
+        onConfigChange?()
     }
 
     // MARK: - Spotify Section
@@ -199,6 +256,7 @@ struct StretchSetupView: View {
                 .autocorrectionDisabled()
                 .onChange(of: spotifyUrl) { _, newValue in
                     config.spotifyPlaylistUrl = newValue.isEmpty ? nil : newValue
+                    onConfigChange?()
                 }
 
             Text("Music will open in the Spotify app when the session starts.")
@@ -280,6 +338,71 @@ struct RegionToggleCard: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+/// Row for reordering regions with up/down buttons
+struct ReorderableRegionRow: View {
+    @Binding var config: StretchRegionConfig
+    let index: Int
+    let totalCount: Int
+    let onMoveUp: () -> Void
+    let onMoveDown: () -> Void
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            // Position indicator
+            Text("\(index + 1)")
+                .font(.caption)
+                .foregroundColor(Theme.textSecondary)
+                .frame(width: 20)
+
+            // Region info
+            Image(systemName: config.region.iconName)
+                .foregroundColor(config.enabled ? Theme.stretch : Theme.textSecondary)
+                .frame(width: 24)
+
+            Text(config.region.displayName)
+                .font(.subheadline)
+                .foregroundColor(config.enabled ? Theme.textPrimary : Theme.textSecondary)
+
+            Spacer()
+
+            // Duration badge
+            Text("\(config.durationSeconds / 60)m")
+                .font(.caption)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Theme.stretch.opacity(0.2))
+                .cornerRadius(4)
+                .foregroundColor(Theme.stretch)
+
+            // Enabled toggle
+            Button(action: { config.enabled.toggle() }) {
+                Image(systemName: config.enabled ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(config.enabled ? Theme.stretch : Theme.textSecondary)
+            }
+
+            // Move buttons
+            VStack(spacing: 2) {
+                Button(action: onMoveUp) {
+                    Image(systemName: "chevron.up")
+                        .font(.caption)
+                        .foregroundColor(index == 0 ? Theme.textSecondary.opacity(0.3) : Theme.textSecondary)
+                }
+                .disabled(index == 0)
+
+                Button(action: onMoveDown) {
+                    Image(systemName: "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(index == totalCount - 1 ? Theme.textSecondary.opacity(0.3) : Theme.textSecondary)
+                }
+                .disabled(index == totalCount - 1)
+            }
+        }
+        .padding(Theme.Spacing.sm)
+        .background(config.enabled ? Theme.stretch.opacity(0.1) : Theme.backgroundSecondary)
+        .cornerRadius(Theme.CornerRadius.sm)
     }
 }
 
