@@ -271,7 +271,7 @@ struct CalendarDayCell: View {
                 HStack(spacing: 2) {
                     ForEach(activityTypes, id: \.self) { type in
                         Circle()
-                            .fill(type.color)
+                            .fill(dotColor(for: type))
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -283,6 +283,14 @@ struct CalendarDayCell: View {
             .cornerRadius(Theme.CornerRadius.sm)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+
+    private func dotColor(for type: ActivityType) -> Color {
+        // When selected, use white for dots that would blend with the accent background
+        if isSelected && type.color == Theme.accent {
+            return .white
+        }
+        return type.color
     }
 
     private var textColor: Color {
