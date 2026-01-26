@@ -2,11 +2,13 @@ import SwiftUI
 
 /// Calendar view showing activity history with filtering
 struct HistoryView: View {
+    @EnvironmentObject var appState: AppState
     @StateObject private var viewModel: CalendarViewModel
     @State private var selectedDate: Date = Date()
     @State private var selectedFilter: ActivityType? = nil
     @State private var showingDayDetail: Bool = false
     @State private var selectedDayActivities: [CalendarActivity] = []
+    @State private var pendingWorkoutId: Int? = nil
 
     init(apiClient: APIClientProtocol = APIClient.shared) {
         _viewModel = StateObject(wrappedValue: CalendarViewModel(apiClient: apiClient))
@@ -51,10 +53,23 @@ struct HistoryView: View {
             .sheet(isPresented: $showingDayDetail) {
                 DayDetailSheet(
                     date: selectedDate,
-                    activities: selectedDayActivities
+                    activities: selectedDayActivities,
+                    onWorkoutTapped: { workoutId in
+                        pendingWorkoutId = workoutId
+                        showingDayDetail = false
+                    }
                 )
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+            }
+            .onChange(of: showingDayDetail) { _, isShowing in
+                // Navigate to workout after sheet dismisses
+                if !isShowing, let workoutId = pendingWorkoutId {
+                    pendingWorkoutId = nil
+                    appState.isShowingLiftingContext = true
+                    // Note: The workout navigation will need to be handled by LiftingTabView
+                    // For now, we navigate to the lifting context where the user can find the workout
+                }
             }
             .task {
                 await viewModel.fetchMonth()
@@ -303,6 +318,7 @@ struct CalendarDayCell: View {
 struct DayDetailSheet: View {
     let date: Date
     let activities: [CalendarActivity]
+    var onWorkoutTapped: ((Int) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
 
@@ -318,7 +334,12 @@ struct DayDetailSheet: View {
                         )
                     } else {
                         ForEach(activities) { activity in
-                            DayActivityCard(activity: activity)
+                            DayActivityCard(
+                                activity: activity,
+                                onTap: {
+                                    handleActivityTap(activity)
+                                }
+                            )
                         }
                     }
                 }
@@ -342,40 +363,67 @@ struct DayDetailSheet: View {
         formatter.dateStyle = .long
         return formatter.string(from: date)
     }
+
+    private func handleActivityTap(_ activity: CalendarActivity) {
+        if activity.type == .workout {
+            // Extract workout ID from activity.id (format: "workout-123")
+            if let workoutIdString = activity.id.split(separator: "-").last,
+               let workoutId = Int(workoutIdString) {
+                onWorkoutTapped?(workoutId)
+            }
+        }
+        // For stretch and meditation, just dismiss
+        dismiss()
+    }
 }
 
 /// Card showing activity details in day detail sheet
 struct DayActivityCard: View {
     let activity: CalendarActivity
+    var onTap: (() -> Void)? = nil
+
+    private var isWorkout: Bool {
+        activity.type == .workout
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack {
-                Image(systemName: activity.type.iconName)
-                    .foregroundColor(activity.type.color)
+        Button(action: { onTap?() }) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack {
+                    Image(systemName: activity.type.iconName)
+                        .foregroundColor(activity.type.color)
 
-                Text(activity.type.displayName)
-                    .font(.headline)
-                    .foregroundColor(Theme.textPrimary)
+                    Text(activity.type.displayName)
+                        .font(.headline)
+                        .foregroundColor(Theme.textPrimary)
 
-                Spacer()
+                    Spacer()
 
-                if let completedAt = activity.completedAt {
-                    Text(formatTime(completedAt))
-                        .font(.caption)
-                        .foregroundColor(Theme.textSecondary)
+                    if let completedAt = activity.completedAt {
+                        Text(formatTime(completedAt))
+                            .font(.caption)
+                            .foregroundColor(Theme.textSecondary)
+                    }
+
+                    // Show chevron for workouts to indicate navigation
+                    if isWorkout {
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(Theme.textSecondary)
+                    }
                 }
+
+                Divider()
+                    .background(Theme.border)
+
+                // Activity-specific details
+                activityDetails
             }
-
-            Divider()
-                .background(Theme.border)
-
-            // Activity-specific details
-            activityDetails
+            .padding(Theme.Spacing.md)
+            .background(Theme.backgroundSecondary)
+            .cornerRadius(Theme.CornerRadius.md)
         }
-        .padding(Theme.Spacing.md)
-        .background(Theme.backgroundSecondary)
-        .cornerRadius(Theme.CornerRadius.md)
+        .buttonStyle(PlainButtonStyle())
     }
 
     @ViewBuilder
@@ -429,15 +477,18 @@ struct DayActivityCard: View {
 
 #Preview("History View") {
     HistoryView(apiClient: MockAPIClient())
+        .environmentObject(AppState())
         .preferredColorScheme(.dark)
 }
 
 #Preview("History View - Loading") {
     HistoryView(apiClient: MockAPIClient.withDelay(10.0))
+        .environmentObject(AppState())
         .preferredColorScheme(.dark)
 }
 
 #Preview("History View - Error") {
     HistoryView(apiClient: MockAPIClient.failing())
+        .environmentObject(AppState())
         .preferredColorScheme(.dark)
 }
