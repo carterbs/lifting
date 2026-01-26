@@ -3,7 +3,7 @@ import Foundation
 /// Root structure for meditation audio manifest
 struct MeditationManifest: Codable {
     let sessions: [MeditationSessionDefinition]
-    let shared: SharedAudio
+    let shared: MeditationSharedAudio
 }
 
 /// Definition of a meditation session type with variants
@@ -61,7 +61,7 @@ struct InterjectionWindow: Codable {
 }
 
 /// Shared audio resources used across sessions
-struct SharedAudio: Codable {
+struct MeditationSharedAudio: Codable {
     let bell: String
     let silence: String
 }

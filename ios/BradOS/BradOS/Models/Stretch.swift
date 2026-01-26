@@ -20,7 +20,7 @@ struct RegionStretches: Codable {
 }
 
 /// Shared audio files used across all stretches
-struct SharedAudio: Codable {
+struct StretchSharedAudio: Codable {
     let switchSides: String
     let halfway: String
     let sessionComplete: String
@@ -30,7 +30,7 @@ struct SharedAudio: Codable {
 /// Root manifest structure matching stretches.json
 struct StretchManifest: Codable {
     let regions: [String: RegionStretches]
-    let shared: SharedAudio
+    let shared: StretchSharedAudio
 
     /// Get stretches for a specific body region
     func getStretches(for region: BodyRegion) -> [Stretch] {

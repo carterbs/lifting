@@ -142,7 +142,7 @@ final class MeditationManifestService {
                     ]
                 )
             ],
-            shared: SharedAudio(
+            shared: MeditationSharedAudio(
                 bell: "shared/bell.wav",
                 silence: "shared/silence.wav"
             )

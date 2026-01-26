@@ -91,7 +91,7 @@ class StretchManifestLoader {
     }
 
     /// Get shared audio file paths
-    func getSharedAudio() throws -> SharedAudio {
+    func getSharedAudio() throws -> StretchSharedAudio {
         let manifest = try loadManifest()
         return manifest.shared
     }
