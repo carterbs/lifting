@@ -3,11 +3,16 @@ import SwiftUI
 /// Grid view of available activity types
 struct ActivitiesView: View {
     @EnvironmentObject var appState: AppState
+    @StateObject private var viewModel: CalendarViewModel
 
     private let columns = [
         GridItem(.flexible()),
         GridItem(.flexible())
     ]
+
+    init(apiClient: APIClientProtocol = APIClient.shared) {
+        _viewModel = StateObject(wrappedValue: CalendarViewModel(apiClient: apiClient))
+    }
 
     var body: some View {
         NavigationStack {
@@ -40,6 +45,9 @@ struct ActivitiesView: View {
             .background(Theme.background)
             .navigationTitle("Activities")
             .navigationBarTitleDisplayMode(.large)
+            .task {
+                await viewModel.fetchMonth()
+            }
         }
     }
 
@@ -52,11 +60,56 @@ struct ActivitiesView: View {
                 appState.selectedTab = .history
             }
 
-            // Placeholder recent activities
-            ForEach(CalendarActivity.mockActivities.prefix(3)) { activity in
-                RecentActivityRow(activity: activity)
+            if viewModel.isLoading {
+                // Show loading placeholders
+                ForEach(0..<3, id: \.self) { _ in
+                    RecentActivityRowPlaceholder()
+                }
+            } else {
+                let activities = viewModel.recentActivities(limit: 3)
+                if activities.isEmpty {
+                    Text("No recent activities")
+                        .font(.subheadline)
+                        .foregroundColor(Theme.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(Theme.Spacing.lg)
+                } else {
+                    ForEach(activities) { activity in
+                        RecentActivityRow(activity: activity)
+                    }
+                }
             }
         }
+    }
+}
+
+/// Placeholder row for loading state
+struct RecentActivityRowPlaceholder: View {
+    var body: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.sm)
+                .fill(Theme.backgroundTertiary)
+                .frame(width: 36, height: 36)
+
+            VStack(alignment: .leading, spacing: 4) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Theme.backgroundTertiary)
+                    .frame(width: 100, height: 14)
+
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Theme.backgroundTertiary)
+                    .frame(width: 60, height: 12)
+            }
+
+            Spacer()
+
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Theme.backgroundTertiary)
+                .frame(width: 50, height: 12)
+        }
+        .padding(Theme.Spacing.md)
+        .background(Theme.backgroundSecondary)
+        .cornerRadius(Theme.CornerRadius.md)
     }
 }
 
@@ -141,8 +194,20 @@ struct RecentActivityRow: View {
     }
 }
 
-#Preview {
-    ActivitiesView()
+#Preview("Activities") {
+    ActivitiesView(apiClient: MockAPIClient())
+        .environmentObject(AppState())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Activities - Loading") {
+    ActivitiesView(apiClient: MockAPIClient.withDelay(10.0))
+        .environmentObject(AppState())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Activities - Empty") {
+    ActivitiesView(apiClient: MockAPIClient.empty)
         .environmentObject(AppState())
         .preferredColorScheme(.dark)
 }
