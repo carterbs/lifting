@@ -1,1 +1,0 @@
-export { NotificationPrompt } from './NotificationPrompt';

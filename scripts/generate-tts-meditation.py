@@ -18,7 +18,7 @@ from pathlib import Path
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent
 MEDITATION_DEFS_DIR = PROJECT_ROOT / "thoughts" / "shared" / "plans" / "meditation"
-OUTPUT_DIR = PROJECT_ROOT / "packages" / "client" / "public" / "audio" / "meditation"
+OUTPUT_DIR = PROJECT_ROOT / "ios" / "BradOS" / "BradOS" / "Resources" / "Audio" / "meditation"
 
 # TTS Settings
 VOICE = "af_heart"

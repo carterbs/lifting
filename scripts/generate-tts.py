@@ -22,7 +22,7 @@ from typing import Optional, Tuple, List, Dict
 PROJECT_ROOT = Path(__file__).parent.parent
 STRETCH_DEFS_DIR = PROJECT_ROOT / "thoughts" / "shared" / "plans" / "stretching"
 IMAGES_SOURCE_DIR = STRETCH_DEFS_DIR / "images"
-OUTPUT_DIR = PROJECT_ROOT / "packages" / "client" / "public" / "audio" / "stretching"
+OUTPUT_DIR = PROJECT_ROOT / "ios" / "BradOS" / "BradOS" / "Resources" / "Audio" / "stretching"
 
 # TTS Settings
 VOICE = "af_heart"

@@ -9,7 +9,6 @@ RUN apk add --no-cache python3 make g++
 COPY package*.json ./
 COPY packages/shared/package*.json ./packages/shared/
 COPY packages/server/package*.json ./packages/server/
-COPY packages/client/package*.json ./packages/client/
 
 # Install dependencies
 RUN npm install
@@ -18,10 +17,10 @@ RUN npm install
 COPY . .
 
 # Build shared package
-RUN npm run build -w @lifting/shared
+RUN npm run build -w @brad-os/shared
 
-# Expose ports
-EXPOSE 3000 3001
+# Expose server port
+EXPOSE 3001
 
-# Start development servers
+# Start development server
 CMD ["npm", "run", "dev"]

@@ -103,7 +103,7 @@ ssh "$REMOTE_HOST" "cd $REMOTE_DIR && docker compose -f docker-compose.prod.yml 
 log_info "Waiting for server to start..."
 sleep 5
 
-if ssh "$REMOTE_HOST" "curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/health" | grep -q "200"; then
+if ssh "$REMOTE_HOST" "curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/api/health" | grep -q "200"; then
     log_info "Server is running and healthy!"
 else
     log_warn "Server may not be running. Check logs with: ssh $REMOTE_HOST 'docker logs lifting-app-1'"
@@ -111,4 +111,4 @@ fi
 
 log_info "Deployment complete!"
 echo ""
-echo "Access the app at: http://$REMOTE_HOST:3000"
+echo "API available at: http://$REMOTE_HOST:3001"

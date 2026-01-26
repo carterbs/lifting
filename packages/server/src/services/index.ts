@@ -7,7 +7,6 @@ import { ProgressionService } from './progression.service.js';
 import { DynamicProgressionService } from './dynamic-progression.service.js';
 import { DeloadService } from './deload.service.js';
 import { PlanModificationService } from './plan-modification.service.js';
-import { NotificationService } from './notification.service.js';
 import { ExerciseHistoryService } from './exercise-history.service.js';
 import { CalendarService } from './calendar.service.js';
 import { createRepositories } from '../repositories/index.js';
@@ -19,7 +18,6 @@ export { ProgressionService } from './progression.service.js';
 export { DynamicProgressionService } from './dynamic-progression.service.js';
 export { DeloadService } from './deload.service.js';
 export { PlanModificationService } from './plan-modification.service.js';
-export { NotificationService } from './notification.service.js';
 export { ExerciseHistoryService } from './exercise-history.service.js';
 export { CalendarService } from './calendar.service.js';
 export type {
@@ -39,7 +37,6 @@ let progressionService: ProgressionService | null = null;
 let dynamicProgressionService: DynamicProgressionService | null = null;
 let deloadService: DeloadService | null = null;
 let planModificationService: PlanModificationService | null = null;
-let notificationService: NotificationService | null = null;
 let exerciseHistoryService: ExerciseHistoryService | null = null;
 let calendarService: CalendarService | null = null;
 
@@ -52,7 +49,6 @@ export function resetServices(): void {
   dynamicProgressionService = null;
   deloadService = null;
   planModificationService = null;
-  notificationService = null;
   exerciseHistoryService = null;
   calendarService = null;
 }
@@ -108,13 +104,6 @@ export function getPlanModificationService(): PlanModificationService {
     );
   }
   return planModificationService;
-}
-
-export function getNotificationService(): NotificationService {
-  if (!notificationService) {
-    notificationService = new NotificationService();
-  }
-  return notificationService;
 }
 
 export function getExerciseHistoryService(): ExerciseHistoryService {

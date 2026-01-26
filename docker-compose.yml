@@ -4,18 +4,16 @@ services:
       context: .
       dockerfile: docker/Dockerfile.dev
     ports:
-      - "${CLIENT_PORT:-3000}:${CLIENT_PORT:-3000}"
-      - "${SERVER_PORT:-3001}:${SERVER_PORT:-3001}"
+      - "${PORT:-3001}:${PORT:-3001}"
     volumes:
       - .:/app
       - /app/node_modules
       - /app/packages/shared/node_modules
       - /app/packages/server/node_modules
-      - /app/packages/client/node_modules
       - lifting-data:/app/packages/server/data
     environment:
       - NODE_ENV=development
-      - PORT=${CLIENT_PORT:-3000}
+      - PORT=${PORT:-3001}
       - DB_PATH=/app/packages/server/data/brad-os.db
 
 volumes:
