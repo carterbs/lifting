@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 /// View displaying exercise library with API integration
 struct ExercisesView: View {
@@ -259,123 +260,231 @@ struct ExerciseRow: View {
     }
 }
 
-/// View displaying exercise history with charts
+/// View displaying exercise history with Swift Charts and API data
 struct ExerciseHistoryView: View {
     let exerciseId: Int
     let exerciseName: String
 
+    @StateObject private var viewModel: ExerciseHistoryViewModel
+    @State private var showingEditSheet = false
+
+    init(exerciseId: Int, exerciseName: String) {
+        self.exerciseId = exerciseId
+        self.exerciseName = exerciseName
+        _viewModel = StateObject(wrappedValue: ExerciseHistoryViewModel(exerciseId: exerciseId))
+    }
+
     var body: some View {
+        Group {
+            switch viewModel.historyState {
+            case .idle, .loading:
+                LoadingView(message: "Loading history...")
+
+            case .error(let error):
+                errorView(error)
+
+            case .loaded(let history):
+                contentView(history)
+            }
+        }
+        .background(Theme.background)
+        .navigationTitle(viewModel.history?.exercise.name ?? exerciseName)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    Task { await viewModel.loadExerciseForEdit() }
+                    showingEditSheet = true
+                }) {
+                    Image(systemName: "pencil")
+                        .foregroundColor(Theme.accent)
+                }
+            }
+        }
+        .sheet(isPresented: $showingEditSheet) {
+            EditExerciseSheet(viewModel: viewModel, isPresented: $showingEditSheet)
+        }
+        .task {
+            await viewModel.loadHistory()
+        }
+    }
+
+    // MARK: - Content View
+
+    @ViewBuilder
+    private func contentView(_ history: ExerciseHistory) -> some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.lg) {
-                // Progress Chart Placeholder
-                progressChartSection
+                // Personal Record Badge
+                if let pr = history.personalRecord {
+                    prSection(pr)
+                }
 
-                // History List Placeholder
-                historySection
+                if viewModel.hasHistory {
+                    // Weight Progression Chart
+                    chartSection
+
+                    // Set History Table
+                    historyTableSection
+                } else {
+                    noHistoryView
+                }
             }
             .padding(Theme.Spacing.md)
         }
-        .background(Theme.background)
-        .navigationTitle(exerciseName)
-        .navigationBarTitleDisplayMode(.inline)
     }
 
+    // MARK: - PR Section
+
     @ViewBuilder
-    private var progressChartSection: some View {
+    private func prSection(_ pr: PersonalRecord) -> some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            GenericBadge(text: "PR", color: Theme.warning)
+
+            Text("\(Int(pr.weight)) lbs x \(pr.reps) reps")
+                .font(.headline)
+                .foregroundColor(Theme.textPrimary)
+
+            Spacer()
+
+            Text(pr.date.formatted(date: .abbreviated, time: .omitted))
+                .font(.caption)
+                .foregroundColor(Theme.textSecondary)
+        }
+        .padding(Theme.Spacing.md)
+        .background(Theme.backgroundSecondary)
+        .cornerRadius(Theme.CornerRadius.md)
+    }
+
+    // MARK: - Chart Section
+
+    @ViewBuilder
+    private var chartSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            SectionHeader(title: "Progress")
+            SectionHeader(title: "Weight Progression")
 
-            VStack(spacing: Theme.Spacing.md) {
-                // Placeholder chart
-                RoundedRectangle(cornerRadius: Theme.CornerRadius.md)
-                    .fill(Theme.backgroundTertiary)
-                    .frame(height: 200)
-                    .overlay(
-                        VStack {
-                            Image(systemName: "chart.line.uptrend.xyaxis")
-                                .font(.system(size: 40))
-                                .foregroundColor(Theme.textSecondary)
-                            Text("Progress Chart")
-                                .font(.caption)
-                                .foregroundColor(Theme.textSecondary)
-                        }
+            if viewModel.chartData.count >= 2 {
+                Chart(viewModel.chartData, id: \.date) { point in
+                    LineMark(
+                        x: .value("Date", point.date),
+                        y: .value("Weight", point.weight)
                     )
+                    .foregroundStyle(Theme.accent)
+                    .interpolationMethod(.catmullRom)
 
-                // Stats
-                HStack(spacing: Theme.Spacing.lg) {
-                    VStack {
-                        Text("135")
+                    PointMark(
+                        x: .value("Date", point.date),
+                        y: .value("Weight", point.weight)
+                    )
+                    .foregroundStyle(Theme.accent)
+                    .annotation(position: .top) {
+                        Text("\(Int(point.weight))")
+                            .font(.caption2)
+                            .foregroundColor(Theme.textSecondary)
+                    }
+                }
+                .chartYAxisLabel("lbs")
+                .chartXAxis {
+                    AxisMarks(values: .automatic) { _ in
+                        AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                    }
+                }
+                .frame(height: 200)
+                .padding(Theme.Spacing.md)
+                .cardStyle()
+            } else if viewModel.chartData.count == 1 {
+                // Show single data point without chart
+                let point = viewModel.chartData[0]
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("\(Int(point.weight)) lbs")
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(Theme.accent)
-                        Text("Current (lbs)")
+                        Text(point.date.formatted(date: .abbreviated, time: .omitted))
                             .font(.caption)
                             .foregroundColor(Theme.textSecondary)
                     }
-
-                    Divider()
-                        .frame(height: 40)
-
-                    VStack {
-                        Text("95")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(Theme.textSecondary)
-                        Text("Starting (lbs)")
-                            .font(.caption)
-                            .foregroundColor(Theme.textSecondary)
-                    }
-
-                    Divider()
-                        .frame(height: 40)
-
-                    VStack {
-                        Text("+40")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(Theme.success)
-                        Text("Gained (lbs)")
-                            .font(.caption)
-                            .foregroundColor(Theme.textSecondary)
-                    }
+                    Spacer()
+                    Text("1 session")
+                        .font(.caption)
+                        .foregroundColor(Theme.textSecondary)
                 }
-                .frame(maxWidth: .infinity)
+                .padding(Theme.Spacing.md)
+                .cardStyle()
             }
-            .padding(Theme.Spacing.md)
-            .cardStyle()
         }
     }
 
+    // MARK: - History Table Section
+
     @ViewBuilder
-    private var historySection: some View {
+    private var historyTableSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            SectionHeader(title: "Recent Sessions")
+            SectionHeader(title: "Set History")
 
-            // Placeholder history items
-            ForEach(0..<5, id: \.self) { index in
+            // Header row
+            HStack {
+                Text("Date")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text("Weight")
+                    .frame(width: 70, alignment: .trailing)
+                Text("Reps")
+                    .frame(width: 50, alignment: .trailing)
+                Text("Sets")
+                    .frame(width: 40, alignment: .trailing)
+            }
+            .font(.caption)
+            .fontWeight(.medium)
+            .foregroundColor(Theme.textSecondary)
+            .padding(.horizontal, Theme.Spacing.md)
+
+            // Data rows (reverse chronological)
+            ForEach(viewModel.sortedEntries) { entry in
                 HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Week \(5 - index)")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(Theme.textPrimary)
-
-                        Text(Calendar.current.date(byAdding: .weekOfYear, value: -index, to: Date())!.formatted(date: .abbreviated, time: .omitted))
-                            .font(.caption)
-                            .foregroundColor(Theme.textSecondary)
-                    }
-
-                    Spacer()
-
-                    Text("3x10 @ \(135 - index * 5) lbs")
-                        .font(.subheadline)
-                        .foregroundColor(Theme.textSecondary)
+                    Text(entry.date.formatted(date: .numeric, time: .omitted))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("\(Int(entry.bestWeight)) lbs")
+                        .frame(width: 70, alignment: .trailing)
+                    Text("\(entry.bestSetReps)")
+                        .frame(width: 50, alignment: .trailing)
+                    Text("\(entry.sets.count)")
+                        .frame(width: 40, alignment: .trailing)
                 }
+                .font(.subheadline)
+                .foregroundColor(Theme.textPrimary)
                 .padding(Theme.Spacing.md)
                 .background(Theme.backgroundSecondary)
                 .cornerRadius(Theme.CornerRadius.md)
             }
         }
+    }
+
+    // MARK: - No History View
+
+    @ViewBuilder
+    private var noHistoryView: some View {
+        EmptyStateView(
+            iconName: "clock",
+            title: "No History Yet",
+            message: "Complete workouts with this exercise to see your progress here."
+        )
+        .padding(.top, Theme.Spacing.xl)
+    }
+
+    // MARK: - Error View
+
+    @ViewBuilder
+    private func errorView(_ error: Error) -> some View {
+        EmptyStateView(
+            iconName: "exclamationmark.triangle",
+            title: "Exercise Not Found",
+            message: error.localizedDescription,
+            buttonTitle: "Try Again"
+        ) {
+            Task { await viewModel.loadHistory() }
+        }
+        .padding(Theme.Spacing.md)
     }
 }
 
