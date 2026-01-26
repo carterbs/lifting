@@ -55,13 +55,16 @@ struct WeekSummary: Identifiable, Codable, Hashable {
     let weekNumber: Int
     var workouts: [WorkoutSummary]
     var isDeload: Bool
-    var isComplete: Bool
 
     enum CodingKeys: String, CodingKey {
         case weekNumber = "week_number"
         case workouts
         case isDeload = "is_deload"
-        case isComplete = "is_complete"
+    }
+
+    /// Computed property: week is complete when all workouts are completed or skipped
+    var isComplete: Bool {
+        workouts.allSatisfy { $0.status == .completed || $0.status == .skipped }
     }
 }
 
@@ -70,14 +73,17 @@ struct WorkoutSummary: Identifiable, Codable, Hashable {
     let id: Int
     let scheduledDate: Date
     var status: WorkoutStatus
-    var dayName: String
+    var planDayName: String
 
     enum CodingKeys: String, CodingKey {
         case id
         case scheduledDate = "scheduled_date"
         case status
-        case dayName = "day_name"
+        case planDayName = "plan_day_name"
     }
+
+    /// Convenience property for display (matches old dayName usage)
+    var dayName: String { planDayName }
 }
 
 // MARK: - Mock Data
