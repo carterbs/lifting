@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import MediaPlayer
 
 /// Session status states
 enum StretchSessionStatus: String, Codable {
@@ -79,6 +80,7 @@ class StretchSessionManager: ObservableObject {
 
     private let audioManager: StretchAudioManager
     private let manifestLoader: StretchManifestLoader
+    private var nowPlayingUpdateTimer: AnyCancellable?
 
     // MARK: - Initialization
 
@@ -88,6 +90,7 @@ class StretchSessionManager: ObservableObject {
     ) {
         self.audioManager = audioManager
         self.manifestLoader = manifestLoader
+        setupRemoteCommandCenter()
     }
 
     // MARK: - Session Control
@@ -131,6 +134,10 @@ class StretchSessionManager: ObservableObject {
         segmentRemaining = segmentDuration
         status = .active
         startTimer()
+
+        // Setup Now Playing
+        updateNowPlayingInfo()
+        startNowPlayingUpdates()
     }
 
     /// Restore a session from saved state
@@ -154,6 +161,8 @@ class StretchSessionManager: ObservableObject {
         segmentStartedAt = Date()
         status = .active
         startTimer()
+        startNowPlayingUpdates()
+        updateNowPlayingInfo()
     }
 
     /// Pause the session
@@ -162,7 +171,10 @@ class StretchSessionManager: ObservableObject {
         pausedElapsed = segmentElapsed
         timer?.cancel()
         timer = nil
+        nowPlayingUpdateTimer?.cancel()
+        nowPlayingUpdateTimer = nil
         status = .paused
+        updateNowPlayingInfo()
     }
 
     /// Skip the current segment
@@ -198,6 +210,8 @@ class StretchSessionManager: ObservableObject {
     func endSession() {
         timer?.cancel()
         timer = nil
+        nowPlayingUpdateTimer?.cancel()
+        nowPlayingUpdateTimer = nil
         audioManager.stopAudio()
         finalizeSession()
     }
@@ -206,7 +220,10 @@ class StretchSessionManager: ObservableObject {
     func reset() {
         timer?.cancel()
         timer = nil
+        nowPlayingUpdateTimer?.cancel()
+        nowPlayingUpdateTimer = nil
         audioManager.stopAudio()
+        clearNowPlayingInfo()
 
         status = .idle
         currentStretchIndex = 0
@@ -286,6 +303,8 @@ class StretchSessionManager: ObservableObject {
                 audioManager.playNarrationAsync(clipPath)
             }
 
+            updateNowPlayingInfo()
+
             if status == .active {
                 startTimer()
             }
@@ -332,6 +351,8 @@ class StretchSessionManager: ObservableObject {
                 audioManager.playNarrationAsync(nextStretch.audioFiles.begin)
             }
 
+            updateNowPlayingInfo()
+
             if status == .active {
                 startTimer()
             }
@@ -354,7 +375,110 @@ class StretchSessionManager: ObservableObject {
             completedStretches.append(completed)
         }
 
+        nowPlayingUpdateTimer?.cancel()
+        nowPlayingUpdateTimer = nil
+        clearNowPlayingInfo()
         status = .complete
+    }
+}
+
+// MARK: - Now Playing / Lock Screen Controls
+
+extension StretchSessionManager {
+    /// Setup remote command center for lock screen controls
+    private func setupRemoteCommandCenter() {
+        let commandCenter = MPRemoteCommandCenter.shared()
+
+        // Play command
+        commandCenter.playCommand.addTarget { [weak self] _ in
+            Task { @MainActor in
+                self?.resume()
+            }
+            return .success
+        }
+
+        // Pause command
+        commandCenter.pauseCommand.addTarget { [weak self] _ in
+            Task { @MainActor in
+                self?.pause()
+            }
+            return .success
+        }
+
+        // Toggle play/pause command
+        commandCenter.togglePlayPauseCommand.addTarget { [weak self] _ in
+            Task { @MainActor in
+                guard let self = self else { return }
+                if self.status == .paused {
+                    self.resume()
+                } else if self.status == .active {
+                    self.pause()
+                }
+            }
+            return .success
+        }
+
+        // Next track command (skip segment)
+        commandCenter.nextTrackCommand.addTarget { [weak self] _ in
+            Task { @MainActor in
+                self?.skipSegment()
+            }
+            return .success
+        }
+
+        // Disable unused commands
+        commandCenter.previousTrackCommand.isEnabled = false
+        commandCenter.skipForwardCommand.isEnabled = false
+        commandCenter.skipBackwardCommand.isEnabled = false
+        commandCenter.seekForwardCommand.isEnabled = false
+        commandCenter.seekBackwardCommand.isEnabled = false
+    }
+
+    /// Start periodic updates of Now Playing info for elapsed time
+    private func startNowPlayingUpdates() {
+        nowPlayingUpdateTimer?.cancel()
+        nowPlayingUpdateTimer = Timer.publish(every: 1.0, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                self?.updateNowPlayingInfo()
+            }
+    }
+
+    /// Update the Now Playing info center with current stretch info
+    func updateNowPlayingInfo() {
+        guard let selected = currentSelectedStretch else {
+            clearNowPlayingInfo()
+            return
+        }
+
+        var info = [String: Any]()
+
+        // Title: stretch name
+        info[MPMediaItemPropertyTitle] = selected.stretch.name
+
+        // Artist: region and segment info
+        let segmentLabel = selected.stretch.bilateral
+            ? (currentSegment == 1 ? "Left Side" : "Right Side")
+            : (currentSegment == 1 ? "First Half" : "Second Half")
+        info[MPMediaItemPropertyArtist] = "\(selected.region.displayName) - \(segmentLabel)"
+
+        // Album: session context
+        info[MPMediaItemPropertyAlbumTitle] = "Stretching Session"
+
+        // Timing info
+        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = segmentElapsed
+        info[MPMediaItemPropertyPlaybackDuration] = segmentDuration
+        info[MPNowPlayingInfoPropertyPlaybackRate] = status == .active ? 1.0 : 0.0
+
+        // Default playback rate when playing
+        info[MPNowPlayingInfoPropertyDefaultPlaybackRate] = 1.0
+
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
+    /// Clear the Now Playing info
+    func clearNowPlayingInfo() {
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
 }
 
