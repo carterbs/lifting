@@ -1,4 +1,6 @@
 import SwiftUI
+import UIKit
+import AVFoundation
 
 /// Meditation session states
 enum MeditationSessionState {
@@ -69,6 +71,16 @@ enum BreathingPhase: String, CaseIterable {
         case .holdIn: return 1.0
         case .exhale: return 1.0
         case .rest: return 0.6
+        }
+    }
+
+    /// VoiceOver description for the phase
+    var accessibilityLabel: String {
+        switch self {
+        case .inhale: return "Inhale for 4 seconds"
+        case .holdIn: return "Hold breath for 2 seconds"
+        case .exhale: return "Exhale for 6 seconds"
+        case .rest: return "Rest for 2 seconds"
         }
     }
 }
@@ -378,6 +390,9 @@ struct MeditationDurationOption: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel("\(duration.rawValue) minutes")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityHint(isSelected ? "Currently selected" : "Double tap to select")
     }
 }
 
@@ -389,6 +404,7 @@ struct MeditationActiveView: View {
     let onCancel: () -> Void
 
     @Environment(\.scenePhase) var scenePhase
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     // Timer state - using timestamps for background resilience
     @State private var sessionStartTime: Date = Date()
@@ -402,6 +418,7 @@ struct MeditationActiveView: View {
     @State private var breathingProgress: Double = 0
     @State private var circleScale: CGFloat = 1.0
     @State private var circleOpacity: Double = 0.6
+    @State private var previousPhase: BreathingPhase? = nil
 
     // Timer for updates
     @State private var displayTimer: Timer?
@@ -418,6 +435,14 @@ struct MeditationActiveView: View {
     @State private var showEndConfirmation: Bool = false
     @State private var showAudioError: Bool = false
     @State private var audioErrorMessage: String = ""
+
+    // Debouncing for rapid pause/resume
+    @State private var lastPauseToggleTime: Date = .distantPast
+    private let pauseDebounceInterval: TimeInterval = 0.3
+
+    // Haptic feedback generators
+    private let impactGenerator = UIImpactFeedbackGenerator(style: .medium)
+    private let notificationGenerator = UINotificationFeedbackGenerator()
 
     // Audio and storage
     private let storage = MeditationStorage.shared
@@ -458,6 +483,10 @@ struct MeditationActiveView: View {
         }
         .padding(Theme.Spacing.md)
         .onAppear {
+            // Prepare haptic generators
+            impactGenerator.prepare()
+            notificationGenerator.prepare()
+
             initializeSession()
         }
         .onDisappear {
@@ -465,6 +494,9 @@ struct MeditationActiveView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhaseChange(newPhase)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)) { notification in
+            handleAudioInterruption(notification)
         }
         .alert("End Session?", isPresented: $showEndConfirmation) {
             Button("End Session", role: .destructive) {
@@ -495,10 +527,14 @@ struct MeditationActiveView: View {
                 .font(.system(size: 48, weight: .light, design: .rounded))
                 .foregroundColor(Theme.textPrimary)
                 .monospacedDigit()
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+                .accessibilityLabel("\(displayedTimeRemaining / 60) minutes and \(displayedTimeRemaining % 60) seconds remaining")
 
             Text("remaining")
                 .font(.caption)
                 .foregroundColor(Theme.textSecondary)
+                .accessibilityHidden(true)
         }
     }
 
@@ -518,16 +554,36 @@ struct MeditationActiveView: View {
                 .stroke(Theme.meditation.opacity(0.2), lineWidth: 4)
                 .frame(width: 200, height: 200)
 
-            // Animated inner circle
-            Circle()
-                .fill(Theme.meditation.opacity(circleOpacity))
-                .frame(width: 100 * circleScale, height: 100 * circleScale)
+            if reduceMotion {
+                // Static indicator for Reduce Motion users
+                breathingStaticIndicator
+            } else {
+                // Animated inner circle
+                Circle()
+                    .fill(Theme.meditation.opacity(circleOpacity))
+                    .frame(width: 100 * circleScale, height: 100 * circleScale)
+            }
 
             // Center dot
             Circle()
                 .fill(Theme.meditation)
                 .frame(width: 20, height: 20)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Breathing circle")
+        .accessibilityValue(breathingPhase.accessibilityLabel)
+    }
+
+    /// Static breathing indicator for Reduce Motion users
+    @ViewBuilder
+    private var breathingStaticIndicator: some View {
+        // Show phase-appropriate static size
+        let staticScale: CGFloat = breathingPhase == .inhale || breathingPhase == .holdIn ? 1.8 : 1.0
+        let staticOpacity: Double = breathingPhase == .inhale || breathingPhase == .holdIn ? 1.0 : 0.6
+
+        Circle()
+            .fill(Theme.meditation.opacity(staticOpacity))
+            .frame(width: 100 * staticScale, height: 100 * staticScale)
     }
 
     // MARK: - Phase Section
@@ -539,12 +595,28 @@ struct MeditationActiveView: View {
                 .font(.title2)
                 .fontWeight(.medium)
                 .foregroundColor(Theme.meditation)
+                .accessibilityLabel(breathingPhase.accessibilityLabel)
+                .onChange(of: breathingPhase) { oldPhase, newPhase in
+                    // Announce phase changes to VoiceOver users
+                    if oldPhase != newPhase {
+                        announcePhaseChange(newPhase)
+                    }
+                }
 
             if isPaused {
                 Text("PAUSED")
                     .font(.headline)
                     .foregroundColor(Theme.warning)
+                    .accessibilityLabel("Session paused")
             }
+        }
+    }
+
+    /// Announce breathing phase change for VoiceOver users
+    private func announcePhaseChange(_ phase: BreathingPhase) {
+        // Only announce if VoiceOver is running
+        if UIAccessibility.isVoiceOverRunning {
+            UIAccessibility.post(notification: .announcement, argument: phase.accessibilityLabel)
         }
     }
 
@@ -563,9 +635,11 @@ struct MeditationActiveView: View {
                 }
                 .foregroundColor(Theme.textSecondary)
             }
+            .accessibilityLabel("End session early")
+            .accessibilityHint("Shows confirmation before ending")
 
             // Pause/Resume button
-            Button(action: togglePause) {
+            Button(action: togglePauseWithHaptic) {
                 ZStack {
                     Circle()
                         .fill(Theme.meditation)
@@ -576,10 +650,12 @@ struct MeditationActiveView: View {
                         .foregroundColor(.white)
                 }
             }
+            .accessibilityLabel(isPaused ? "Resume session" : "Pause session")
 
             // Placeholder for symmetry
             Color.clear
                 .frame(width: 60, height: 60)
+                .accessibilityHidden(true)
         }
     }
 
@@ -788,6 +864,21 @@ struct MeditationActiveView: View {
 
     // MARK: - Pause/Resume
 
+    /// Toggle pause with haptic feedback and debouncing
+    private func togglePauseWithHaptic() {
+        // Debounce rapid taps
+        let now = Date()
+        guard now.timeIntervalSince(lastPauseToggleTime) >= pauseDebounceInterval else {
+            return
+        }
+        lastPauseToggleTime = now
+
+        // Haptic feedback
+        impactGenerator.impactOccurred()
+
+        togglePause()
+    }
+
     private func togglePause() {
         if isPaused {
             resumeSession()
@@ -813,6 +904,11 @@ struct MeditationActiveView: View {
 
         // Save state
         saveSessionState()
+
+        // Announce to VoiceOver
+        if UIAccessibility.isVoiceOverRunning {
+            UIAccessibility.post(notification: .announcement, argument: "Session paused")
+        }
     }
 
     private func resumeSession() {
@@ -837,6 +933,11 @@ struct MeditationActiveView: View {
 
         // Save state
         saveSessionState()
+
+        // Announce to VoiceOver
+        if UIAccessibility.isVoiceOverRunning {
+            UIAccessibility.post(notification: .announcement, argument: "Session resumed")
+        }
     }
 
     // MARK: - Pause Timeout
@@ -883,6 +984,13 @@ struct MeditationActiveView: View {
 
         // Clear saved state
         storage.clearMeditationState()
+
+        // Haptic feedback for completion
+        if fully {
+            notificationGenerator.notificationOccurred(.success)
+        } else {
+            impactGenerator.impactOccurred()
+        }
 
         // Play bell if fully completed
         if fully {
@@ -931,6 +1039,44 @@ struct MeditationActiveView: View {
             saveSessionState()
         case .inactive:
             break
+        @unknown default:
+            break
+        }
+    }
+
+    // MARK: - Audio Interruption Handling
+
+    /// Handle audio session interruptions (phone calls, Siri, etc.)
+    private func handleAudioInterruption(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            return
+        }
+
+        switch type {
+        case .began:
+            // Phone call or other interruption started - pause the session
+            if !isPaused {
+                pauseSession()
+            }
+
+        case .ended:
+            // Interruption ended - check if we should resume
+            guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else {
+                return
+            }
+
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+            if options.contains(.shouldResume) {
+                // The system recommends resuming - but we leave it paused
+                // The user can manually resume when ready
+                // This is better UX for meditation
+
+                // Re-activate audio session
+                try? AVAudioSession.sharedInstance().setActive(true)
+            }
+
         @unknown default:
             break
         }
