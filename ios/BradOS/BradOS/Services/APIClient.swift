@@ -424,24 +424,24 @@ final class APIClient: APIClientProtocol {
     }
 
     func createMeditationSession(_ session: MeditationSession) async throws -> MeditationSession {
-        // Use a custom body struct to match server expectations
+        // Use a custom body struct to match server expectations (camelCase)
         struct CreateMeditationSessionBody: Encodable {
-            let completed_at: String
-            let session_type: String
-            let planned_duration_seconds: Int
-            let actual_duration_seconds: Int
-            let completed_fully: Bool
+            let completedAt: String
+            let sessionType: String
+            let plannedDurationSeconds: Int
+            let actualDurationSeconds: Int
+            let completedFully: Bool
         }
 
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
         let body = CreateMeditationSessionBody(
-            completed_at: formatter.string(from: session.completedAt),
-            session_type: session.sessionType,
-            planned_duration_seconds: session.plannedDurationSeconds,
-            actual_duration_seconds: session.actualDurationSeconds,
-            completed_fully: session.completedFully
+            completedAt: formatter.string(from: session.completedAt),
+            sessionType: session.sessionType,
+            plannedDurationSeconds: session.plannedDurationSeconds,
+            actualDurationSeconds: session.actualDurationSeconds,
+            completedFully: session.completedFully
         )
         return try await post("/meditation-sessions", body: body)
     }
