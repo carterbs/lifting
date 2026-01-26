@@ -25,7 +25,7 @@
               "type": "closing",
               "durationSeconds": 30,
               "fixedCues": [
-                { "atSeconds": 0, "audioFile": "sessions/basic-breathing/closing.wav" }
+                { "atSeconds": 0, "audioFile": "sessions/basic-breathing/closing-transition.wav" }
               ]
             }
           ]
@@ -50,7 +50,7 @@
               "type": "closing",
               "durationSeconds": 30,
               "fixedCues": [
-                { "atSeconds": 0, "audioFile": "sessions/basic-breathing/closing.wav" }
+                { "atSeconds": 0, "audioFile": "sessions/basic-breathing/closing-transition.wav" }
               ]
             }
           ]
@@ -75,7 +75,7 @@
               "type": "closing",
               "durationSeconds": 30,
               "fixedCues": [
-                { "atSeconds": 0, "audioFile": "sessions/basic-breathing/closing.wav" }
+                { "atSeconds": 0, "audioFile": "sessions/basic-breathing/closing-transition.wav" }
               ]
             }
           ]
@@ -85,6 +85,6 @@
   ],
   "shared": {
     "bell": "shared/bell.wav",
-    "silence": "shared/silence.wav"
+    "silence": "shared/silence-1s.wav"
   }
 }

@@ -63,31 +63,42 @@ final class MeditationAudioEngine: NSObject, ObservableObject {
 
     // MARK: - Audio File Resolution
 
-    /// Get URL for an audio file, checking bundle first then constructing server URL
+    /// Get URL for an audio file, checking bundle first
+    /// Paths come from manifest like "sessions/basic-breathing/intro-welcome.wav" or "shared/bell.wav"
+    /// Files are stored in Audio/meditation/...
     private func getAudioURL(for path: String) -> URL? {
-        // First check if we have it in the bundle
         let components = path.components(separatedBy: "/")
-        if let fileName = components.last {
-            let nameWithoutExt = (fileName as NSString).deletingPathExtension
-            let ext = (fileName as NSString).pathExtension
+        let filename = components.last ?? path
+        let filenameWithoutExt = (filename as NSString).deletingPathExtension
+        let ext = (filename as NSString).pathExtension.isEmpty ? "wav" : (filename as NSString).pathExtension
 
-            if let bundleURL = Bundle.main.url(forResource: nameWithoutExt, withExtension: ext) {
-                return bundleURL
-            }
+        // Build subdirectory path: Audio/meditation/{folder}
+        let folder = components.count > 1 ? components.dropLast().joined(separator: "/") : ""
+        let subdirectory = folder.isEmpty ? "Audio/meditation" : "Audio/meditation/\(folder)"
 
-            // Also check in meditation subdirectory
-            if let bundleURL = Bundle.main.url(
-                forResource: nameWithoutExt,
-                withExtension: ext,
-                subdirectory: "meditation"
-            ) {
-                return bundleURL
-            }
+        // Try in the expected location
+        if let url = Bundle.main.url(
+            forResource: filenameWithoutExt,
+            withExtension: ext,
+            subdirectory: subdirectory
+        ) {
+            #if DEBUG
+            print("[MeditationAudioEngine] Found audio: \(path) at \(url.path)")
+            #endif
+            return url
         }
 
-        // Fall back to server URL
-        // Note: In a real implementation, this would download and cache the file
-        // For now, we'll construct the URL (API phase will handle actual downloading)
+        // Fallback: Try just the filename anywhere in bundle
+        if let url = Bundle.main.url(forResource: filenameWithoutExt, withExtension: ext) {
+            #if DEBUG
+            print("[MeditationAudioEngine] Found audio (fallback): \(path) at \(url.path)")
+            #endif
+            return url
+        }
+
+        #if DEBUG
+        print("[MeditationAudioEngine] Audio file not found: \(path) (looked in \(subdirectory))")
+        #endif
         return nil
     }
 
