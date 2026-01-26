@@ -82,14 +82,7 @@ struct StretchSession: Identifiable, Codable, Hashable {
     var regionsSkipped: Int
     var stretches: [CompletedStretch]?
 
-    enum CodingKeys: String, CodingKey {
-        case id
-        case completedAt = "completed_at"
-        case totalDurationSeconds = "total_duration_seconds"
-        case regionsCompleted = "regions_completed"
-        case regionsSkipped = "regions_skipped"
-        case stretches
-    }
+    // Server returns camelCase, so no CodingKeys mapping needed
 
     var formattedDuration: String {
         let minutes = totalDurationSeconds / 60

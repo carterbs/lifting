@@ -5,27 +5,15 @@ struct CalendarData: Codable {
     let startDate: String
     let endDate: String
     let days: [String: CalendarDayData]
-
-    enum CodingKeys: String, CodingKey {
-        case startDate = "start_date"
-        case endDate = "end_date"
-        case days
-    }
 }
 
 /// Statistics from meditation sessions API
 struct MeditationStats: Codable {
     let totalSessions: Int
     let totalMinutes: Int
-    let currentStreak: Int
-    let longestStreak: Int
-
-    enum CodingKeys: String, CodingKey {
-        case totalSessions = "total_sessions"
-        case totalMinutes = "total_minutes"
-        case currentStreak = "current_streak"
-        case longestStreak = "longest_streak"
-    }
+    // Note: streak fields are not yet implemented in the API
+    var currentStreak: Int?
+    var longestStreak: Int?
 }
 
 /// Exercise history from API
@@ -106,6 +94,12 @@ extension MeditationStats {
         currentStreak: 7,
         longestStreak: 14
     )
+
+    /// Current streak with default fallback
+    var displayCurrentStreak: Int { currentStreak ?? 0 }
+
+    /// Longest streak with default fallback
+    var displayLongestStreak: Int { longestStreak ?? 0 }
 }
 
 extension ExerciseHistory {

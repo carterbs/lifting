@@ -372,22 +372,43 @@ final class APIClient: APIClientProtocol {
     }
 
     func createStretchSession(_ session: StretchSession) async throws -> StretchSession {
-        // Use a custom body struct to match server expectations
+        // Use a custom body struct to match server expectations (camelCase)
+        struct CompletedStretchBody: Encodable {
+            let region: String
+            let stretchId: String
+            let stretchName: String
+            let durationSeconds: Int
+            let skippedSegments: Int
+        }
+
         struct CreateStretchSessionBody: Encodable {
-            let completed_at: String
-            let total_duration_seconds: Int
-            let regions_completed: Int
-            let regions_skipped: Int
+            let completedAt: String
+            let totalDurationSeconds: Int
+            let regionsCompleted: Int
+            let regionsSkipped: Int
+            let stretches: [CompletedStretchBody]
         }
 
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
+        // Convert stretches to the expected format
+        let stretchBodies = (session.stretches ?? []).map { stretch in
+            CompletedStretchBody(
+                region: stretch.region.rawValue,
+                stretchId: stretch.stretchId,
+                stretchName: stretch.stretchName,
+                durationSeconds: stretch.durationSeconds,
+                skippedSegments: stretch.skippedSegments
+            )
+        }
+
         let body = CreateStretchSessionBody(
-            completed_at: formatter.string(from: session.completedAt),
-            total_duration_seconds: session.totalDurationSeconds,
-            regions_completed: session.regionsCompleted,
-            regions_skipped: session.regionsSkipped
+            completedAt: formatter.string(from: session.completedAt),
+            totalDurationSeconds: session.totalDurationSeconds,
+            regionsCompleted: session.regionsCompleted,
+            regionsSkipped: session.regionsSkipped,
+            stretches: stretchBodies
         )
         return try await post("/stretch-sessions", body: body)
     }

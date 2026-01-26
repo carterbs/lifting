@@ -26,15 +26,6 @@ struct MeditationSession: Identifiable, Codable, Hashable {
     var actualDurationSeconds: Int
     var completedFully: Bool
 
-    enum CodingKeys: String, CodingKey {
-        case id
-        case completedAt = "completed_at"
-        case sessionType = "session_type"
-        case plannedDurationSeconds = "planned_duration_seconds"
-        case actualDurationSeconds = "actual_duration_seconds"
-        case completedFully = "completed_fully"
-    }
-
     var formattedPlannedDuration: String {
         let minutes = plannedDurationSeconds / 60
         return "\(minutes) min"

@@ -39,14 +39,6 @@ struct CalendarActivity: Identifiable, Codable, Hashable {
     let date: Date
     var completedAt: Date?
     var summary: ActivitySummary
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case type
-        case date
-        case completedAt = "completed_at"
-        case summary
-    }
 }
 
 /// Summary information for an activity
@@ -67,20 +59,6 @@ struct ActivitySummary: Codable, Hashable {
     // Meditation fields
     var durationSeconds: Int?
     var meditationType: String?
-
-    enum CodingKeys: String, CodingKey {
-        case dayName = "day_name"
-        case exerciseCount = "exercise_count"
-        case setsCompleted = "sets_completed"
-        case totalSets = "total_sets"
-        case weekNumber = "week_number"
-        case isDeload = "is_deload"
-        case totalDurationSeconds = "total_duration_seconds"
-        case regionsCompleted = "regions_completed"
-        case regionsSkipped = "regions_skipped"
-        case durationSeconds = "duration_seconds"
-        case meditationType = "meditation_type"
-    }
 }
 
 /// Data for a single calendar day
