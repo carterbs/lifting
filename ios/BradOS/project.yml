@@ -40,6 +40,7 @@ targets:
         UIUserInterfaceStyle: Dark
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        NSUserNotificationsUsageDescription: BradOS uses notifications to alert you when rest timers complete during workouts.
 
 schemes:
   BradOS:
