@@ -175,7 +175,7 @@ struct MesoView: View {
     }
 }
 
-/// Card displaying active mesocycle details
+/// Container displaying active mesocycle with header and week cards
 struct ActiveMesocycleCard: View {
     let mesocycle: Mesocycle
     @Binding var navigationPath: NavigationPath
@@ -185,7 +185,53 @@ struct ActiveMesocycleCard: View {
     @State private var showingCancelAlert: Bool = false
     @State private var isCancelling = false
 
+    /// The active week is the first week that has an incomplete workout
+    private var activeWeekNumber: Int? {
+        guard let weeks = mesocycle.weeks else { return nil }
+        for week in weeks {
+            if week.workouts.contains(where: { $0.status != .completed && $0.status != .skipped }) {
+                return week.weekNumber
+            }
+        }
+        return nil
+    }
+
     var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            // Header Card
+            headerCard
+
+            // Week Cards
+            if let weeks = mesocycle.weeks {
+                ForEach(weeks, id: \.weekNumber) { week in
+                    WeekCard(
+                        week: week,
+                        isActiveWeek: week.weekNumber == activeWeekNumber,
+                        navigationPath: $navigationPath
+                    )
+                }
+            }
+
+            // Cancel Button
+            Button(action: { showingCancelAlert = true }) {
+                Text("Cancel Mesocycle")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(SecondaryButtonStyle())
+        }
+        .alert("Cancel Mesocycle?", isPresented: $showingCancelAlert) {
+            Button("Keep Going", role: .cancel) {}
+            Button("Cancel Mesocycle", role: .destructive) {
+                Task { await cancelMesocycle() }
+            }
+        } message: {
+            Text("This will end your current mesocycle. Your progress will be saved but the mesocycle will be marked as cancelled.")
+        }
+        .disabled(isCancelling)
+    }
+
+    @ViewBuilder
+    private var headerCard: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             // Header
             HStack {
@@ -201,10 +247,12 @@ struct ActiveMesocycleCard: View {
 
                 Spacer()
 
-                GenericBadge(
-                    text: mesocycle.isDeloadWeek ? "Deload" : "Week \(mesocycle.currentWeek)",
-                    color: mesocycle.isDeloadWeek ? Theme.warning : Theme.accent
-                )
+                if let activeWeek = activeWeekNumber {
+                    GenericBadge(
+                        text: activeWeek == 7 ? "Deload" : "Week \(activeWeek)",
+                        color: activeWeek == 7 ? Theme.warning : Theme.accent
+                    )
+                }
             }
 
             // Progress
@@ -222,29 +270,6 @@ struct ActiveMesocycleCard: View {
                 ProgressView(value: mesocycle.progressPercentage)
                     .tint(Theme.accent)
             }
-
-            Divider()
-                .background(Theme.border)
-
-            // Week Overview (placeholder)
-            weekOverview
-
-            // Actions
-            HStack(spacing: Theme.Spacing.md) {
-                Button(action: { showingCancelAlert = true }) {
-                    Text("Cancel")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(SecondaryButtonStyle())
-
-                if mesocycle.progressPercentage >= 1.0 {
-                    Button(action: { /* Complete mesocycle */ }) {
-                        Text("Complete")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(PrimaryButtonStyle())
-                }
-            }
         }
         .padding(Theme.Spacing.md)
         .background(Theme.backgroundSecondary)
@@ -253,15 +278,6 @@ struct ActiveMesocycleCard: View {
             RoundedRectangle(cornerRadius: Theme.CornerRadius.md)
                 .stroke(Theme.lifting.opacity(0.5), lineWidth: 2)
         )
-        .alert("Cancel Mesocycle?", isPresented: $showingCancelAlert) {
-            Button("Keep Going", role: .cancel) {}
-            Button("Cancel Mesocycle", role: .destructive) {
-                Task { await cancelMesocycle() }
-            }
-        } message: {
-            Text("This will end your current mesocycle. Your progress will be saved but the mesocycle will be marked as cancelled.")
-        }
-        .disabled(isCancelling)
     }
 
     private var formattedStartDate: String {
@@ -283,33 +299,59 @@ struct ActiveMesocycleCard: View {
         isCancelling = false
     }
 
-    @ViewBuilder
-    private var weekOverview: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Week \(mesocycle.currentWeek)")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(Theme.textPrimary)
+}
 
-            // Show actual workouts from weeks data if available
-            if let weeks = mesocycle.weeks,
-               let currentWeekData = weeks.first(where: { $0.weekNumber == mesocycle.currentWeek }) {
-                ForEach(currentWeekData.workouts) { workout in
-                    workoutRow(workout)
+/// Card displaying a single week's workouts
+struct WeekCard: View {
+    let week: WeekSummary
+    let isActiveWeek: Bool
+    @Binding var navigationPath: NavigationPath
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            // Week Header
+            HStack {
+                Text(week.isDeload ? "Deload Week" : "Week \(week.weekNumber)")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(isActiveWeek ? Theme.accent : Theme.textPrimary)
+
+                if week.isComplete {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(Theme.statusCompleted)
                 }
-            } else {
-                Text("No workouts scheduled")
-                    .font(.caption)
-                    .foregroundColor(Theme.textSecondary)
-                    .padding(.vertical, 4)
+
+                Spacer()
+
+                if isActiveWeek {
+                    Text("Active")
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Theme.accent)
+                        .cornerRadius(4)
+                }
+            }
+
+            // Workouts
+            ForEach(week.workouts) { workout in
+                workoutRow(workout)
             }
         }
+        .padding(Theme.Spacing.md)
+        .background(isActiveWeek ? Theme.accent.opacity(0.08) : Theme.backgroundSecondary)
+        .cornerRadius(Theme.CornerRadius.md)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.md)
+                .stroke(isActiveWeek ? Theme.accent : Theme.border, lineWidth: isActiveWeek ? 2 : 1)
+        )
     }
 
     @ViewBuilder
     private func workoutRow(_ workout: WorkoutSummary) -> some View {
-        let isCompleted = workout.status == .completed
-        let isSkipped = workout.status == .skipped
         let isPending = workout.status == .pending
         let isInProgress = workout.status == .inProgress
 
