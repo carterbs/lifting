@@ -1,11 +1,18 @@
 import SwiftUI
 
-/// Calendar view showing activity history
+/// Calendar view showing activity history with filtering
 struct HistoryView: View {
+    @EnvironmentObject var appState: AppState
+    @StateObject private var viewModel: CalendarViewModel
     @State private var selectedDate: Date = Date()
     @State private var selectedFilter: ActivityType? = nil
     @State private var showingDayDetail: Bool = false
     @State private var selectedDayActivities: [CalendarActivity] = []
+    @State private var pendingWorkoutId: Int? = nil
+
+    init(apiClient: APIClientProtocol = APIClient.shared) {
+        _viewModel = StateObject(wrappedValue: CalendarViewModel(apiClient: apiClient))
+    }
 
     var body: some View {
         NavigationStack {
@@ -14,15 +21,26 @@ struct HistoryView: View {
                     // Filter Buttons
                     filterSection
 
-                    // Calendar
-                    MonthCalendarView(
-                        selectedDate: $selectedDate,
-                        filter: selectedFilter,
-                        onDayTapped: { date, activities in
-                            selectedDayActivities = activities
-                            showingDayDetail = !activities.isEmpty
+                    // Calendar with loading/error states
+                    if viewModel.isLoading {
+                        LoadingView(message: "Loading calendar...")
+                            .frame(minHeight: 300)
+                    } else if let error = viewModel.error {
+                        ErrorStateView(message: error) {
+                            Task { await viewModel.fetchMonth() }
                         }
-                    )
+                        .frame(minHeight: 300)
+                    } else {
+                        MonthCalendarView(
+                            viewModel: viewModel,
+                            selectedDate: $selectedDate,
+                            filter: selectedFilter,
+                            onDayTapped: { date, activities in
+                                selectedDayActivities = activities
+                                showingDayDetail = !activities.isEmpty
+                            }
+                        )
+                    }
 
                     // Legend
                     legendSection
@@ -35,10 +53,26 @@ struct HistoryView: View {
             .sheet(isPresented: $showingDayDetail) {
                 DayDetailSheet(
                     date: selectedDate,
-                    activities: selectedDayActivities
+                    activities: selectedDayActivities,
+                    onWorkoutTapped: { workoutId in
+                        pendingWorkoutId = workoutId
+                        showingDayDetail = false
+                    }
                 )
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+            }
+            .onChange(of: showingDayDetail) { _, isShowing in
+                // Navigate to workout after sheet dismisses
+                if !isShowing, let workoutId = pendingWorkoutId {
+                    pendingWorkoutId = nil
+                    appState.isShowingLiftingContext = true
+                    // Note: The workout navigation will need to be handled by LiftingTabView
+                    // For now, we navigate to the lifting context where the user can find the workout
+                }
+            }
+            .task {
+                await viewModel.fetchMonth()
             }
         }
     }
@@ -119,33 +153,19 @@ struct FilterChip: View {
 
 /// Monthly calendar view
 struct MonthCalendarView: View {
+    @ObservedObject var viewModel: CalendarViewModel
     @Binding var selectedDate: Date
     let filter: ActivityType?
     let onDayTapped: (Date, [CalendarActivity]) -> Void
 
-    @State private var currentMonth: Date = Date()
-
     private let calendar = Calendar.current
     private let daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"]
-
-    // Mock data - placeholder for actual calendar data
-    private let mockActivitiesByDate: [String: [CalendarActivity]] = {
-        var dict: [String: [CalendarActivity]] = [:]
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-
-        for activity in CalendarActivity.mockActivities {
-            let key = formatter.string(from: activity.date)
-            dict[key, default: []].append(activity)
-        }
-        return dict
-    }()
 
     var body: some View {
         VStack(spacing: Theme.Spacing.md) {
             // Month Navigation
             HStack {
-                Button(action: previousMonth) {
+                Button(action: { viewModel.previousMonth() }) {
                     Image(systemName: "chevron.left")
                         .foregroundColor(Theme.textPrimary)
                 }
@@ -158,7 +178,7 @@ struct MonthCalendarView: View {
 
                 Spacer()
 
-                Button(action: nextMonth) {
+                Button(action: { viewModel.nextMonth() }) {
                     Image(systemName: "chevron.right")
                         .foregroundColor(Theme.textPrimary)
                 }
@@ -184,11 +204,11 @@ struct MonthCalendarView: View {
                             date: date,
                             isSelected: calendar.isDate(date, inSameDayAs: selectedDate),
                             isToday: calendar.isDateInToday(date),
-                            activities: activitiesForDate(date),
+                            activities: viewModel.activitiesForDate(date),
                             filter: filter
                         ) {
                             selectedDate = date
-                            onDayTapped(date, activitiesForDate(date))
+                            onDayTapped(date, viewModel.activitiesForDate(date, filter: filter))
                         }
                     } else {
                         Color.clear
@@ -205,12 +225,12 @@ struct MonthCalendarView: View {
     private var monthYearString: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: currentMonth)
+        return formatter.string(from: viewModel.currentMonth)
     }
 
     private var daysInMonth: [Date?] {
-        guard let range = calendar.range(of: .day, in: .month, for: currentMonth),
-              let firstDayOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth))
+        guard let range = calendar.range(of: .day, in: .month, for: viewModel.currentMonth),
+              let firstDayOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: viewModel.currentMonth))
         else { return [] }
 
         let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth)
@@ -225,25 +245,6 @@ struct MonthCalendarView: View {
         }
 
         return days
-    }
-
-    private func activitiesForDate(_ date: Date) -> [CalendarActivity] {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let key = formatter.string(from: date)
-        return mockActivitiesByDate[key] ?? []
-    }
-
-    private func previousMonth() {
-        if let newMonth = calendar.date(byAdding: .month, value: -1, to: currentMonth) {
-            currentMonth = newMonth
-        }
-    }
-
-    private func nextMonth() {
-        if let newMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) {
-            currentMonth = newMonth
-        }
     }
 }
 
@@ -317,6 +318,7 @@ struct CalendarDayCell: View {
 struct DayDetailSheet: View {
     let date: Date
     let activities: [CalendarActivity]
+    var onWorkoutTapped: ((Int) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
 
@@ -332,7 +334,12 @@ struct DayDetailSheet: View {
                         )
                     } else {
                         ForEach(activities) { activity in
-                            DayActivityCard(activity: activity)
+                            DayActivityCard(
+                                activity: activity,
+                                onTap: {
+                                    handleActivityTap(activity)
+                                }
+                            )
                         }
                     }
                 }
@@ -356,40 +363,67 @@ struct DayDetailSheet: View {
         formatter.dateStyle = .long
         return formatter.string(from: date)
     }
+
+    private func handleActivityTap(_ activity: CalendarActivity) {
+        if activity.type == .workout {
+            // Extract workout ID from activity.id (format: "workout-123")
+            if let workoutIdString = activity.id.split(separator: "-").last,
+               let workoutId = Int(workoutIdString) {
+                onWorkoutTapped?(workoutId)
+            }
+        }
+        // For stretch and meditation, just dismiss
+        dismiss()
+    }
 }
 
 /// Card showing activity details in day detail sheet
 struct DayActivityCard: View {
     let activity: CalendarActivity
+    var onTap: (() -> Void)? = nil
+
+    private var isWorkout: Bool {
+        activity.type == .workout
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack {
-                Image(systemName: activity.type.iconName)
-                    .foregroundColor(activity.type.color)
+        Button(action: { onTap?() }) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack {
+                    Image(systemName: activity.type.iconName)
+                        .foregroundColor(activity.type.color)
 
-                Text(activity.type.displayName)
-                    .font(.headline)
-                    .foregroundColor(Theme.textPrimary)
+                    Text(activity.type.displayName)
+                        .font(.headline)
+                        .foregroundColor(Theme.textPrimary)
 
-                Spacer()
+                    Spacer()
 
-                if let completedAt = activity.completedAt {
-                    Text(formatTime(completedAt))
-                        .font(.caption)
-                        .foregroundColor(Theme.textSecondary)
+                    if let completedAt = activity.completedAt {
+                        Text(formatTime(completedAt))
+                            .font(.caption)
+                            .foregroundColor(Theme.textSecondary)
+                    }
+
+                    // Show chevron for workouts to indicate navigation
+                    if isWorkout {
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(Theme.textSecondary)
+                    }
                 }
+
+                Divider()
+                    .background(Theme.border)
+
+                // Activity-specific details
+                activityDetails
             }
-
-            Divider()
-                .background(Theme.border)
-
-            // Activity-specific details
-            activityDetails
+            .padding(Theme.Spacing.md)
+            .background(Theme.backgroundSecondary)
+            .cornerRadius(Theme.CornerRadius.md)
         }
-        .padding(Theme.Spacing.md)
-        .background(Theme.backgroundSecondary)
-        .cornerRadius(Theme.CornerRadius.md)
+        .buttonStyle(PlainButtonStyle())
     }
 
     @ViewBuilder
@@ -441,7 +475,20 @@ struct DayActivityCard: View {
     }
 }
 
-#Preview {
-    HistoryView()
+#Preview("History View") {
+    HistoryView(apiClient: MockAPIClient())
+        .environmentObject(AppState())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("History View - Loading") {
+    HistoryView(apiClient: MockAPIClient.withDelay(10.0))
+        .environmentObject(AppState())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("History View - Error") {
+    HistoryView(apiClient: MockAPIClient.failing())
+        .environmentObject(AppState())
         .preferredColorScheme(.dark)
 }
