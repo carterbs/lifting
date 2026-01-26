@@ -22,10 +22,13 @@ struct StretchView: View {
                 switch sessionManager.status {
                 case .idle:
                     if sessionManager.isWaitingForSpotifyReturn {
-                        // Waiting for user to return from Spotify
-                        SpotifyWaitView(onCancel: {
-                            sessionManager.cancelSpotifyWait()
-                        })
+                        // Waiting for user to return to the app
+                        AppReturnWaitView(
+                            hasSpotify: config.spotifyPlaylistUrl?.isEmpty == false,
+                            onStartNow: {
+                                sessionManager.cancelSpotifyWait()
+                            }
+                        )
                     } else {
                         StretchSetupView(
                             config: $config,
@@ -55,8 +58,9 @@ struct StretchView: View {
                     )
                 }
             }
-            .navigationTitle("Stretch")
+            .navigationTitle(sessionManager.status == .idle ? "Stretch" : "")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarHidden(sessionManager.status == .active || sessionManager.status == .paused)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     if sessionManager.status == .idle {
@@ -520,11 +524,10 @@ struct StretchActiveView: View {
     let onCancel: () -> Void
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.xl) {
-            Spacer()
-
-            // Progress indicator
+        VStack(spacing: Theme.Spacing.md) {
+            // Progress indicator at top
             progressSection
+                .padding(.top, Theme.Spacing.md)
 
             // Current stretch display
             if let stretch = sessionManager.currentStretch,
@@ -543,7 +546,8 @@ struct StretchActiveView: View {
             // Controls
             controlsSection
         }
-        .padding(Theme.Spacing.md)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.bottom, Theme.Spacing.md)
     }
 
     // MARK: - Progress Section
@@ -587,36 +591,36 @@ struct StretchActiveView: View {
 
     @ViewBuilder
     private func currentStretchSection(stretch: Stretch, region: BodyRegion) -> some View {
-        VStack(spacing: Theme.Spacing.md) {
+        VStack(spacing: Theme.Spacing.sm) {
             // Show stretch image if available, otherwise show icon
             if let imagePath = stretch.image,
                let uiImage = loadStretchImage(imagePath) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: 280, maxHeight: 200)
+                    .frame(maxWidth: .infinity, maxHeight: 280)
                     .cornerRadius(Theme.CornerRadius.md)
             } else {
                 Image(systemName: region.iconName)
-                    .font(.system(size: 60))
+                    .font(.system(size: 80))
                     .foregroundColor(Theme.stretch)
             }
 
             Text(stretch.name)
-                .font(.largeTitle)
+                .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(Theme.textPrimary)
                 .multilineTextAlignment(.center)
 
             Text(region.displayName)
-                .font(.headline)
+                .font(.subheadline)
                 .foregroundColor(Theme.stretch)
 
             Text(stretch.description)
-                .font(.subheadline)
+                .font(.caption)
                 .foregroundColor(Theme.textSecondary)
                 .multilineTextAlignment(.center)
-                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal)
         }
     }
@@ -739,16 +743,17 @@ struct StretchActiveView: View {
     @ViewBuilder
     private var controlsSection: some View {
         VStack(spacing: Theme.Spacing.md) {
-            HStack(spacing: Theme.Spacing.lg) {
+            HStack(spacing: Theme.Spacing.xl) {
                 // Skip Segment button
                 Button(action: { sessionManager.skipSegment() }) {
-                    VStack {
-                        Image(systemName: "forward.fill")
-                            .font(.title2)
-                        Text("Skip Segment")
-                            .font(.caption)
-                    }
-                    .foregroundColor(Theme.textSecondary)
+                    Circle()
+                        .fill(Theme.backgroundSecondary)
+                        .frame(width: 56, height: 56)
+                        .overlay(
+                            Image(systemName: "forward.fill")
+                                .font(.title3)
+                                .foregroundColor(Theme.textSecondary)
+                        )
                 }
                 .accessibilityLabel("Skip Segment")
                 .accessibilityHint("Skip to the next segment of this stretch")
@@ -761,28 +766,28 @@ struct StretchActiveView: View {
                         sessionManager.pause()
                     }
                 }) {
-                    ZStack {
-                        Circle()
-                            .fill(Theme.stretch)
-                            .frame(width: 80, height: 80)
-
-                        Image(systemName: sessionManager.status == .paused ? "play.fill" : "pause.fill")
-                            .font(.title)
-                            .foregroundColor(.white)
-                    }
+                    Circle()
+                        .fill(Theme.stretch)
+                        .frame(width: 80, height: 80)
+                        .overlay(
+                            Image(systemName: sessionManager.status == .paused ? "play.fill" : "pause.fill")
+                                .font(.title)
+                                .foregroundColor(.white)
+                        )
                 }
                 .accessibilityLabel(sessionManager.status == .paused ? "Resume" : "Pause")
                 .accessibilityHint(sessionManager.status == .paused ? "Resume the stretching session" : "Pause the stretching session")
 
                 // End button
                 Button(action: onCancel) {
-                    VStack {
-                        Image(systemName: "stop.fill")
-                            .font(.title2)
-                        Text("End")
-                            .font(.caption)
-                    }
-                    .foregroundColor(Theme.textSecondary)
+                    Circle()
+                        .fill(Theme.backgroundSecondary)
+                        .frame(width: 56, height: 56)
+                        .overlay(
+                            Image(systemName: "stop.fill")
+                                .font(.title3)
+                                .foregroundColor(Theme.textSecondary)
+                        )
                 }
                 .accessibilityLabel("End Session")
                 .accessibilityHint("End the stretching session early")
@@ -791,8 +796,12 @@ struct StretchActiveView: View {
             // Skip entire stretch button
             Button(action: { sessionManager.skipStretch() }) {
                 Text("Skip Entire Stretch")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundColor(Theme.textSecondary)
+                    .padding(.horizontal, Theme.Spacing.lg)
+                    .padding(.vertical, Theme.Spacing.sm)
+                    .background(Theme.backgroundSecondary)
+                    .cornerRadius(Theme.CornerRadius.md)
             }
             .accessibilityLabel("Skip Entire Stretch")
             .accessibilityHint("Skip both segments of this stretch and move to the next one")
@@ -1069,27 +1078,31 @@ struct StatRow: View {
     }
 }
 
-// MARK: - Spotify Wait View
+// MARK: - App Return Wait View
 
-/// View shown while waiting for user to return from Spotify
-struct SpotifyWaitView: View {
-    let onCancel: () -> Void
+/// View shown while waiting for user to return to the app
+/// Shows different messaging based on whether Spotify was configured
+struct AppReturnWaitView: View {
+    let hasSpotify: Bool
+    let onStartNow: () -> Void
 
     var body: some View {
         VStack(spacing: Theme.Spacing.xl) {
             Spacer()
 
-            // Spotify icon
-            Image(systemName: "music.note.list")
+            // Icon
+            Image(systemName: hasSpotify ? "music.note.list" : "figure.flexibility")
                 .font(.system(size: 60))
                 .foregroundColor(Theme.stretch)
 
-            Text("Opening Spotify...")
+            Text(hasSpotify ? "Opening Spotify..." : "Get Ready!")
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundColor(Theme.textPrimary)
 
-            Text("Come back here when your music is playing")
+            Text(hasSpotify
+                ? "Come back here when your music is playing"
+                : "Switch away to start your music, then come back")
                 .font(.subheadline)
                 .foregroundColor(Theme.textSecondary)
                 .multilineTextAlignment(.center)
@@ -1097,9 +1110,9 @@ struct SpotifyWaitView: View {
 
             Spacer()
 
-            // Cancel button
-            Button(action: onCancel) {
-                Text("Start Without Spotify")
+            // Start now button
+            Button(action: onStartNow) {
+                Text("Start Now")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(SecondaryButtonStyle())

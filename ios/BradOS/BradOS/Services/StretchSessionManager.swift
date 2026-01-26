@@ -165,6 +165,7 @@ class StretchSessionManager: ObservableObject {
     // MARK: - Session Control
 
     /// Start a new stretch session with the given configuration
+    /// Always waits for user to background and return to the app before starting timer/narration
     func start(with config: StretchSessionConfig) async {
         // Select random stretches for each enabled region
         do {
@@ -179,52 +180,36 @@ class StretchSessionManager: ObservableObject {
             return
         }
 
-        // Handle Spotify if configured (uses visibility detection like PWA)
+        // Store config for when user returns
+        pendingConfig = config
+
+        // Open Spotify if configured
         if let spotifyUrl = config.spotifyPlaylistUrl, !spotifyUrl.isEmpty {
-            // Store config for when user returns
-            pendingConfig = config
-
-            // Open Spotify - use two-phase visibility detection like PWA
-            if let _ = audioManager.openSpotifyPlaylist(spotifyUrl) {
-                // Spotify URL was valid, wait for user to return
-                spotifyState = .waitingForHide
-                isWaitingForSpotifyReturn = true
-
-                // Monitor for app going to background (Spotify opened)
-                let backgroundObserver = NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)
-                    .first()
-                    .sink { [weak self] _ in
-                        Task { @MainActor in
-                            if self?.spotifyState == .waitingForHide {
-                                self?.spotifyState = .waitingForVisible
-                            }
-                        }
-                    }
-
-                // Store observer to keep it alive
-                var observers: [AnyCancellable] = []
-                observers.append(backgroundObserver)
-
-                // Timeout after 5 seconds if Spotify doesn't open
-                Task {
-                    try? await Task.sleep(nanoseconds: 5_000_000_000)  // 5 seconds
-                    if self.spotifyState == .waitingForHide {
-                        // Spotify didn't open in time, start anyway
-                        self.spotifyState = .idle
-                        self.isWaitingForSpotifyReturn = false
-                        if let config = self.pendingConfig {
-                            self.pendingConfig = nil
-                            await self.startSessionInternal(with: config)
-                        }
-                    }
-                }
-
-                return  // Wait for user to return from Spotify
-            }
+            _ = audioManager.openSpotifyPlaylist(spotifyUrl)
         }
 
-        // No Spotify or invalid URL - start immediately
-        await startSessionInternal(with: config)
+        // Always wait for app to be backgrounded and return (like PWA visibility detection)
+        // This gives user time to start music in any app before stretching begins
+        spotifyState = .waitingForHide
+        isWaitingForSpotifyReturn = true
+
+        // Monitor for app going to background
+        let backgroundObserver = NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)
+            .first()
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    if self?.spotifyState == .waitingForHide {
+                        self?.spotifyState = .waitingForVisible
+                    }
+                }
+            }
+
+        // Store observer to keep it alive
+        var observers: [AnyCancellable] = []
+        observers.append(backgroundObserver)
+
+        // Note: No timeout - user must explicitly come back or tap "Start Now"
+        // This matches the expected behavior where timer only starts after refocus
     }
 
     /// Internal method to actually start the session (called after Spotify return or immediately)

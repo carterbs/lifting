@@ -144,6 +144,7 @@ class StretchAudioManager: ObservableObject {
 
     /// Plays narration audio. Returns when clip finishes.
     /// Keepalive continues running during narration (matching PWA behavior).
+    /// Other audio (Spotify) is ducked (lowered) during narration via .duckOthers.
     /// - Parameter clipPath: Relative path to audio file (e.g., "back/childs-pose-begin.wav")
     func playNarration(_ clipPath: String) async throws {
         // Stop any existing narration (but not keepalive)
@@ -159,6 +160,10 @@ class StretchAudioManager: ObservableObject {
             #endif
             return
         }
+
+        // Begin ducking other audio (like Spotify/Safari)
+        // This activates an interruption that lowers other audio volume
+        try? AVAudioSession.sharedInstance().setActive(true, options: [])
 
         // Create player
         let playerItem = AVPlayerItem(url: audioURL)
