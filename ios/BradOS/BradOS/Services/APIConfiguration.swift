@@ -14,7 +14,7 @@ struct APIConfiguration {
         // For physical device testing, use your Mac's IP address
         // This can be configured via the Settings app or environment variable
         let urlString = ProcessInfo.processInfo.environment["BRAD_OS_API_URL"]
-            ?? "http://192.168.1.100:3001/api"
+            ?? "http://192.168.5.98:3001/api"
         #endif
         #else
         // Production URL
