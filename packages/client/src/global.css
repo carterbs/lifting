@@ -1,8 +1,10 @@
 /* Ensure full viewport coverage with no default margins */
+/* Use dvh for proper mobile viewport handling (fallback to vh for older browsers) */
 html, body, #root {
   margin: 0;
   padding: 0;
-  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
 }
 
