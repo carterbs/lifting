@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Full workout tracking view with API integration
 struct WorkoutView: View {
@@ -312,9 +313,25 @@ struct WorkoutView: View {
         do {
             workout = try await apiClient.getWorkout(id: workoutId)
 
-            // Restore local state if available
-            if let state = stateManager.loadState(), state.workoutId == workoutId {
-                restoreLocalState(from: state)
+            // Handle state based on workout status
+            if let workout = workout {
+                if workout.status == .inProgress {
+                    // Restore local state if available and matches this workout
+                    if let state = stateManager.loadState(), state.workoutId == workoutId {
+                        restoreLocalState(from: state)
+                        // Sync with server - remove edits for already-completed sets
+                        syncStateWithServer()
+                    } else {
+                        // No local state but workout is in progress - initialize fresh
+                        stateManager.initializeForWorkout(workoutId: workoutId)
+                    }
+                } else if workout.status == .completed || workout.status == .skipped {
+                    // Workout is finished - clear any stale local state
+                    if stateManager.hasStateForWorkout(workoutId: workoutId) {
+                        stateManager.clearState()
+                        restTimer.dismiss()
+                    }
+                }
             }
         } catch {
             self.error = error
@@ -346,6 +363,24 @@ struct WorkoutView: View {
                     exerciseId: timerState.exerciseId,
                     setNumber: timerState.setNumber
                 )
+            }
+        }
+    }
+
+    /// Sync local state with server - server is source of truth for completed sets
+    private func syncStateWithServer() {
+        guard let workout = workout,
+              let exercises = workout.exercises else { return }
+
+        // Server is source of truth for completed sets
+        // Remove local edits for sets that are already completed/skipped on server
+        for exercise in exercises {
+            for set in exercise.sets {
+                if set.status == .completed || set.status == .skipped {
+                    // Remove from pending edits - server has final values
+                    localSetEdits.removeValue(forKey: set.id)
+                    stateManager.removePendingEdit(setId: set.id)
+                }
             }
         }
     }
