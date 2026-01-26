@@ -9,9 +9,9 @@ enum ActivityType: String, Codable, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .workout: return "Workout"
+        case .workout: return "Lifting"
         case .stretch: return "Stretch"
-        case .meditation: return "Meditation"
+        case .meditation: return "Meditate"
         }
     }
 
