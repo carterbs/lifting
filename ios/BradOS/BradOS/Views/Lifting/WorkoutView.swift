@@ -391,8 +391,11 @@ struct WorkoutView: View {
         isStarting = true
 
         do {
-            workout = try await apiClient.startWorkout(id: workoutId)
+            // Start the workout - this returns minimal workout data without exercises
+            _ = try await apiClient.startWorkout(id: workoutId)
             stateManager.initializeForWorkout(workoutId: workoutId)
+            // Reload the full workout to get exercises
+            await loadWorkout()
         } catch {
             #if DEBUG
             print("[WorkoutView] Failed to start workout: \(error)")
@@ -698,6 +701,7 @@ struct ExerciseCard: View {
                     SetRow(
                         workoutSet: workoutSet,
                         isEditable: isEditable,
+                        canLog: canLogSet(workoutSet),
                         localEdit: localEdits[workoutSet.id],
                         onEdited: { weight, reps in
                             onSetEdited(workoutSet.id, weight, reps)
@@ -753,12 +757,24 @@ struct ExerciseCard: View {
         // Can only remove if there's more than one set and at least one is pending
         exercise.sets.count > 1 && exercise.sets.contains { $0.status == .pending }
     }
+
+    /// Determines if a set can be logged - only the first pending set can be logged
+    private func canLogSet(_ workoutSet: WorkoutSet) -> Bool {
+        guard workoutSet.status == .pending else { return false }
+        // Find the first pending set number
+        let firstPendingSetNumber = exercise.sets
+            .filter { $0.status == .pending }
+            .map { $0.setNumber }
+            .min()
+        return workoutSet.setNumber == firstPendingSetNumber
+    }
 }
 
 /// Row displaying a single set with edit and action capabilities
 struct SetRow: View {
     let workoutSet: WorkoutSet
     let isEditable: Bool
+    let canLog: Bool
     let localEdit: SetEditState?
     let onEdited: (Double, Int) -> Void
     let onLog: () -> Void
@@ -849,13 +865,19 @@ struct SetRow: View {
 
     @ViewBuilder
     private var actionButton: some View {
-        if workoutSet.status == .pending && isEditable {
+        if workoutSet.status == .pending && isEditable && canLog {
             Button(action: onLog) {
                 Image(systemName: "circle")
                     .font(.title2)
                     .foregroundColor(Theme.textSecondary)
             }
             .frame(width: 44)
+        } else if workoutSet.status == .pending && isEditable && !canLog {
+            // Show disabled circle for pending sets that can't be logged yet
+            Image(systemName: "circle")
+                .font(.title2)
+                .foregroundColor(Theme.textSecondary.opacity(0.3))
+                .frame(width: 44)
         } else if workoutSet.status == .completed {
             Button(action: { showingActions = true }) {
                 Image(systemName: "checkmark.circle.fill")
