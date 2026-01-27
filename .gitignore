@@ -58,3 +58,12 @@ scripts/ralph-ios/
 # Firebase Emulator data (user's local state)
 emulator-data/
 # Keep seed data in git (not ignored)
+
+# Firebase iOS config (contains API keys)
+ios/BradOS/BradOS/GoogleService-Info.plist
+
+# Firebase CLI cache
+.firebase/
+
+# Bundled shared package for Cloud Functions deployment
+packages/functions/shared/
