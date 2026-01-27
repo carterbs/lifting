@@ -1,4 +1,4 @@
-import type { Database } from 'better-sqlite3';
+import type { Firestore } from 'firebase-admin/firestore';
 import type {
   Workout,
   WorkoutSet,
@@ -38,7 +38,7 @@ export class WorkoutService {
   private exerciseRepo: ExerciseRepository;
   private progressionService: DynamicProgressionService;
 
-  constructor(db: Database) {
+  constructor(db: Firestore) {
     this.workoutRepo = new WorkoutRepository(db);
     this.workoutSetRepo = new WorkoutSetRepository(db);
     this.planDayRepo = new PlanDayRepository(db);
@@ -50,8 +50,8 @@ export class WorkoutService {
   /**
    * Get a workout by ID with all sets grouped by exercise
    */
-  getById(id: number): WorkoutWithExercises | null {
-    const workout = this.workoutRepo.findById(id);
+  async getById(id: string): Promise<WorkoutWithExercises | null> {
+    const workout = await this.workoutRepo.findById(id);
     if (!workout) {
       return null;
     }
@@ -61,11 +61,9 @@ export class WorkoutService {
 
   /**
    * Get the next pending or in_progress workout.
-   * Returns the first workout by scheduled_date that hasn't been completed or skipped,
-   * regardless of whether its scheduled_date is today, past, or future.
    */
-  getTodaysWorkout(): WorkoutWithExercises | null {
-    const nextWorkout = this.workoutRepo.findNextPending();
+  async getTodaysWorkout(): Promise<WorkoutWithExercises | null> {
+    const nextWorkout = await this.workoutRepo.findNextPending();
 
     if (!nextWorkout) {
       return null;
@@ -78,8 +76,8 @@ export class WorkoutService {
    * Start a workout (mark as in_progress)
    * Applies dynamic progression from previous week to update targets
    */
-  start(id: number): Workout {
-    const workout = this.workoutRepo.findById(id);
+  async start(id: string): Promise<Workout> {
+    const workout = await this.workoutRepo.findById(id);
     if (!workout) {
       throw new Error(`Workout with id ${id} not found`);
     }
@@ -97,9 +95,9 @@ export class WorkoutService {
     }
 
     // Apply dynamic progression and persist targets to DB before starting
-    this.persistDynamicProgressionToSets(workout);
+    await this.persistDynamicProgressionToSets(workout);
 
-    const updated = this.workoutRepo.update(id, {
+    const updated = await this.workoutRepo.update(id, {
       status: 'in_progress',
       started_at: new Date().toISOString(),
     });
@@ -113,13 +111,11 @@ export class WorkoutService {
 
   /**
    * Get previous week performance data for each exercise.
-   * Returns the immediately previous week's actual performance (not peak of all weeks).
-   * This is used by the dynamic progression algorithm.
    */
-  private getPreviousWeekPerformance(
+  private async getPreviousWeekPerformance(
     workout: Workout
-  ): Map<number, PreviousWeekPerformance> {
-    const performanceByExercise = new Map<number, PreviousWeekPerformance>();
+  ): Promise<Map<string, PreviousWeekPerformance>> {
+    const performanceByExercise = new Map<string, PreviousWeekPerformance>();
 
     // Week 1 has no previous week data
     if (workout.week_number <= 1) {
@@ -127,7 +123,7 @@ export class WorkoutService {
     }
 
     // Get the immediately previous week's workout
-    const previousWorkout = this.workoutRepo.findPreviousWeekWorkout(
+    const previousWorkout = await this.workoutRepo.findPreviousWeekWorkout(
       workout.mesocycle_id,
       workout.plan_day_id,
       workout.week_number
@@ -137,8 +133,8 @@ export class WorkoutService {
       return performanceByExercise;
     }
 
-    const previousSets = this.workoutSetRepo.findByWorkoutId(previousWorkout.id);
-    const planDayExercises = this.planDayExerciseRepo.findByPlanDayId(
+    const previousSets = await this.workoutSetRepo.findByWorkoutId(previousWorkout.id);
+    const planDayExercises = await this.planDayExerciseRepo.findByPlanDayId(
       workout.plan_day_id
     );
 
@@ -147,7 +143,7 @@ export class WorkoutService {
 
     // Group completed sets by exercise
     const setsByExercise = new Map<
-      number,
+      string,
       Array<{
         actualWeight: number;
         actualReps: number;
@@ -176,7 +172,7 @@ export class WorkoutService {
     }
 
     // Build performance history for consecutive failure calculation
-    const performanceHistory = this.getPerformanceHistory(workout, 5);
+    const performanceHistory = await this.getPerformanceHistory(workout, 5);
 
     // Build PreviousWeekPerformance for each exercise
     for (const [exerciseId, sets] of setsByExercise) {
@@ -190,9 +186,9 @@ export class WorkoutService {
       const exerciseHistory = performanceHistory.get(exerciseId) ?? [];
 
       const perf = this.progressionService.buildPreviousWeekPerformance(
-        String(exerciseId),
+        exerciseId,
         previousWorkout.week_number,
-        firstSet.targetWeight, // All sets have same target
+        firstSet.targetWeight,
         firstSet.targetReps,
         sets.map((s) => ({ actualWeight: s.actualWeight, actualReps: s.actualReps })),
         pde.min_reps,
@@ -209,13 +205,12 @@ export class WorkoutService {
 
   /**
    * Get performance history for consecutive failure calculation.
-   * Returns up to `limit` weeks of history, newest first.
    */
-  private getPerformanceHistory(
+  private async getPerformanceHistory(
     workout: Workout,
     limit: number
-  ): Map<number, PreviousWeekPerformance[]> {
-    const historyByExercise = new Map<number, PreviousWeekPerformance[]>();
+  ): Promise<Map<string, PreviousWeekPerformance[]>> {
+    const historyByExercise = new Map<string, PreviousWeekPerformance[]>();
 
     // Start from week before the previous week
     for (
@@ -223,7 +218,7 @@ export class WorkoutService {
       week >= 1 && workout.week_number - week <= limit;
       week--
     ) {
-      const historicalWorkout = this.workoutRepo.findPreviousWeekWorkout(
+      const historicalWorkout = await this.workoutRepo.findPreviousWeekWorkout(
         workout.mesocycle_id,
         workout.plan_day_id,
         week + 1
@@ -233,15 +228,15 @@ export class WorkoutService {
         continue;
       }
 
-      const sets = this.workoutSetRepo.findByWorkoutId(historicalWorkout.id);
-      const planDayExercises = this.planDayExerciseRepo.findByPlanDayId(
+      const sets = await this.workoutSetRepo.findByWorkoutId(historicalWorkout.id);
+      const planDayExercises = await this.planDayExerciseRepo.findByPlanDayId(
         workout.plan_day_id
       );
       const pdeMap = new Map(planDayExercises.map((pde) => [pde.exercise_id, pde]));
 
       // Group by exercise
       const setsByExercise = new Map<
-        number,
+        string,
         Array<{ actualWeight: number; actualReps: number; targetWeight: number; targetReps: number }>
       >();
 
@@ -284,14 +279,14 @@ export class WorkoutService {
         }
 
         const perf: PreviousWeekPerformance = {
-          exerciseId: String(exerciseId),
+          exerciseId,
           weekNumber: historicalWorkout.week_number,
           targetWeight: bestSet.targetWeight,
           targetReps: bestSet.targetReps,
           actualWeight: bestSet.actualWeight,
           actualReps: bestSet.actualReps,
           hitTarget: bestSet.actualReps >= bestSet.targetReps,
-          consecutiveFailures: 0, // Calculated later by progressionService
+          consecutiveFailures: 0,
         };
 
         const existing = historyByExercise.get(exerciseId) ?? [];
@@ -306,24 +301,24 @@ export class WorkoutService {
   /**
    * Calculate dynamic progression targets for each exercise in a workout.
    */
-  private calculateDynamicTargets(
+  private async calculateDynamicTargets(
     workout: Workout
-  ): Map<number, DynamicProgressionResult> {
-    const targetsByExercise = new Map<number, DynamicProgressionResult>();
+  ): Promise<Map<string, DynamicProgressionResult>> {
+    const targetsByExercise = new Map<string, DynamicProgressionResult>();
 
-    const planDayExercises = this.planDayExerciseRepo.findByPlanDayId(
+    const planDayExercises = await this.planDayExerciseRepo.findByPlanDayId(
       workout.plan_day_id
     );
-    const previousPerformance = this.getPreviousWeekPerformance(workout);
+    const previousPerformance = await this.getPreviousWeekPerformance(workout);
     const isDeloadWeek = workout.week_number === 7;
 
     for (const pde of planDayExercises) {
-      const exercise = this.exerciseRepo.findById(pde.exercise_id);
+      const exercise = await this.exerciseRepo.findById(pde.exercise_id);
       if (!exercise) continue;
 
       const progression: ExerciseProgression = {
-        exerciseId: String(pde.exercise_id),
-        planExerciseId: String(pde.id),
+        exerciseId: pde.exercise_id,
+        planExerciseId: pde.id,
         baseWeight: pde.weight,
         baseReps: pde.reps,
         baseSets: pde.sets,
@@ -348,15 +343,14 @@ export class WorkoutService {
 
   /**
    * Persist dynamic progression targets to current workout's sets.
-   * Called when starting a workout to save the calculated targets to DB.
    */
-  private persistDynamicProgressionToSets(workout: Workout): void {
-    const dynamicTargets = this.calculateDynamicTargets(workout);
+  private async persistDynamicProgressionToSets(workout: Workout): Promise<void> {
+    const dynamicTargets = await this.calculateDynamicTargets(workout);
     if (dynamicTargets.size === 0) {
       return;
     }
 
-    const currentSets = this.workoutSetRepo.findByWorkoutId(workout.id);
+    const currentSets = await this.workoutSetRepo.findByWorkoutId(workout.id);
 
     for (const set of currentSets) {
       if (set.status !== 'pending') {
@@ -373,7 +367,7 @@ export class WorkoutService {
         targets.targetWeight !== set.target_weight ||
         targets.targetReps !== set.target_reps
       ) {
-        this.workoutSetRepo.update(set.id, {
+        await this.workoutSetRepo.update(set.id, {
           target_weight: targets.targetWeight,
           target_reps: targets.targetReps,
         });
@@ -384,8 +378,8 @@ export class WorkoutService {
   /**
    * Complete a workout
    */
-  complete(id: number): Workout {
-    const workout = this.workoutRepo.findById(id);
+  async complete(id: string): Promise<Workout> {
+    const workout = await this.workoutRepo.findById(id);
     if (!workout) {
       throw new Error(`Workout with id ${id} not found`);
     }
@@ -402,7 +396,7 @@ export class WorkoutService {
       throw new Error('Cannot complete a skipped workout');
     }
 
-    const updated = this.workoutRepo.update(id, {
+    const updated = await this.workoutRepo.update(id, {
       status: 'completed',
       completed_at: new Date().toISOString(),
     });
@@ -416,10 +410,9 @@ export class WorkoutService {
 
   /**
    * Skip a workout
-   * Also marks all pending sets as skipped (preserves logged sets)
    */
-  skip(id: number): Workout {
-    const workout = this.workoutRepo.findById(id);
+  async skip(id: string): Promise<Workout> {
+    const workout = await this.workoutRepo.findById(id);
     if (!workout) {
       throw new Error(`Workout with id ${id} not found`);
     }
@@ -433,14 +426,14 @@ export class WorkoutService {
     }
 
     // Mark all pending sets as skipped
-    const sets = this.workoutSetRepo.findByWorkoutId(id);
+    const sets = await this.workoutSetRepo.findByWorkoutId(id);
     for (const set of sets) {
       if (set.status === 'pending') {
-        this.workoutSetRepo.update(set.id, { status: 'skipped' });
+        await this.workoutSetRepo.update(set.id, { status: 'skipped' });
       }
     }
 
-    const updated = this.workoutRepo.update(id, { status: 'skipped' });
+    const updated = await this.workoutRepo.update(id, { status: 'skipped' });
 
     if (!updated) {
       throw new Error(`Failed to update workout with id ${id}`);
@@ -452,21 +445,23 @@ export class WorkoutService {
   /**
    * Build a workout with exercises grouped
    */
-  private buildWorkoutWithExercises(workout: Workout): WorkoutWithExercises {
-    const planDay = this.planDayRepo.findById(workout.plan_day_id);
-    const planDayExercises = this.planDayExerciseRepo.findByPlanDayId(
+  private async buildWorkoutWithExercises(
+    workout: Workout
+  ): Promise<WorkoutWithExercises> {
+    const planDay = await this.planDayRepo.findById(workout.plan_day_id);
+    const planDayExercises = await this.planDayExerciseRepo.findByPlanDayId(
       workout.plan_day_id
     );
-    const sets = this.workoutSetRepo.findByWorkoutId(workout.id);
+    const sets = await this.workoutSetRepo.findByWorkoutId(workout.id);
 
     // Calculate dynamic targets for preview (only for pending workouts)
     const dynamicTargets =
       workout.status === 'pending'
-        ? this.calculateDynamicTargets(workout)
-        : new Map<number, DynamicProgressionResult>();
+        ? await this.calculateDynamicTargets(workout)
+        : new Map<string, DynamicProgressionResult>();
 
     // Group sets by exercise and apply dynamic progression adjustments
-    const setsByExercise = new Map<number, WorkoutSet[]>();
+    const setsByExercise = new Map<string, WorkoutSet[]>();
     for (const set of sets) {
       // For pending sets in pending workouts, adjust targets with dynamic progression
       let adjustedSet = set;
@@ -499,7 +494,7 @@ export class WorkoutService {
     );
 
     for (const pde of sortedPlanDayExercises) {
-      const exercise = this.exerciseRepo.findById(pde.exercise_id);
+      const exercise = await this.exerciseRepo.findById(pde.exercise_id);
       if (!exercise) continue;
 
       const exerciseSets = setsByExercise.get(pde.exercise_id) ?? [];

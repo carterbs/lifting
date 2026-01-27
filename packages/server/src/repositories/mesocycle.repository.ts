@@ -1,4 +1,4 @@
-import type { Database } from 'better-sqlite3';
+import type { Firestore } from 'firebase-admin/firestore';
 import type {
   Mesocycle,
   CreateMesocycleDTO,
@@ -7,116 +7,95 @@ import type {
 } from '@brad-os/shared';
 import { BaseRepository } from './base.repository.js';
 
-interface MesocycleRow {
-  id: number;
-  plan_id: number;
-  start_date: string;
-  current_week: number;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export class MesocycleRepository extends BaseRepository<
   Mesocycle,
   CreateMesocycleDTO,
   UpdateMesocycleDTO
 > {
-  constructor(db: Database) {
-    super(db, 'mesocycles');
+  constructor(db?: Firestore) {
+    super('mesocycles', db);
   }
 
-  private rowToMesocycle(row: MesocycleRow): Mesocycle {
-    return {
-      id: row.id,
-      plan_id: row.plan_id,
-      start_date: row.start_date,
-      current_week: row.current_week,
-      status: row.status as MesocycleStatus,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
+  async create(data: CreateMesocycleDTO): Promise<Mesocycle> {
+    const timestamps = this.createTimestamps();
+    const mesocycleData = {
+      plan_id: data.plan_id,
+      start_date: data.start_date,
+      current_week: 1,
+      status: 'pending' as MesocycleStatus,
+      ...timestamps,
     };
-  }
 
-  create(data: CreateMesocycleDTO): Mesocycle {
-    const stmt = this.db.prepare(`
-      INSERT INTO mesocycles (plan_id, start_date)
-      VALUES (?, ?)
-    `);
+    const docRef = await this.collection.add(mesocycleData);
+    const mesocycle: Mesocycle = {
+      id: docRef.id,
+      ...mesocycleData,
+    };
 
-    const result = stmt.run(data.plan_id, data.start_date);
-
-    const mesocycle = this.findById(result.lastInsertRowid as number);
-    if (!mesocycle) {
-      throw new Error('Failed to retrieve newly created mesocycle');
-    }
     return mesocycle;
   }
 
-  findById(id: number): Mesocycle | null {
-    const stmt = this.db.prepare('SELECT * FROM mesocycles WHERE id = ?');
-    const row = stmt.get(id) as MesocycleRow | undefined;
-    return row ? this.rowToMesocycle(row) : null;
+  async findById(id: string): Promise<Mesocycle | null> {
+    const doc = await this.collection.doc(id).get();
+    if (!doc.exists) {
+      return null;
+    }
+    return { id: doc.id, ...doc.data() } as Mesocycle;
   }
 
-  findByPlanId(planId: number): Mesocycle[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM mesocycles WHERE plan_id = ? ORDER BY start_date DESC'
-    );
-    const rows = stmt.all(planId) as MesocycleRow[];
-    return rows.map((row) => this.rowToMesocycle(row));
+  async findByPlanId(planId: string): Promise<Mesocycle[]> {
+    const snapshot = await this.collection
+      .where('plan_id', '==', planId)
+      .orderBy('start_date', 'desc')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Mesocycle);
   }
 
-  findActive(): Mesocycle[] {
-    const stmt = this.db.prepare(
-      "SELECT * FROM mesocycles WHERE status = 'active' ORDER BY start_date DESC"
-    );
-    const rows = stmt.all() as MesocycleRow[];
-    return rows.map((row) => this.rowToMesocycle(row));
+  async findActive(): Promise<Mesocycle[]> {
+    const snapshot = await this.collection
+      .where('status', '==', 'active')
+      .orderBy('start_date', 'desc')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Mesocycle);
   }
 
-  findAll(): Mesocycle[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM mesocycles ORDER BY start_date DESC'
-    );
-    const rows = stmt.all() as MesocycleRow[];
-    return rows.map((row) => this.rowToMesocycle(row));
+  async findAll(): Promise<Mesocycle[]> {
+    const snapshot = await this.collection.orderBy('start_date', 'desc').get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Mesocycle);
   }
 
-  update(id: number, data: UpdateMesocycleDTO): Mesocycle | null {
-    const existing = this.findById(id);
-    if (!existing) return null;
+  async update(id: string, data: UpdateMesocycleDTO): Promise<Mesocycle | null> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return null;
+    }
 
-    const updates: string[] = [];
-    const values: (string | number)[] = [];
+    const updates: Record<string, string | number> = {};
 
     if (data.current_week !== undefined) {
-      updates.push('current_week = ?');
-      values.push(data.current_week);
+      updates['current_week'] = data.current_week;
     }
 
     if (data.status !== undefined) {
-      updates.push('status = ?');
-      values.push(data.status);
+      updates['status'] = data.status;
     }
 
-    if (updates.length === 0) return existing;
+    if (Object.keys(updates).length === 0) {
+      return existing;
+    }
 
-    updates.push('updated_at = ?');
-    values.push(this.updateTimestamp());
-    values.push(id);
+    updates['updated_at'] = this.updateTimestamp();
 
-    const stmt = this.db.prepare(`
-      UPDATE mesocycles SET ${updates.join(', ')} WHERE id = ?
-    `);
-    stmt.run(...values);
-
+    await this.collection.doc(id).update(updates);
     return this.findById(id);
   }
 
-  delete(id: number): boolean {
-    const stmt = this.db.prepare('DELETE FROM mesocycles WHERE id = ?');
-    const result = stmt.run(id);
-    return result.changes > 0;
+  async delete(id: string): Promise<boolean> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return false;
+    }
+    await this.collection.doc(id).delete();
+    return true;
   }
 }

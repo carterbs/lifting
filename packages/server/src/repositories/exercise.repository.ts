@@ -1,138 +1,123 @@
-import type { Database } from 'better-sqlite3';
+import type { Firestore } from 'firebase-admin/firestore';
 import type {
   Exercise,
   CreateExerciseDTO,
   UpdateExerciseDTO,
 } from '@brad-os/shared';
 import { BaseRepository } from './base.repository.js';
-
-interface ExerciseRow {
-  id: number;
-  name: string;
-  weight_increment: number;
-  is_custom: number;
-  created_at: string;
-  updated_at: string;
-}
+import { getCollectionName } from '../firebase/index.js';
 
 export class ExerciseRepository extends BaseRepository<
   Exercise,
   CreateExerciseDTO,
   UpdateExerciseDTO
 > {
-  constructor(db: Database) {
-    super(db, 'exercises');
+  constructor(db?: Firestore) {
+    super('exercises', db);
   }
 
-  private rowToExercise(row: ExerciseRow): Exercise {
-    return {
-      id: row.id,
-      name: row.name,
-      weight_increment: row.weight_increment,
-      is_custom: row.is_custom === 1,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
+  async create(data: CreateExerciseDTO): Promise<Exercise> {
+    const timestamps = this.createTimestamps();
+    const exerciseData = {
+      name: data.name,
+      weight_increment: data.weight_increment ?? 5.0,
+      is_custom: data.is_custom ?? false,
+      ...timestamps,
     };
-  }
 
-  create(data: CreateExerciseDTO): Exercise {
-    const stmt = this.db.prepare(`
-      INSERT INTO exercises (name, weight_increment, is_custom)
-      VALUES (?, ?, ?)
-    `);
+    const docRef = await this.collection.add(exerciseData);
+    const exercise: Exercise = {
+      id: docRef.id,
+      ...exerciseData,
+    };
 
-    const result = stmt.run(
-      data.name,
-      data.weight_increment ?? 5.0,
-      (data.is_custom ?? false) ? 1 : 0
-    );
-
-    const exercise = this.findById(result.lastInsertRowid as number);
-    if (!exercise) {
-      throw new Error('Failed to retrieve newly created exercise');
-    }
     return exercise;
   }
 
-  findById(id: number): Exercise | null {
-    const stmt = this.db.prepare('SELECT * FROM exercises WHERE id = ?');
-    const row = stmt.get(id) as ExerciseRow | undefined;
-    return row ? this.rowToExercise(row) : null;
+  async findById(id: string): Promise<Exercise | null> {
+    const doc = await this.collection.doc(id).get();
+    if (!doc.exists) {
+      return null;
+    }
+    return { id: doc.id, ...doc.data() } as Exercise;
   }
 
-  findByName(name: string): Exercise | null {
-    const stmt = this.db.prepare('SELECT * FROM exercises WHERE name = ?');
-    const row = stmt.get(name) as ExerciseRow | undefined;
-    return row ? this.rowToExercise(row) : null;
+  async findByName(name: string): Promise<Exercise | null> {
+    const snapshot = await this.collection.where('name', '==', name).limit(1).get();
+    if (snapshot.empty) {
+      return null;
+    }
+    const doc = snapshot.docs[0];
+    return { id: doc.id, ...doc.data() } as Exercise;
   }
 
-  findAll(): Exercise[] {
-    const stmt = this.db.prepare('SELECT * FROM exercises ORDER BY name');
-    const rows = stmt.all() as ExerciseRow[];
-    return rows.map((row) => this.rowToExercise(row));
+  async findAll(): Promise<Exercise[]> {
+    const snapshot = await this.collection.orderBy('name').get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Exercise);
   }
 
-  findDefaultExercises(): Exercise[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM exercises WHERE is_custom = 0 ORDER BY name'
-    );
-    const rows = stmt.all() as ExerciseRow[];
-    return rows.map((row) => this.rowToExercise(row));
+  async findDefaultExercises(): Promise<Exercise[]> {
+    const snapshot = await this.collection
+      .where('is_custom', '==', false)
+      .orderBy('name')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Exercise);
   }
 
-  findCustomExercises(): Exercise[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM exercises WHERE is_custom = 1 ORDER BY name'
-    );
-    const rows = stmt.all() as ExerciseRow[];
-    return rows.map((row) => this.rowToExercise(row));
+  async findCustomExercises(): Promise<Exercise[]> {
+    const snapshot = await this.collection
+      .where('is_custom', '==', true)
+      .orderBy('name')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Exercise);
   }
 
-  update(id: number, data: UpdateExerciseDTO): Exercise | null {
-    const existing = this.findById(id);
-    if (!existing) return null;
+  async update(id: string, data: UpdateExerciseDTO): Promise<Exercise | null> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return null;
+    }
 
-    const updates: string[] = [];
-    const values: (string | number)[] = [];
+    const updates: Record<string, string | number> = {};
 
     if (data.name !== undefined) {
-      updates.push('name = ?');
-      values.push(data.name);
+      updates['name'] = data.name;
     }
 
     if (data.weight_increment !== undefined) {
-      updates.push('weight_increment = ?');
-      values.push(data.weight_increment);
+      updates['weight_increment'] = data.weight_increment;
     }
 
-    if (updates.length === 0) return existing;
+    if (Object.keys(updates).length === 0) {
+      return existing;
+    }
 
-    updates.push('updated_at = ?');
-    values.push(this.updateTimestamp());
-    values.push(id);
+    updates['updated_at'] = this.updateTimestamp();
 
-    const stmt = this.db.prepare(`
-      UPDATE exercises SET ${updates.join(', ')} WHERE id = ?
-    `);
-    stmt.run(...values);
-
+    await this.collection.doc(id).update(updates);
     return this.findById(id);
   }
 
-  delete(id: number): boolean {
-    const stmt = this.db.prepare('DELETE FROM exercises WHERE id = ?');
-    const result = stmt.run(id);
-    return result.changes > 0;
+  async delete(id: string): Promise<boolean> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return false;
+    }
+    await this.collection.doc(id).delete();
+    return true;
   }
 
   /**
    * Check if exercise is referenced by any plan_day_exercises
    */
-  isInUse(id: number): boolean {
-    const stmt = this.db.prepare(
-      'SELECT COUNT(*) as count FROM plan_day_exercises WHERE exercise_id = ?'
+  async isInUse(id: string): Promise<boolean> {
+    const planDayExercisesCollection = this.db.collection(
+      getCollectionName('plan_day_exercises')
     );
-    const result = stmt.get(id) as { count: number };
-    return result.count > 0;
+    const snapshot = await planDayExercisesCollection
+      .where('exercise_id', '==', id)
+      .limit(1)
+      .get();
+    return !snapshot.empty;
   }
 }

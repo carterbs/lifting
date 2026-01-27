@@ -1,6 +1,6 @@
 // Base entity with timestamps
 export interface BaseEntity {
-  id: number;
+  id: string;
   created_at: string;
   updated_at: string;
 }
@@ -41,8 +41,8 @@ export interface UpdatePlanDTO {
 
 // Plan Days
 export interface PlanDay {
-  id: number;
-  plan_id: number;
+  id: string;
+  plan_id: string;
   day_of_week: DayOfWeek;
   name: string;
   sort_order: number;
@@ -51,7 +51,7 @@ export interface PlanDay {
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface CreatePlanDayDTO {
-  plan_id: number;
+  plan_id: string;
   day_of_week: DayOfWeek;
   name: string;
   sort_order: number;
@@ -65,9 +65,9 @@ export interface UpdatePlanDayDTO {
 
 // Plan Day Exercises
 export interface PlanDayExercise {
-  id: number;
-  plan_day_id: number;
-  exercise_id: number;
+  id: string;
+  plan_day_id: string;
+  exercise_id: string;
   sets: number;
   reps: number;
   weight: number;
@@ -80,8 +80,8 @@ export interface PlanDayExercise {
 }
 
 export interface CreatePlanDayExerciseDTO {
-  plan_day_id: number;
-  exercise_id: number;
+  plan_day_id: string;
+  exercise_id: string;
   sets?: number;
   reps?: number;
   weight?: number;
@@ -105,14 +105,14 @@ export interface UpdatePlanDayExerciseDTO {
 export type MesocycleStatus = 'pending' | 'active' | 'completed' | 'cancelled';
 
 export interface Mesocycle extends BaseEntity {
-  plan_id: number;
+  plan_id: string;
   start_date: string;
   current_week: number;
   status: MesocycleStatus;
 }
 
 export interface CreateMesocycleDTO {
-  plan_id: number;
+  plan_id: string;
   start_date: string;
 }
 
@@ -125,9 +125,9 @@ export interface UpdateMesocycleDTO {
 export type WorkoutStatus = 'pending' | 'in_progress' | 'completed' | 'skipped';
 
 export interface Workout {
-  id: number;
-  mesocycle_id: number;
-  plan_day_id: number;
+  id: string;
+  mesocycle_id: string;
+  plan_day_id: string;
   week_number: number;
   scheduled_date: string;
   status: WorkoutStatus;
@@ -136,8 +136,8 @@ export interface Workout {
 }
 
 export interface CreateWorkoutDTO {
-  mesocycle_id: number;
-  plan_day_id: number;
+  mesocycle_id: string;
+  plan_day_id: string;
   week_number: number;
   scheduled_date: string;
 }
@@ -152,9 +152,9 @@ export interface UpdateWorkoutDTO {
 export type WorkoutSetStatus = 'pending' | 'completed' | 'skipped';
 
 export interface WorkoutSet {
-  id: number;
-  workout_id: number;
-  exercise_id: number;
+  id: string;
+  workout_id: string;
+  exercise_id: string;
   set_number: number;
   target_reps: number;
   target_weight: number;
@@ -164,8 +164,8 @@ export interface WorkoutSet {
 }
 
 export interface CreateWorkoutSetDTO {
-  workout_id: number;
-  exercise_id: number;
+  workout_id: string;
+  exercise_id: string;
   set_number: number;
   target_reps: number;
   target_weight: number;
@@ -189,7 +189,7 @@ export interface WorkoutWithSets extends Workout {
 
 // Exercise info with target values for a workout
 export interface WorkoutExercise {
-  exercise_id: number;
+  exercise_id: string;
   exercise_name: string;
   sets: WorkoutSet[];
   total_sets: number;
@@ -198,8 +198,8 @@ export interface WorkoutExercise {
 
 // Workout summary for week display
 export interface WorkoutSummary {
-  id: number;
-  plan_day_id: number;
+  id: string;
+  plan_day_id: string;
   plan_day_name: string;
   day_of_week: DayOfWeek;
   week_number: number;
@@ -231,7 +231,7 @@ export interface MesocycleWithDetails extends Mesocycle {
 
 // Request types for mesocycle creation
 export interface CreateMesocycleRequest {
-  plan_id: number;
+  plan_id: string;
   start_date: string;
 }
 
@@ -261,10 +261,10 @@ export interface ModifySetCountResult {
 
 /** A single historical data point for an exercise (one workout session) */
 export interface ExerciseHistoryEntry {
-  workout_id: number;
+  workout_id: string;
   date: string;
   week_number: number;
-  mesocycle_id: number;
+  mesocycle_id: string;
   sets: Array<{
     set_number: number;
     weight: number;
@@ -276,7 +276,7 @@ export interface ExerciseHistoryEntry {
 
 /** Full exercise history response */
 export interface ExerciseHistory {
-  exercise_id: number;
+  exercise_id: string;
   exercise_name: string;
   entries: ExerciseHistoryEntry[];
   personal_record: {

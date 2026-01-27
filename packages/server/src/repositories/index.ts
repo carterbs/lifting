@@ -1,5 +1,5 @@
-import type { Database } from 'better-sqlite3';
-import { getDatabase } from '../db/index.js';
+import type { Firestore } from 'firebase-admin/firestore';
+import { getFirestoreDb } from '../firebase/index.js';
 import { ExerciseRepository } from './exercise.repository.js';
 import { PlanRepository } from './plan.repository.js';
 import { PlanDayRepository } from './plan-day.repository.js';
@@ -47,69 +47,69 @@ export function resetRepositories(): void {
 
 export function getExerciseRepository(): ExerciseRepository {
   if (!exerciseRepository) {
-    exerciseRepository = new ExerciseRepository(getDatabase());
+    exerciseRepository = new ExerciseRepository(getFirestoreDb());
   }
   return exerciseRepository;
 }
 
 export function getPlanRepository(): PlanRepository {
   if (!planRepository) {
-    planRepository = new PlanRepository(getDatabase());
+    planRepository = new PlanRepository(getFirestoreDb());
   }
   return planRepository;
 }
 
 export function getPlanDayRepository(): PlanDayRepository {
   if (!planDayRepository) {
-    planDayRepository = new PlanDayRepository(getDatabase());
+    planDayRepository = new PlanDayRepository(getFirestoreDb());
   }
   return planDayRepository;
 }
 
 export function getPlanDayExerciseRepository(): PlanDayExerciseRepository {
   if (!planDayExerciseRepository) {
-    planDayExerciseRepository = new PlanDayExerciseRepository(getDatabase());
+    planDayExerciseRepository = new PlanDayExerciseRepository(getFirestoreDb());
   }
   return planDayExerciseRepository;
 }
 
 export function getMesocycleRepository(): MesocycleRepository {
   if (!mesocycleRepository) {
-    mesocycleRepository = new MesocycleRepository(getDatabase());
+    mesocycleRepository = new MesocycleRepository(getFirestoreDb());
   }
   return mesocycleRepository;
 }
 
 export function getWorkoutRepository(): WorkoutRepository {
   if (!workoutRepository) {
-    workoutRepository = new WorkoutRepository(getDatabase());
+    workoutRepository = new WorkoutRepository(getFirestoreDb());
   }
   return workoutRepository;
 }
 
 export function getWorkoutSetRepository(): WorkoutSetRepository {
   if (!workoutSetRepository) {
-    workoutSetRepository = new WorkoutSetRepository(getDatabase());
+    workoutSetRepository = new WorkoutSetRepository(getFirestoreDb());
   }
   return workoutSetRepository;
 }
 
 export function getStretchSessionRepository(): StretchSessionRepository {
   if (!stretchSessionRepository) {
-    stretchSessionRepository = new StretchSessionRepository(getDatabase());
+    stretchSessionRepository = new StretchSessionRepository(getFirestoreDb());
   }
   return stretchSessionRepository;
 }
 
 export function getMeditationSessionRepository(): MeditationSessionRepository {
   if (!meditationSessionRepository) {
-    meditationSessionRepository = new MeditationSessionRepository(getDatabase());
+    meditationSessionRepository = new MeditationSessionRepository(getFirestoreDb());
   }
   return meditationSessionRepository;
 }
 
 // Helper to create repositories with a custom database (useful for testing)
-export function createRepositories(db: Database): {
+export function createRepositories(db: Firestore): {
   exercise: ExerciseRepository;
   plan: PlanRepository;
   planDay: PlanDayRepository;

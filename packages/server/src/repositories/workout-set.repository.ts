@@ -1,4 +1,4 @@
-import type { Database } from 'better-sqlite3';
+import type { Firestore } from 'firebase-admin/firestore';
 import type {
   WorkoutSet,
   CreateWorkoutSetDTO,
@@ -6,29 +6,18 @@ import type {
   WorkoutSetStatus,
 } from '@brad-os/shared';
 import { BaseRepository } from './base.repository.js';
-
-interface WorkoutSetRow {
-  id: number;
-  workout_id: number;
-  exercise_id: number;
-  set_number: number;
-  target_reps: number;
-  target_weight: number;
-  actual_reps: number | null;
-  actual_weight: number | null;
-  status: string;
-}
+import { getCollectionName } from '../firebase/index.js';
 
 export interface CompletedSetRow {
-  workout_id: number;
-  exercise_id: number;
+  workout_id: string;
+  exercise_id: string;
   set_number: number;
   actual_weight: number;
   actual_reps: number;
   scheduled_date: string;
   completed_at: string | null;
   week_number: number;
-  mesocycle_id: number;
+  mesocycle_id: string;
 }
 
 export class WorkoutSetRepository extends BaseRepository<
@@ -36,146 +25,213 @@ export class WorkoutSetRepository extends BaseRepository<
   CreateWorkoutSetDTO,
   UpdateWorkoutSetDTO
 > {
-  constructor(db: Database) {
-    super(db, 'workout_sets');
+  constructor(db?: Firestore) {
+    super('workout_sets', db);
   }
 
-  private rowToWorkoutSet(row: WorkoutSetRow): WorkoutSet {
-    return {
-      id: row.id,
-      workout_id: row.workout_id,
-      exercise_id: row.exercise_id,
-      set_number: row.set_number,
-      target_reps: row.target_reps,
-      target_weight: row.target_weight,
-      actual_reps: row.actual_reps,
-      actual_weight: row.actual_weight,
-      status: row.status as WorkoutSetStatus,
+  async create(data: CreateWorkoutSetDTO): Promise<WorkoutSet> {
+    const setData = {
+      workout_id: data.workout_id,
+      exercise_id: data.exercise_id,
+      set_number: data.set_number,
+      target_reps: data.target_reps,
+      target_weight: data.target_weight,
+      actual_reps: null,
+      actual_weight: null,
+      status: 'pending' as WorkoutSetStatus,
     };
-  }
 
-  create(data: CreateWorkoutSetDTO): WorkoutSet {
-    const stmt = this.db.prepare(`
-      INSERT INTO workout_sets (workout_id, exercise_id, set_number, target_reps, target_weight)
-      VALUES (?, ?, ?, ?, ?)
-    `);
+    const docRef = await this.collection.add(setData);
+    const workoutSet: WorkoutSet = {
+      id: docRef.id,
+      ...setData,
+    };
 
-    const result = stmt.run(
-      data.workout_id,
-      data.exercise_id,
-      data.set_number,
-      data.target_reps,
-      data.target_weight
-    );
-
-    const workoutSet = this.findById(result.lastInsertRowid as number);
-    if (!workoutSet) {
-      throw new Error('Failed to retrieve newly created workout set');
-    }
     return workoutSet;
   }
 
-  findById(id: number): WorkoutSet | null {
-    const stmt = this.db.prepare('SELECT * FROM workout_sets WHERE id = ?');
-    const row = stmt.get(id) as WorkoutSetRow | undefined;
-    return row ? this.rowToWorkoutSet(row) : null;
+  async findById(id: string): Promise<WorkoutSet | null> {
+    const doc = await this.collection.doc(id).get();
+    if (!doc.exists) {
+      return null;
+    }
+    return { id: doc.id, ...doc.data() } as WorkoutSet;
   }
 
-  findByWorkoutId(workoutId: number): WorkoutSet[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM workout_sets WHERE workout_id = ? ORDER BY exercise_id, set_number'
-    );
-    const rows = stmt.all(workoutId) as WorkoutSetRow[];
-    return rows.map((row) => this.rowToWorkoutSet(row));
+  async findByWorkoutId(workoutId: string): Promise<WorkoutSet[]> {
+    const snapshot = await this.collection
+      .where('workout_id', '==', workoutId)
+      .orderBy('exercise_id')
+      .orderBy('set_number')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as WorkoutSet);
   }
 
-  findByWorkoutAndExercise(workoutId: number, exerciseId: number): WorkoutSet[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM workout_sets WHERE workout_id = ? AND exercise_id = ? ORDER BY set_number'
-    );
-    const rows = stmt.all(workoutId, exerciseId) as WorkoutSetRow[];
-    return rows.map((row) => this.rowToWorkoutSet(row));
+  async findByWorkoutAndExercise(
+    workoutId: string,
+    exerciseId: string
+  ): Promise<WorkoutSet[]> {
+    const snapshot = await this.collection
+      .where('workout_id', '==', workoutId)
+      .where('exercise_id', '==', exerciseId)
+      .orderBy('set_number')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as WorkoutSet);
   }
 
-  findByStatus(status: WorkoutSetStatus): WorkoutSet[] {
-    const stmt = this.db.prepare('SELECT * FROM workout_sets WHERE status = ?');
-    const rows = stmt.all(status) as WorkoutSetRow[];
-    return rows.map((row) => this.rowToWorkoutSet(row));
+  async findByStatus(status: WorkoutSetStatus): Promise<WorkoutSet[]> {
+    const snapshot = await this.collection.where('status', '==', status).get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as WorkoutSet);
   }
 
-  findAll(): WorkoutSet[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM workout_sets ORDER BY workout_id, exercise_id, set_number'
-    );
-    const rows = stmt.all() as WorkoutSetRow[];
-    return rows.map((row) => this.rowToWorkoutSet(row));
+  async findAll(): Promise<WorkoutSet[]> {
+    const snapshot = await this.collection
+      .orderBy('workout_id')
+      .orderBy('exercise_id')
+      .orderBy('set_number')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as WorkoutSet);
   }
 
-  update(id: number, data: UpdateWorkoutSetDTO): WorkoutSet | null {
-    const existing = this.findById(id);
-    if (!existing) return null;
+  async update(id: string, data: UpdateWorkoutSetDTO): Promise<WorkoutSet | null> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return null;
+    }
 
-    const updates: string[] = [];
-    const values: (string | number | null)[] = [];
+    const updates: Record<string, string | number | null> = {};
 
     if (data.actual_reps !== undefined) {
-      updates.push('actual_reps = ?');
-      values.push(data.actual_reps);
+      updates['actual_reps'] = data.actual_reps;
     }
 
     if (data.actual_weight !== undefined) {
-      updates.push('actual_weight = ?');
-      values.push(data.actual_weight);
+      updates['actual_weight'] = data.actual_weight;
     }
 
     if (data.status !== undefined) {
-      updates.push('status = ?');
-      values.push(data.status);
+      updates['status'] = data.status;
     }
 
     if (data.target_reps !== undefined) {
-      updates.push('target_reps = ?');
-      values.push(data.target_reps);
+      updates['target_reps'] = data.target_reps;
     }
 
     if (data.target_weight !== undefined) {
-      updates.push('target_weight = ?');
-      values.push(data.target_weight);
+      updates['target_weight'] = data.target_weight;
     }
 
-    if (updates.length === 0) return existing;
+    if (Object.keys(updates).length === 0) {
+      return existing;
+    }
 
-    values.push(id);
-
-    const stmt = this.db.prepare(`
-      UPDATE workout_sets SET ${updates.join(', ')} WHERE id = ?
-    `);
-    stmt.run(...values);
-
+    await this.collection.doc(id).update(updates);
     return this.findById(id);
   }
 
-  delete(id: number): boolean {
-    const stmt = this.db.prepare('DELETE FROM workout_sets WHERE id = ?');
-    const result = stmt.run(id);
-    return result.changes > 0;
+  async delete(id: string): Promise<boolean> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return false;
+    }
+    await this.collection.doc(id).delete();
+    return true;
   }
 
-  findCompletedByExerciseId(exerciseId: number): CompletedSetRow[] {
-    const stmt = this.db.prepare(`
-      SELECT
-        ws.workout_id, ws.exercise_id, ws.set_number,
-        ws.actual_weight, ws.actual_reps,
-        w.scheduled_date, w.completed_at, w.week_number, w.mesocycle_id
-      FROM workout_sets ws
-      JOIN workouts w ON w.id = ws.workout_id
-      WHERE ws.exercise_id = ?
-        AND ws.status = 'completed'
-        AND ws.actual_weight IS NOT NULL
-        AND ws.actual_reps IS NOT NULL
-        AND w.status = 'completed'
-      ORDER BY w.completed_at ASC, w.scheduled_date ASC, ws.set_number ASC
-    `);
-    return stmt.all(exerciseId) as CompletedSetRow[];
+  /**
+   * Find completed sets for a given exercise with workout details.
+   * This requires joining data from workout_sets and workouts collections.
+   */
+  async findCompletedByExerciseId(exerciseId: string): Promise<CompletedSetRow[]> {
+    // Get all completed sets for this exercise
+    const setsSnapshot = await this.collection
+      .where('exercise_id', '==', exerciseId)
+      .where('status', '==', 'completed')
+      .get();
+
+    if (setsSnapshot.empty) {
+      return [];
+    }
+
+    // Get unique workout IDs
+    const workoutIds = new Set<string>();
+    for (const doc of setsSnapshot.docs) {
+      const data = doc.data();
+      if (data['actual_weight'] !== null && data['actual_reps'] !== null) {
+        workoutIds.add(data['workout_id'] as string);
+      }
+    }
+
+    if (workoutIds.size === 0) {
+      return [];
+    }
+
+    // Fetch workout details
+    const workoutsCollection = this.db.collection(getCollectionName('workouts'));
+    const workoutMap = new Map<
+      string,
+      {
+        scheduled_date: string;
+        completed_at: string | null;
+        week_number: number;
+        mesocycle_id: string;
+        status: string;
+      }
+    >();
+
+    for (const workoutId of workoutIds) {
+      const workoutDoc = await workoutsCollection.doc(workoutId).get();
+      if (workoutDoc.exists) {
+        const data = workoutDoc.data();
+        if (data && data['status'] === 'completed') {
+          workoutMap.set(workoutId, {
+            scheduled_date: data['scheduled_date'] as string,
+            completed_at: data['completed_at'] as string | null,
+            week_number: data['week_number'] as number,
+            mesocycle_id: data['mesocycle_id'] as string,
+            status: data['status'] as string,
+          });
+        }
+      }
+    }
+
+    // Build the result
+    const results: CompletedSetRow[] = [];
+    for (const doc of setsSnapshot.docs) {
+      const setData = doc.data();
+      const workoutId = setData['workout_id'] as string;
+      const workout = workoutMap.get(workoutId);
+
+      if (
+        workout &&
+        setData['actual_weight'] !== null &&
+        setData['actual_reps'] !== null
+      ) {
+        results.push({
+          workout_id: workoutId,
+          exercise_id: setData['exercise_id'] as string,
+          set_number: setData['set_number'] as number,
+          actual_weight: setData['actual_weight'] as number,
+          actual_reps: setData['actual_reps'] as number,
+          scheduled_date: workout.scheduled_date,
+          completed_at: workout.completed_at,
+          week_number: workout.week_number,
+          mesocycle_id: workout.mesocycle_id,
+        });
+      }
+    }
+
+    // Sort by completed_at, scheduled_date, set_number
+    results.sort((a, b) => {
+      if (a.completed_at && b.completed_at) {
+        const cmp = a.completed_at.localeCompare(b.completed_at);
+        if (cmp !== 0) return cmp;
+      }
+      const dateCmp = a.scheduled_date.localeCompare(b.scheduled_date);
+      if (dateCmp !== 0) return dateCmp;
+      return a.set_number - b.set_number;
+    });
+
+    return results;
   }
 }

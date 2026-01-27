@@ -1,4 +1,4 @@
-import type { Database } from 'better-sqlite3';
+import type { Firestore } from 'firebase-admin/firestore';
 import type {
   PlanDay,
   CreatePlanDayDTO,
@@ -6,112 +6,90 @@ import type {
 } from '@brad-os/shared';
 import { BaseRepository } from './base.repository.js';
 
-interface PlanDayRow {
-  id: number;
-  plan_id: number;
-  day_of_week: number;
-  name: string;
-  sort_order: number;
-}
-
 export class PlanDayRepository extends BaseRepository<
   PlanDay,
   CreatePlanDayDTO,
   UpdatePlanDayDTO
 > {
-  constructor(db: Database) {
-    super(db, 'plan_days');
+  constructor(db?: Firestore) {
+    super('plan_days', db);
   }
 
-  private rowToPlanDay(row: PlanDayRow): PlanDay {
-    return {
-      id: row.id,
-      plan_id: row.plan_id,
-      day_of_week: row.day_of_week as PlanDay['day_of_week'],
-      name: row.name,
-      sort_order: row.sort_order,
+  async create(data: CreatePlanDayDTO): Promise<PlanDay> {
+    const planDayData = {
+      plan_id: data.plan_id,
+      day_of_week: data.day_of_week,
+      name: data.name,
+      sort_order: data.sort_order,
     };
-  }
 
-  create(data: CreatePlanDayDTO): PlanDay {
-    const stmt = this.db.prepare(`
-      INSERT INTO plan_days (plan_id, day_of_week, name, sort_order)
-      VALUES (?, ?, ?, ?)
-    `);
+    const docRef = await this.collection.add(planDayData);
+    const planDay: PlanDay = {
+      id: docRef.id,
+      ...planDayData,
+    };
 
-    const result = stmt.run(
-      data.plan_id,
-      data.day_of_week,
-      data.name,
-      data.sort_order
-    );
-
-    const planDay = this.findById(result.lastInsertRowid as number);
-    if (!planDay) {
-      throw new Error('Failed to retrieve newly created plan day');
-    }
     return planDay;
   }
 
-  findById(id: number): PlanDay | null {
-    const stmt = this.db.prepare('SELECT * FROM plan_days WHERE id = ?');
-    const row = stmt.get(id) as PlanDayRow | undefined;
-    return row ? this.rowToPlanDay(row) : null;
+  async findById(id: string): Promise<PlanDay | null> {
+    const doc = await this.collection.doc(id).get();
+    if (!doc.exists) {
+      return null;
+    }
+    return { id: doc.id, ...doc.data() } as PlanDay;
   }
 
-  findByPlanId(planId: number): PlanDay[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM plan_days WHERE plan_id = ? ORDER BY sort_order'
-    );
-    const rows = stmt.all(planId) as PlanDayRow[];
-    return rows.map((row) => this.rowToPlanDay(row));
+  async findByPlanId(planId: string): Promise<PlanDay[]> {
+    const snapshot = await this.collection
+      .where('plan_id', '==', planId)
+      .orderBy('sort_order')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as PlanDay);
   }
 
-  findAll(): PlanDay[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM plan_days ORDER BY plan_id, sort_order'
-    );
-    const rows = stmt.all() as PlanDayRow[];
-    return rows.map((row) => this.rowToPlanDay(row));
+  async findAll(): Promise<PlanDay[]> {
+    const snapshot = await this.collection
+      .orderBy('plan_id')
+      .orderBy('sort_order')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as PlanDay);
   }
 
-  update(id: number, data: UpdatePlanDayDTO): PlanDay | null {
-    const existing = this.findById(id);
-    if (!existing) return null;
+  async update(id: string, data: UpdatePlanDayDTO): Promise<PlanDay | null> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return null;
+    }
 
-    const updates: string[] = [];
-    const values: (string | number)[] = [];
+    const updates: Record<string, string | number> = {};
 
     if (data.day_of_week !== undefined) {
-      updates.push('day_of_week = ?');
-      values.push(data.day_of_week);
+      updates['day_of_week'] = data.day_of_week;
     }
 
     if (data.name !== undefined) {
-      updates.push('name = ?');
-      values.push(data.name);
+      updates['name'] = data.name;
     }
 
     if (data.sort_order !== undefined) {
-      updates.push('sort_order = ?');
-      values.push(data.sort_order);
+      updates['sort_order'] = data.sort_order;
     }
 
-    if (updates.length === 0) return existing;
+    if (Object.keys(updates).length === 0) {
+      return existing;
+    }
 
-    values.push(id);
-
-    const stmt = this.db.prepare(`
-      UPDATE plan_days SET ${updates.join(', ')} WHERE id = ?
-    `);
-    stmt.run(...values);
-
+    await this.collection.doc(id).update(updates);
     return this.findById(id);
   }
 
-  delete(id: number): boolean {
-    const stmt = this.db.prepare('DELETE FROM plan_days WHERE id = ?');
-    const result = stmt.run(id);
-    return result.changes > 0;
+  async delete(id: string): Promise<boolean> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return false;
+    }
+    await this.collection.doc(id).delete();
+    return true;
   }
 }

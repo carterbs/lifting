@@ -1,4 +1,4 @@
-import type { Database } from 'better-sqlite3';
+import type { Firestore } from 'firebase-admin/firestore';
 import { ExerciseRepository } from '../repositories/exercise.repository.js';
 import { PlanRepository } from '../repositories/plan.repository.js';
 import { PlanDayRepository } from '../repositories/plan-day.repository.js';
@@ -20,13 +20,13 @@ export const DEFAULT_EXERCISES = [
   { name: 'Single-Leg Leg Curl', weight_increment: 5.0 },
 ] as const;
 
-export function seedDefaultExercises(db: Database): void {
+export async function seedDefaultExercises(db: Firestore): Promise<void> {
   const repository = new ExerciseRepository(db);
 
   for (const exercise of DEFAULT_EXERCISES) {
-    const existing = repository.findByName(exercise.name);
+    const existing = await repository.findByName(exercise.name);
     if (!existing) {
-      repository.create({
+      await repository.create({
         name: exercise.name,
         weight_increment: exercise.weight_increment,
         is_custom: false,
@@ -35,7 +35,7 @@ export function seedDefaultExercises(db: Database): void {
   }
 }
 
-export function seedDefaultPlanAndMesocycle(db: Database): void {
+export async function seedDefaultPlanAndMesocycle(db: Firestore): Promise<void> {
   const planRepo = new PlanRepository(db);
   const planDayRepo = new PlanDayRepository(db);
   const planDayExerciseRepo = new PlanDayExerciseRepository(db);
@@ -43,17 +43,17 @@ export function seedDefaultPlanAndMesocycle(db: Database): void {
   const mesocycleService = new MesocycleService(db);
 
   // Check if plan already exists
-  const existingPlans = planRepo.findAll();
+  const existingPlans = await planRepo.findAll();
   if (existingPlans.some((p) => p.name === 'Mon/Thu Split')) {
     return;
   }
 
   // Create the plan
-  const plan = planRepo.create({ name: 'Mon/Thu Split', duration_weeks: 6 });
+  const plan = await planRepo.create({ name: 'Mon/Thu Split', duration_weeks: 6 });
 
   // Helper to get exercise ID by name
-  const getExerciseId = (name: string): number => {
-    const exercise = exerciseRepo.findByName(name);
+  const getExerciseId = async (name: string): Promise<string> => {
+    const exercise = await exerciseRepo.findByName(name);
     if (!exercise) {
       throw new Error(`Exercise not found: ${name}`);
     }
@@ -61,7 +61,7 @@ export function seedDefaultPlanAndMesocycle(db: Database): void {
   };
 
   // Day 1: Monday (day_of_week = 1)
-  const day1 = planDayRepo.create({
+  const day1 = await planDayRepo.create({
     plan_id: plan.id,
     day_of_week: 1,
     name: 'Day 1',
@@ -77,20 +77,21 @@ export function seedDefaultPlanAndMesocycle(db: Database): void {
     { name: 'Dumbbell Lateral Raise (Super ROM)', sets: 3 },
   ];
 
-  day1Exercises.forEach((ex, index) => {
-    planDayExerciseRepo.create({
+  for (let index = 0; index < day1Exercises.length; index++) {
+    const ex = day1Exercises[index];
+    await planDayExerciseRepo.create({
       plan_day_id: day1.id,
-      exercise_id: getExerciseId(ex.name),
+      exercise_id: await getExerciseId(ex.name),
       sets: ex.sets,
       reps: 8,
       weight: 30,
       rest_seconds: 60,
       sort_order: index,
     });
-  });
+  }
 
   // Day 2: Thursday (day_of_week = 4)
-  const day2 = planDayRepo.create({
+  const day2 = await planDayRepo.create({
     plan_id: plan.id,
     day_of_week: 4,
     name: 'Day 2',
@@ -106,27 +107,28 @@ export function seedDefaultPlanAndMesocycle(db: Database): void {
     { name: 'Single-Leg Leg Curl', sets: 3 },
   ];
 
-  day2Exercises.forEach((ex, index) => {
-    planDayExerciseRepo.create({
+  for (let index = 0; index < day2Exercises.length; index++) {
+    const ex = day2Exercises[index];
+    await planDayExerciseRepo.create({
       plan_day_id: day2.id,
-      exercise_id: getExerciseId(ex.name),
+      exercise_id: await getExerciseId(ex.name),
       sets: ex.sets,
       reps: 8,
       weight: 30,
       rest_seconds: 60,
       sort_order: index,
     });
-  });
+  }
 
   // Create an unstarted mesocycle (status defaults to 'pending')
   const today = new Date().toISOString().slice(0, 10);
-  mesocycleService.create({
+  await mesocycleService.create({
     plan_id: plan.id,
     start_date: today,
   });
 }
 
-export function seedDatabase(db: Database): void {
-  seedDefaultExercises(db);
-  seedDefaultPlanAndMesocycle(db);
+export async function seedDatabase(db: Firestore): Promise<void> {
+  await seedDefaultExercises(db);
+  await seedDefaultPlanAndMesocycle(db);
 }

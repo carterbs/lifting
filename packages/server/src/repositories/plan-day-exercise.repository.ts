@@ -1,4 +1,4 @@
-import type { Database } from 'better-sqlite3';
+import type { Firestore } from 'firebase-admin/firestore';
 import type {
   PlanDayExercise,
   CreatePlanDayExerciseDTO,
@@ -6,149 +6,118 @@ import type {
 } from '@brad-os/shared';
 import { BaseRepository } from './base.repository.js';
 
-interface PlanDayExerciseRow {
-  id: number;
-  plan_day_id: number;
-  exercise_id: number;
-  sets: number;
-  reps: number;
-  weight: number;
-  rest_seconds: number;
-  sort_order: number;
-  min_reps: number;
-  max_reps: number;
-}
-
 export class PlanDayExerciseRepository extends BaseRepository<
   PlanDayExercise,
   CreatePlanDayExerciseDTO,
   UpdatePlanDayExerciseDTO
 > {
-  constructor(db: Database) {
-    super(db, 'plan_day_exercises');
+  constructor(db?: Firestore) {
+    super('plan_day_exercises', db);
   }
 
-  private rowToPlanDayExercise(row: PlanDayExerciseRow): PlanDayExercise {
-    return {
-      id: row.id,
-      plan_day_id: row.plan_day_id,
-      exercise_id: row.exercise_id,
-      sets: row.sets,
-      reps: row.reps,
-      weight: row.weight,
-      rest_seconds: row.rest_seconds,
-      sort_order: row.sort_order,
-      min_reps: row.min_reps,
-      max_reps: row.max_reps,
+  async create(data: CreatePlanDayExerciseDTO): Promise<PlanDayExercise> {
+    const exerciseData = {
+      plan_day_id: data.plan_day_id,
+      exercise_id: data.exercise_id,
+      sets: data.sets ?? 2,
+      reps: data.reps ?? 8,
+      weight: data.weight ?? 30.0,
+      rest_seconds: data.rest_seconds ?? 60,
+      sort_order: data.sort_order,
+      min_reps: data.min_reps ?? 8,
+      max_reps: data.max_reps ?? 12,
     };
-  }
 
-  create(data: CreatePlanDayExerciseDTO): PlanDayExercise {
-    const stmt = this.db.prepare(`
-      INSERT INTO plan_day_exercises (plan_day_id, exercise_id, sets, reps, weight, rest_seconds, sort_order, min_reps, max_reps)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+    const docRef = await this.collection.add(exerciseData);
+    const planDayExercise: PlanDayExercise = {
+      id: docRef.id,
+      ...exerciseData,
+    };
 
-    const result = stmt.run(
-      data.plan_day_id,
-      data.exercise_id,
-      data.sets ?? 2,
-      data.reps ?? 8,
-      data.weight ?? 30.0,
-      data.rest_seconds ?? 60,
-      data.sort_order,
-      data.min_reps ?? 8,
-      data.max_reps ?? 12
-    );
-
-    const planDayExercise = this.findById(result.lastInsertRowid as number);
-    if (!planDayExercise) {
-      throw new Error('Failed to retrieve newly created plan day exercise');
-    }
     return planDayExercise;
   }
 
-  findById(id: number): PlanDayExercise | null {
-    const stmt = this.db.prepare(
-      'SELECT * FROM plan_day_exercises WHERE id = ?'
-    );
-    const row = stmt.get(id) as PlanDayExerciseRow | undefined;
-    return row ? this.rowToPlanDayExercise(row) : null;
+  async findById(id: string): Promise<PlanDayExercise | null> {
+    const doc = await this.collection.doc(id).get();
+    if (!doc.exists) {
+      return null;
+    }
+    return { id: doc.id, ...doc.data() } as PlanDayExercise;
   }
 
-  findByPlanDayId(planDayId: number): PlanDayExercise[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM plan_day_exercises WHERE plan_day_id = ? ORDER BY sort_order'
+  async findByPlanDayId(planDayId: string): Promise<PlanDayExercise[]> {
+    const snapshot = await this.collection
+      .where('plan_day_id', '==', planDayId)
+      .orderBy('sort_order')
+      .get();
+    return snapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() }) as PlanDayExercise
     );
-    const rows = stmt.all(planDayId) as PlanDayExerciseRow[];
-    return rows.map((row) => this.rowToPlanDayExercise(row));
   }
 
-  findAll(): PlanDayExercise[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM plan_day_exercises ORDER BY plan_day_id, sort_order'
+  async findAll(): Promise<PlanDayExercise[]> {
+    const snapshot = await this.collection
+      .orderBy('plan_day_id')
+      .orderBy('sort_order')
+      .get();
+    return snapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() }) as PlanDayExercise
     );
-    const rows = stmt.all() as PlanDayExerciseRow[];
-    return rows.map((row) => this.rowToPlanDayExercise(row));
   }
 
-  update(id: number, data: UpdatePlanDayExerciseDTO): PlanDayExercise | null {
-    const existing = this.findById(id);
-    if (!existing) return null;
+  async update(
+    id: string,
+    data: UpdatePlanDayExerciseDTO
+  ): Promise<PlanDayExercise | null> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return null;
+    }
 
-    const updates: string[] = [];
-    const values: number[] = [];
+    const updates: Record<string, number> = {};
 
     if (data.sets !== undefined) {
-      updates.push('sets = ?');
-      values.push(data.sets);
+      updates['sets'] = data.sets;
     }
 
     if (data.reps !== undefined) {
-      updates.push('reps = ?');
-      values.push(data.reps);
+      updates['reps'] = data.reps;
     }
 
     if (data.weight !== undefined) {
-      updates.push('weight = ?');
-      values.push(data.weight);
+      updates['weight'] = data.weight;
     }
 
     if (data.rest_seconds !== undefined) {
-      updates.push('rest_seconds = ?');
-      values.push(data.rest_seconds);
+      updates['rest_seconds'] = data.rest_seconds;
     }
 
     if (data.sort_order !== undefined) {
-      updates.push('sort_order = ?');
-      values.push(data.sort_order);
+      updates['sort_order'] = data.sort_order;
     }
 
     if (data.min_reps !== undefined) {
-      updates.push('min_reps = ?');
-      values.push(data.min_reps);
+      updates['min_reps'] = data.min_reps;
     }
 
     if (data.max_reps !== undefined) {
-      updates.push('max_reps = ?');
-      values.push(data.max_reps);
+      updates['max_reps'] = data.max_reps;
     }
 
-    if (updates.length === 0) return existing;
+    if (Object.keys(updates).length === 0) {
+      return existing;
+    }
 
-    values.push(id);
-
-    const stmt = this.db.prepare(`
-      UPDATE plan_day_exercises SET ${updates.join(', ')} WHERE id = ?
-    `);
-    stmt.run(...values);
-
+    await this.collection.doc(id).update(updates);
     return this.findById(id);
   }
 
-  delete(id: number): boolean {
-    const stmt = this.db.prepare('DELETE FROM plan_day_exercises WHERE id = ?');
-    const result = stmt.run(id);
-    return result.changes > 0;
+  async delete(id: string): Promise<boolean> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return false;
+    }
+    await this.collection.doc(id).delete();
+    return true;
   }
 }

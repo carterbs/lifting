@@ -1,4 +1,4 @@
-import type { Database } from 'better-sqlite3';
+import type { Firestore } from 'firebase-admin/firestore';
 import type {
   Workout,
   CreateWorkoutDTO,
@@ -20,15 +20,11 @@ function localDateToUtcBoundary(
   isEndOfDay: boolean,
   timezoneOffsetMinutes: number
 ): string {
-  // Parse the local date components (format: YYYY-MM-DD)
   const parts = localDate.split('-').map(Number);
   const year = parts[0] ?? 0;
   const month = parts[1] ?? 1;
   const day = parts[2] ?? 1;
 
-  // Create a date representing the local time boundary
-  // For start of day: 00:00:00.000 local time
-  // For end of day: 23:59:59.999 local time
   const localMs = Date.UTC(
     year,
     month - 1,
@@ -39,22 +35,8 @@ function localDateToUtcBoundary(
     isEndOfDay ? 999 : 0
   );
 
-  // Convert local time to UTC by adding the offset
-  // utcTime = localTime + (offsetMinutes * 60 * 1000)
   const utcMs = localMs + timezoneOffsetMinutes * 60 * 1000;
-
   return new Date(utcMs).toISOString();
-}
-
-interface WorkoutRow {
-  id: number;
-  mesocycle_id: number;
-  plan_day_id: number;
-  week_number: number;
-  scheduled_date: string;
-  status: string;
-  started_at: string | null;
-  completed_at: string | null;
 }
 
 export class WorkoutRepository extends BaseRepository<
@@ -62,187 +44,186 @@ export class WorkoutRepository extends BaseRepository<
   CreateWorkoutDTO,
   UpdateWorkoutDTO
 > {
-  constructor(db: Database) {
-    super(db, 'workouts');
+  constructor(db?: Firestore) {
+    super('workouts', db);
   }
 
-  private rowToWorkout(row: WorkoutRow): Workout {
-    return {
-      id: row.id,
-      mesocycle_id: row.mesocycle_id,
-      plan_day_id: row.plan_day_id,
-      week_number: row.week_number,
-      scheduled_date: row.scheduled_date,
-      status: row.status as WorkoutStatus,
-      started_at: row.started_at,
-      completed_at: row.completed_at,
+  async create(data: CreateWorkoutDTO): Promise<Workout> {
+    const workoutData = {
+      mesocycle_id: data.mesocycle_id,
+      plan_day_id: data.plan_day_id,
+      week_number: data.week_number,
+      scheduled_date: data.scheduled_date,
+      status: 'pending' as WorkoutStatus,
+      started_at: null,
+      completed_at: null,
     };
-  }
 
-  create(data: CreateWorkoutDTO): Workout {
-    const stmt = this.db.prepare(`
-      INSERT INTO workouts (mesocycle_id, plan_day_id, week_number, scheduled_date)
-      VALUES (?, ?, ?, ?)
-    `);
+    const docRef = await this.collection.add(workoutData);
+    const workout: Workout = {
+      id: docRef.id,
+      ...workoutData,
+    };
 
-    const result = stmt.run(
-      data.mesocycle_id,
-      data.plan_day_id,
-      data.week_number,
-      data.scheduled_date
-    );
-
-    const workout = this.findById(result.lastInsertRowid as number);
-    if (!workout) {
-      throw new Error('Failed to retrieve newly created workout');
-    }
     return workout;
   }
 
-  findById(id: number): Workout | null {
-    const stmt = this.db.prepare('SELECT * FROM workouts WHERE id = ?');
-    const row = stmt.get(id) as WorkoutRow | undefined;
-    return row ? this.rowToWorkout(row) : null;
+  async findById(id: string): Promise<Workout | null> {
+    const doc = await this.collection.doc(id).get();
+    if (!doc.exists) {
+      return null;
+    }
+    return { id: doc.id, ...doc.data() } as Workout;
   }
 
-  findByMesocycleId(mesocycleId: number): Workout[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM workouts WHERE mesocycle_id = ? ORDER BY scheduled_date'
-    );
-    const rows = stmt.all(mesocycleId) as WorkoutRow[];
-    return rows.map((row) => this.rowToWorkout(row));
+  async findByMesocycleId(mesocycleId: string): Promise<Workout[]> {
+    const snapshot = await this.collection
+      .where('mesocycle_id', '==', mesocycleId)
+      .orderBy('scheduled_date')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Workout);
   }
 
-  findByStatus(status: WorkoutStatus): Workout[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM workouts WHERE status = ? ORDER BY scheduled_date'
-    );
-    const rows = stmt.all(status) as WorkoutRow[];
-    return rows.map((row) => this.rowToWorkout(row));
+  async findByStatus(status: WorkoutStatus): Promise<Workout[]> {
+    const snapshot = await this.collection
+      .where('status', '==', status)
+      .orderBy('scheduled_date')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Workout);
   }
 
-  findByDate(date: string): Workout[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM workouts WHERE scheduled_date = ?'
-    );
-    const rows = stmt.all(date) as WorkoutRow[];
-    return rows.map((row) => this.rowToWorkout(row));
+  async findByDate(date: string): Promise<Workout[]> {
+    const snapshot = await this.collection
+      .where('scheduled_date', '==', date)
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Workout);
   }
 
   /**
    * Find the previous week's workout for the same plan day within the same mesocycle
    */
-  findPreviousWeekWorkout(
-    mesocycleId: number,
-    planDayId: number,
+  async findPreviousWeekWorkout(
+    mesocycleId: string,
+    planDayId: string,
     currentWeekNumber: number
-  ): Workout | null {
+  ): Promise<Workout | null> {
     if (currentWeekNumber <= 1) {
       return null;
     }
 
-    const stmt = this.db.prepare(`
-      SELECT * FROM workouts
-      WHERE mesocycle_id = ?
-        AND plan_day_id = ?
-        AND week_number = ?
-    `);
-    const row = stmt.get(
-      mesocycleId,
-      planDayId,
-      currentWeekNumber - 1
-    ) as WorkoutRow | undefined;
-    return row ? this.rowToWorkout(row) : null;
+    const snapshot = await this.collection
+      .where('mesocycle_id', '==', mesocycleId)
+      .where('plan_day_id', '==', planDayId)
+      .where('week_number', '==', currentWeekNumber - 1)
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) {
+      return null;
+    }
+    const doc = snapshot.docs[0];
+    return { id: doc.id, ...doc.data() } as Workout;
   }
 
   /**
    * Find the next upcoming workout (pending or in_progress) ordered by scheduled date.
-   * Returns the first pending/in_progress workout regardless of whether its
-   * scheduled_date is in the past, so users who miss a day still see their next workout.
    */
-  findNextPending(): Workout | null {
-    const stmt = this.db.prepare(`
-      SELECT * FROM workouts
-      WHERE status IN ('pending', 'in_progress')
-      ORDER BY scheduled_date ASC, id ASC
-      LIMIT 1
-    `);
-    const row = stmt.get() as WorkoutRow | undefined;
-    return row ? this.rowToWorkout(row) : null;
+  async findNextPending(): Promise<Workout | null> {
+    // Query for pending workouts
+    const pendingSnapshot = await this.collection
+      .where('status', '==', 'pending')
+      .orderBy('scheduled_date')
+      .limit(1)
+      .get();
+
+    // Query for in_progress workouts
+    const inProgressSnapshot = await this.collection
+      .where('status', '==', 'in_progress')
+      .orderBy('scheduled_date')
+      .limit(1)
+      .get();
+
+    const candidates: Workout[] = [];
+
+    if (!pendingSnapshot.empty) {
+      const doc = pendingSnapshot.docs[0];
+      candidates.push({ id: doc.id, ...doc.data() } as Workout);
+    }
+
+    if (!inProgressSnapshot.empty) {
+      const doc = inProgressSnapshot.docs[0];
+      candidates.push({ id: doc.id, ...doc.data() } as Workout);
+    }
+
+    if (candidates.length === 0) {
+      return null;
+    }
+
+    // Return the one with earliest scheduled_date
+    candidates.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
+    return candidates[0];
   }
 
-  findAll(): Workout[] {
-    const stmt = this.db.prepare(
-      'SELECT * FROM workouts ORDER BY scheduled_date DESC'
-    );
-    const rows = stmt.all() as WorkoutRow[];
-    return rows.map((row) => this.rowToWorkout(row));
+  async findAll(): Promise<Workout[]> {
+    const snapshot = await this.collection.orderBy('scheduled_date', 'desc').get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Workout);
   }
 
   /**
    * Find completed workouts where completed_at falls within the date range.
-   * Date range is inclusive of both start and end dates in the user's local timezone.
-   * @param startDate - Start date in YYYY-MM-DD format (local date)
-   * @param endDate - End date in YYYY-MM-DD format (local date)
-   * @param timezoneOffset - Timezone offset in minutes from Date.getTimezoneOffset()
-   *                         (positive for west of UTC, negative for east). Defaults to 0 (UTC).
    */
-  findCompletedInDateRange(
+  async findCompletedInDateRange(
     startDate: string,
     endDate: string,
     timezoneOffset: number = 0
-  ): Workout[] {
-    const stmt = this.db.prepare(`
-      SELECT * FROM workouts
-      WHERE status = 'completed'
-        AND completed_at >= ?
-        AND completed_at <= ?
-      ORDER BY completed_at ASC
-    `);
-    // Convert local date boundaries to UTC timestamps
+  ): Promise<Workout[]> {
     const startTimestamp = localDateToUtcBoundary(startDate, false, timezoneOffset);
     const endTimestamp = localDateToUtcBoundary(endDate, true, timezoneOffset);
-    const rows = stmt.all(startTimestamp, endTimestamp) as WorkoutRow[];
-    return rows.map((row) => this.rowToWorkout(row));
+
+    const snapshot = await this.collection
+      .where('status', '==', 'completed')
+      .where('completed_at', '>=', startTimestamp)
+      .where('completed_at', '<=', endTimestamp)
+      .orderBy('completed_at')
+      .get();
+
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Workout);
   }
 
-  update(id: number, data: UpdateWorkoutDTO): Workout | null {
-    const existing = this.findById(id);
-    if (!existing) return null;
+  async update(id: string, data: UpdateWorkoutDTO): Promise<Workout | null> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return null;
+    }
 
-    const updates: string[] = [];
-    const values: (string | number | null)[] = [];
+    const updates: Record<string, string | null> = {};
 
     if (data.status !== undefined) {
-      updates.push('status = ?');
-      values.push(data.status);
+      updates['status'] = data.status;
     }
 
     if (data.started_at !== undefined) {
-      updates.push('started_at = ?');
-      values.push(data.started_at);
+      updates['started_at'] = data.started_at;
     }
 
     if (data.completed_at !== undefined) {
-      updates.push('completed_at = ?');
-      values.push(data.completed_at);
+      updates['completed_at'] = data.completed_at;
     }
 
-    if (updates.length === 0) return existing;
+    if (Object.keys(updates).length === 0) {
+      return existing;
+    }
 
-    values.push(id);
-
-    const stmt = this.db.prepare(`
-      UPDATE workouts SET ${updates.join(', ')} WHERE id = ?
-    `);
-    stmt.run(...values);
-
+    await this.collection.doc(id).update(updates);
     return this.findById(id);
   }
 
-  delete(id: number): boolean {
-    const stmt = this.db.prepare('DELETE FROM workouts WHERE id = ?');
-    const result = stmt.run(id);
-    return result.changes > 0;
+  async delete(id: string): Promise<boolean> {
+    const existing = await this.findById(id);
+    if (!existing) {
+      return false;
+    }
+    await this.collection.doc(id).delete();
+    return true;
   }
 }

@@ -1,4 +1,4 @@
-import type { Database } from 'better-sqlite3';
+import type { Firestore } from 'firebase-admin/firestore';
 import type {
   Mesocycle,
   CreateMesocycleRequest,
@@ -37,7 +37,7 @@ export class MesocycleService {
   private workoutRepo: WorkoutRepository;
   private workoutSetRepo: WorkoutSetRepository;
 
-  constructor(db: Database) {
+  constructor(db: Firestore) {
     this.mesocycleRepo = new MesocycleRepository(db);
     this.planRepo = new PlanRepository(db);
     this.planDayRepo = new PlanDayRepository(db);
@@ -51,21 +51,21 @@ export class MesocycleService {
    * Create a new mesocycle from a plan (in pending status, no workouts yet)
    * Validates plan exists and has workout days configured
    */
-  create(request: CreateMesocycleRequest): Mesocycle {
+  async create(request: CreateMesocycleRequest): Promise<Mesocycle> {
     // Check if plan exists
-    const plan = this.planRepo.findById(request.plan_id);
+    const plan = await this.planRepo.findById(request.plan_id);
     if (!plan) {
       throw new Error(`Plan with id ${request.plan_id} not found`);
     }
 
     // Get plan days with exercises to validate plan is properly configured
-    const planDays = this.planDayRepo.findByPlanId(request.plan_id);
+    const planDays = await this.planDayRepo.findByPlanId(request.plan_id);
     if (planDays.length === 0) {
       throw new Error('Plan has no workout days configured');
     }
 
     // Create mesocycle (defaults to 'pending' status)
-    const mesocycle = this.mesocycleRepo.create({
+    const mesocycle = await this.mesocycleRepo.create({
       plan_id: request.plan_id,
       start_date: request.start_date,
     });
@@ -77,8 +77,8 @@ export class MesocycleService {
    * Start a pending mesocycle - generates workouts and sets status to active
    * Only one mesocycle can be active at a time
    */
-  start(id: number): Mesocycle {
-    const mesocycle = this.mesocycleRepo.findById(id);
+  async start(id: string): Promise<Mesocycle> {
+    const mesocycle = await this.mesocycleRepo.findById(id);
     if (!mesocycle) {
       throw new Error(`Mesocycle with id ${id} not found`);
     }
@@ -88,41 +88,47 @@ export class MesocycleService {
     }
 
     // Check for existing active mesocycle
-    const activeMesocycles = this.mesocycleRepo.findActive();
+    const activeMesocycles = await this.mesocycleRepo.findActive();
     if (activeMesocycles.length > 0) {
       throw new Error('An active mesocycle already exists');
     }
 
     // Get plan days with exercises
-    const planDays = this.planDayRepo.findByPlanId(mesocycle.plan_id);
-    const planDaysWithExercises: PlanDayWithExercises[] = planDays.map(
-      (day) => {
-        const planDayExercises = this.planDayExerciseRepo.findByPlanDayId(
-          day.id
-        );
-        const exercises = planDayExercises.map((pde) => {
-          const exercise = this.exerciseRepo.findById(pde.exercise_id);
-          if (!exercise) {
-            throw new Error(`Exercise with id ${pde.exercise_id} not found`);
-          }
-          return {
-            planDayExercise: pde,
-            exercise,
-          };
+    const planDays = await this.planDayRepo.findByPlanId(mesocycle.plan_id);
+    const planDaysWithExercises: PlanDayWithExercises[] = [];
+
+    for (const day of planDays) {
+      const planDayExercises = await this.planDayExerciseRepo.findByPlanDayId(
+        day.id
+      );
+      const exercises: Array<{
+        planDayExercise: PlanDayExercise;
+        exercise: Exercise;
+      }> = [];
+
+      for (const pde of planDayExercises) {
+        const exercise = await this.exerciseRepo.findById(pde.exercise_id);
+        if (!exercise) {
+          throw new Error(`Exercise with id ${pde.exercise_id} not found`);
+        }
+        exercises.push({
+          planDayExercise: pde,
+          exercise,
         });
-        return { day, exercises };
       }
-    );
+
+      planDaysWithExercises.push({ day, exercises });
+    }
 
     // Generate workouts for each week (7 weeks total: 6 regular + 1 deload)
-    this.generateWorkouts(
+    await this.generateWorkouts(
       mesocycle.id,
       planDaysWithExercises,
       mesocycle.start_date
     );
 
     // Update status to active
-    const updated = this.mesocycleRepo.update(id, { status: 'active' });
+    const updated = await this.mesocycleRepo.update(id, { status: 'active' });
     if (!updated) {
       throw new Error(`Failed to start mesocycle with id ${id}`);
     }
@@ -133,8 +139,8 @@ export class MesocycleService {
   /**
    * Get the currently active mesocycle with details
    */
-  getActive(): MesocycleWithDetails | null {
-    const activeMesocycles = this.mesocycleRepo.findActive();
+  async getActive(): Promise<MesocycleWithDetails | null> {
+    const activeMesocycles = await this.mesocycleRepo.findActive();
     const firstActive = activeMesocycles[0];
     if (!firstActive) {
       return null;
@@ -146,30 +152,32 @@ export class MesocycleService {
   /**
    * Get a mesocycle by ID with full details
    */
-  getById(id: number): MesocycleWithDetails | null {
-    const mesocycle = this.mesocycleRepo.findById(id);
+  async getById(id: string): Promise<MesocycleWithDetails | null> {
+    const mesocycle = await this.mesocycleRepo.findById(id);
     if (!mesocycle) {
       return null;
     }
 
-    const plan = this.planRepo.findById(mesocycle.plan_id);
-    const workouts = this.workoutRepo.findByMesocycleId(id);
-    const planDays = this.planDayRepo.findByPlanId(mesocycle.plan_id);
+    const plan = await this.planRepo.findById(mesocycle.plan_id);
+    const workouts = await this.workoutRepo.findByMesocycleId(id);
+    const planDays = await this.planDayRepo.findByPlanId(mesocycle.plan_id);
 
     // Build week summaries
     const weeks: WeekSummary[] = [];
     for (let weekNum = 1; weekNum <= 7; weekNum++) {
       const weekWorkouts = workouts.filter((w) => w.week_number === weekNum);
-      const workoutSummaries: WorkoutSummary[] = weekWorkouts.map((workout) => {
+      const workoutSummaries: WorkoutSummary[] = [];
+
+      for (const workout of weekWorkouts) {
         const planDay = planDays.find((d) => d.id === workout.plan_day_id);
-        const sets = this.workoutSetRepo.findByWorkoutId(workout.id);
+        const sets = await this.workoutSetRepo.findByWorkoutId(workout.id);
         const uniqueExercises = new Set(sets.map((s) => s.exercise_id));
         const completedSets = sets.filter(
           (s) => s.status === 'completed'
         ).length;
 
-        const dayOfWeek: DayOfWeek = (planDay?.day_of_week ?? 0);
-        return {
+        const dayOfWeek: DayOfWeek = planDay?.day_of_week ?? 0;
+        workoutSummaries.push({
           id: workout.id,
           plan_day_id: workout.plan_day_id,
           plan_day_name: planDay?.name ?? 'Unknown',
@@ -181,8 +189,8 @@ export class MesocycleService {
           exercise_count: uniqueExercises.size,
           set_count: sets.length,
           completed_set_count: completedSets,
-        };
-      });
+        });
+      }
 
       const completedWorkouts = weekWorkouts.filter(
         (w) => w.status === 'completed'
@@ -218,15 +226,15 @@ export class MesocycleService {
   /**
    * List all mesocycles
    */
-  list(): Mesocycle[] {
+  async list(): Promise<Mesocycle[]> {
     return this.mesocycleRepo.findAll();
   }
 
   /**
    * Mark a mesocycle as completed
    */
-  complete(id: number): Mesocycle {
-    const mesocycle = this.mesocycleRepo.findById(id);
+  async complete(id: string): Promise<Mesocycle> {
+    const mesocycle = await this.mesocycleRepo.findById(id);
     if (!mesocycle) {
       throw new Error(`Mesocycle with id ${id} not found`);
     }
@@ -235,7 +243,7 @@ export class MesocycleService {
       throw new Error('Mesocycle is not active');
     }
 
-    const updated = this.mesocycleRepo.update(id, { status: 'completed' });
+    const updated = await this.mesocycleRepo.update(id, { status: 'completed' });
     if (!updated) {
       throw new Error(`Failed to update mesocycle with id ${id}`);
     }
@@ -245,8 +253,8 @@ export class MesocycleService {
   /**
    * Cancel a mesocycle (preserves data)
    */
-  cancel(id: number): Mesocycle {
-    const mesocycle = this.mesocycleRepo.findById(id);
+  async cancel(id: string): Promise<Mesocycle> {
+    const mesocycle = await this.mesocycleRepo.findById(id);
     if (!mesocycle) {
       throw new Error(`Mesocycle with id ${id} not found`);
     }
@@ -255,7 +263,7 @@ export class MesocycleService {
       throw new Error('Mesocycle is not active');
     }
 
-    const updated = this.mesocycleRepo.update(id, { status: 'cancelled' });
+    const updated = await this.mesocycleRepo.update(id, { status: 'cancelled' });
     if (!updated) {
       throw new Error(`Failed to update mesocycle with id ${id}`);
     }
@@ -265,11 +273,11 @@ export class MesocycleService {
   /**
    * Generate all workouts and sets for a mesocycle
    */
-  private generateWorkouts(
-    mesocycleId: number,
+  private async generateWorkouts(
+    mesocycleId: string,
     planDaysWithExercises: PlanDayWithExercises[],
     startDate: string
-  ): void {
+  ): Promise<void> {
     const startDateObj = new Date(startDate + 'T00:00:00');
 
     for (let weekNum = 1; weekNum <= 7; weekNum++) {
@@ -284,7 +292,7 @@ export class MesocycleService {
         );
 
         // Create workout
-        const workout = this.workoutRepo.create({
+        const workout = await this.workoutRepo.create({
           mesocycle_id: mesocycleId,
           plan_day_id: day.id,
           week_number: weekNum,
@@ -304,7 +312,7 @@ export class MesocycleService {
             );
 
           for (let setNum = 1; setNum <= setCount; setNum++) {
-            this.workoutSetRepo.create({
+            await this.workoutSetRepo.create({
               workout_id: workout.id,
               exercise_id: exercise.id,
               set_number: setNum,
@@ -332,15 +340,11 @@ export class MesocycleService {
     const startDayOfWeek = date.getDay();
     const dayOffset = dayOfWeek - startDayOfWeek;
 
-    // If target day is before or same as start day in week 1, it should be in that week
-    // For subsequent weeks, add (weekNumber - 1) * 7 days
-
     // Calculate the date
     const daysToAdd = (weekNumber - 1) * 7 + dayOffset;
     date.setDate(date.getDate() + daysToAdd);
 
     // Format as YYYY-MM-DD in local timezone
-    // Using toISOString() would convert to UTC and shift the date incorrectly
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -349,12 +353,6 @@ export class MesocycleService {
 
   /**
    * Calculate progressive overload values for a week
-   *
-   * Progression scheme:
-   * - Week 1: Base values
-   * - Odd weeks (3, 5): +1 rep from previous even week
-   * - Even weeks (2, 4, 6): +weight, reset reps to base
-   * - Week 7 (deload): Base weight (reduced intensity), 50% sets (reduced volume)
    */
   private calculateProgression(
     baseReps: number,
@@ -365,8 +363,6 @@ export class MesocycleService {
     isDeload: boolean
   ): { targetReps: number; targetWeight: number; setCount: number } {
     if (isDeload) {
-      // Deload week: reduced intensity (base weight) and 50% volume (half sets)
-      // This gives the body proper recovery by reducing both weight and total work
       return {
         targetReps: baseReps,
         targetWeight: baseWeight,
@@ -374,14 +370,9 @@ export class MesocycleService {
       };
     }
 
-    // Calculate weight based on even weeks completed
-    // Week 1: 0 increases, Week 2: 1, Week 3: 1, Week 4: 2, Week 5: 2, Week 6: 3
     const weightIncreases = Math.floor(weekNumber / 2);
     const targetWeight = baseWeight + weightIncrement * weightIncreases;
 
-    // Calculate reps
-    // Even weeks: base reps (after weight increase)
-    // Odd weeks (except 1): base reps + 1
     let targetReps = baseReps;
     if (weekNumber > 1 && weekNumber % 2 === 1) {
       targetReps = baseReps + 1;

@@ -19,9 +19,6 @@ app.use(express.json());
 // Request logging
 app.use(requestLogger);
 
-// Initialize database
-initializeDatabase();
-
 // API routes
 app.use('/api', apiRouter);
 
@@ -38,9 +35,20 @@ app.get('/', (_req: Request, res: Response): void => {
 // Error handling (must be last)
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, (): void => {
-  console.log(`Server running on http://localhost:${String(PORT)}`);
-});
+// Initialize database and start server
+async function startServer(): Promise<void> {
+  try {
+    await initializeDatabase();
+
+    app.listen(PORT, (): void => {
+      console.log(`Server running on http://localhost:${String(PORT)}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 export { app };
