@@ -19,6 +19,7 @@ import { mesocyclesApp } from './handlers/mesocycles.js';
 const defaultOptions: HttpsOptions = {
   region: 'us-central1',
   cors: true,
+  invoker: 'public', // Allow unauthenticated access (App Check middleware handles auth)
 };
 
 // ============ DEV Functions ============
