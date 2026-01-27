@@ -4,20 +4,21 @@ import Foundation
 struct APIConfiguration {
     let baseURL: URL
 
-    /// Cloud Functions base URL
-    private static let cloudFunctionsURL = "https://brad-os.web.app/api"
+    /// Cloud Functions base URLs
+    private static let devCloudFunctionsURL = "https://brad-os.web.app/api/dev"
+    private static let prodCloudFunctionsURL = "https://brad-os.web.app/api/prod"
 
     /// Default configuration based on build settings
     static var `default`: APIConfiguration {
-        // All environments use Cloud Functions
+        // DEBUG builds use dev functions, Release builds use prod functions
         // Override with BRAD_OS_API_URL env var for local testing if needed
         #if DEBUG
         let envURL = ProcessInfo.processInfo.environment["BRAD_OS_API_URL"]
-        let urlString = envURL ?? cloudFunctionsURL
-        print("🔧 [APIConfiguration] Using: \(urlString) (env override: \(envURL != nil))")
+        let urlString = envURL ?? devCloudFunctionsURL
+        print("🔧 [APIConfiguration] Using DEV: \(urlString) (env override: \(envURL != nil))")
         #else
-        let urlString = cloudFunctionsURL
-        print("🔧 [APIConfiguration] Using PRODUCTION: \(urlString)")
+        let urlString = prodCloudFunctionsURL
+        print("🔧 [APIConfiguration] Using PROD: \(urlString)")
         #endif
 
         guard let url = URL(string: urlString) else {

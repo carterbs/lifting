@@ -4,19 +4,15 @@ import { initializeFirebase } from './firebase.js';
 // Initialize Firebase at cold start
 initializeFirebase();
 
-// Import handler apps - Phase 3: Simple Functions
+// Import handler apps
 import { healthApp } from './handlers/health.js';
 import { exercisesApp } from './handlers/exercises.js';
 import { stretchSessionsApp } from './handlers/stretchSessions.js';
 import { meditationSessionsApp } from './handlers/meditationSessions.js';
-
-// Import handler apps - Phase 4: Complex Functions
 import { plansApp } from './handlers/plans.js';
 import { workoutsApp } from './handlers/workouts.js';
 import { workoutSetsApp } from './handlers/workoutSets.js';
 import { calendarApp } from './handlers/calendar.js';
-
-// Import handler apps - Phase 5: Mesocycle with Batch Writes
 import { mesocyclesApp } from './handlers/mesocycles.js';
 
 // Common options
@@ -25,17 +21,24 @@ const defaultOptions: HttpsOptions = {
   cors: true,
 };
 
-// Export functions - Phase 3: Simple Functions
-export const health = onRequest(defaultOptions, healthApp);
-export const exercises = onRequest(defaultOptions, exercisesApp);
-export const stretchSessions = onRequest(defaultOptions, stretchSessionsApp);
-export const meditationSessions = onRequest(defaultOptions, meditationSessionsApp);
+// ============ DEV Functions ============
+export const devHealth = onRequest(defaultOptions, healthApp);
+export const devExercises = onRequest(defaultOptions, exercisesApp);
+export const devStretchSessions = onRequest(defaultOptions, stretchSessionsApp);
+export const devMeditationSessions = onRequest(defaultOptions, meditationSessionsApp);
+export const devPlans = onRequest(defaultOptions, plansApp);
+export const devWorkouts = onRequest(defaultOptions, workoutsApp);
+export const devWorkoutSets = onRequest(defaultOptions, workoutSetsApp);
+export const devCalendar = onRequest(defaultOptions, calendarApp);
+export const devMesocycles = onRequest(defaultOptions, mesocyclesApp);
 
-// Export functions - Phase 4: Complex Functions
-export const plans = onRequest(defaultOptions, plansApp);
-export const workouts = onRequest(defaultOptions, workoutsApp);
-export const workoutSets = onRequest(defaultOptions, workoutSetsApp);
-export const calendar = onRequest(defaultOptions, calendarApp);
-
-// Export functions - Phase 5: Mesocycle with Batch Writes
-export const mesocycles = onRequest(defaultOptions, mesocyclesApp);
+// ============ PROD Functions ============
+export const prodHealth = onRequest(defaultOptions, healthApp);
+export const prodExercises = onRequest(defaultOptions, exercisesApp);
+export const prodStretchSessions = onRequest(defaultOptions, stretchSessionsApp);
+export const prodMeditationSessions = onRequest(defaultOptions, meditationSessionsApp);
+export const prodPlans = onRequest(defaultOptions, plansApp);
+export const prodWorkouts = onRequest(defaultOptions, workoutsApp);
+export const prodWorkoutSets = onRequest(defaultOptions, workoutSetsApp);
+export const prodCalendar = onRequest(defaultOptions, calendarApp);
+export const prodMesocycles = onRequest(defaultOptions, mesocyclesApp);
