@@ -9,16 +9,20 @@ import { testRouter } from './test.routes.js';
 import { stretchSessionRouter } from './stretchSession.routes.js';
 import { calendarRouter } from './calendar.routes.js';
 import { meditationSessionRouter } from './meditationSession.routes.js';
+import { requireAppCheck } from '../middleware/app-check.js';
 
 export const apiRouter = Router();
 
+// Health endpoint - public (no App Check required)
 apiRouter.use('/health', healthRouter);
-apiRouter.use('/exercises', exerciseRouter);
-apiRouter.use('/plans', planRouter);
-apiRouter.use('/mesocycles', mesocycleRouter);
-apiRouter.use('/workouts', workoutRouter);
-apiRouter.use('/workout-sets', workoutSetRouter);
-apiRouter.use('/test', testRouter);
-apiRouter.use('/stretch-sessions', stretchSessionRouter);
-apiRouter.use('/calendar', calendarRouter);
-apiRouter.use('/meditation-sessions', meditationSessionRouter);
+
+// Protected routes - require App Check token
+apiRouter.use('/exercises', requireAppCheck, exerciseRouter);
+apiRouter.use('/plans', requireAppCheck, planRouter);
+apiRouter.use('/mesocycles', requireAppCheck, mesocycleRouter);
+apiRouter.use('/workouts', requireAppCheck, workoutRouter);
+apiRouter.use('/workout-sets', requireAppCheck, workoutSetRouter);
+apiRouter.use('/test', requireAppCheck, testRouter);
+apiRouter.use('/stretch-sessions', requireAppCheck, stretchSessionRouter);
+apiRouter.use('/calendar', requireAppCheck, calendarRouter);
+apiRouter.use('/meditation-sessions', requireAppCheck, meditationSessionRouter);
