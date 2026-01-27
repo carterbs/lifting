@@ -12,7 +12,6 @@ git worktree add ../lifting-worktrees/<branch-name> -b <branch-name>
 # 2. Set up the worktree (REQUIRED before running tests)
 cd ../lifting-worktrees/<branch-name>
 npm install
-npm run build -w @brad-os/shared
 
 # 3. Make changes and verify
 # ... make changes ...
@@ -29,7 +28,6 @@ git branch -d <branch-name>
 
 **Worktree Setup Requirements:**
 - `npm install` - Install dependencies (worktrees don't share node_modules)
-- `npm run build -w @brad-os/shared` - Build shared package (required by server)
 
 This keeps main clean and allows easy rollback of changes.
 
@@ -103,17 +101,17 @@ const name = workout.exercise?.name ?? 'Unknown';
 
 ### Validation
 
-All API inputs must be validated with Zod schemas defined in `packages/shared/`:
+All API inputs must be validated with Zod schemas defined in `packages/functions/src/schemas/`:
 
 ```typescript
-// packages/shared/src/schemas/exercise.ts
+// packages/functions/src/schemas/exercise.schema.ts
 export const createExerciseSchema = z.object({
   name: z.string().min(1).max(100),
   weightIncrement: z.number().positive().default(5),
 });
 
-// packages/server/src/routes/exercise.routes.ts
-router.post('/', validate(createExerciseSchema), exerciseController.create);
+// packages/functions/src/handlers/exercises.ts
+import { createExerciseSchema } from '../shared.js';
 ```
 
 ### API Patterns
@@ -191,7 +189,7 @@ exercise.routes.test.ts
 
 1. Read the relevant plan in `plans/phase-XX-*.md` first
 2. Write tests BEFORE implementation (TDD)
-3. Start with types/schemas in `packages/shared/`
+3. Start with types/schemas in `packages/functions/src/types/` and `packages/functions/src/schemas/`
 4. Run full test suite before considering complete
 5. Never use `any` - find or create proper types
 
@@ -211,7 +209,7 @@ npm test                 # Unit tests (vitest)
 - **Explicit paths over vague instructions**: Reference exact file paths, not "look at existing patterns."
 - **Commit after each phase**: Don't batch commits at the end. Smaller commits = easier rollback.
 - **Validate before committing**: Run typecheck, lint, and test before every commit.
-- **Shared types go in shared**: Put types used by both iOS and server in `packages/shared/src/types/`. Import from `@brad-os/shared`.
+- **Types go in functions**: Put types in `packages/functions/src/types/`. Import from `../shared.js`.
 - **Use vitest, not jest**: Follow existing test patterns.
 
 ## iOS App
