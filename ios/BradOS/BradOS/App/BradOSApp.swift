@@ -27,7 +27,7 @@ class AppState: ObservableObject {
     @Published var isShowingMeditation: Bool = false
 
     /// Selected workout ID for navigation to workout detail
-    @Published var selectedWorkoutId: Int?
+    @Published var selectedWorkoutId: String?
 
     /// Reference to the API client for convenience
     let apiClient: APIClientProtocol
@@ -37,7 +37,7 @@ class AppState: ObservableObject {
     }
 
     /// Navigate to a specific workout
-    func navigateToWorkout(_ workoutId: Int) {
+    func navigateToWorkout(_ workoutId: String) {
         selectedWorkoutId = workoutId
         isShowingLiftingContext = true
     }

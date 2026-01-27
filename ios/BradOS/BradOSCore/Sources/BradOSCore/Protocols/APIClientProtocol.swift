@@ -9,33 +9,33 @@ public protocol APIClientProtocol: Sendable {
     func getTodaysWorkout() async throws -> Workout?
 
     /// Get a specific workout by ID
-    func getWorkout(id: Int) async throws -> Workout
+    func getWorkout(id: String) async throws -> Workout
 
     /// Start a workout (sets status to in_progress)
-    func startWorkout(id: Int) async throws -> Workout
+    func startWorkout(id: String) async throws -> Workout
 
     /// Complete a workout
-    func completeWorkout(id: Int) async throws -> Workout
+    func completeWorkout(id: String) async throws -> Workout
 
     /// Skip a workout
-    func skipWorkout(id: Int) async throws -> Workout
+    func skipWorkout(id: String) async throws -> Workout
 
     // MARK: - Workout Sets
 
     /// Log a completed set with actual reps and weight
-    func logSet(id: Int, actualReps: Int, actualWeight: Double) async throws -> WorkoutSet
+    func logSet(id: String, actualReps: Int, actualWeight: Double) async throws -> WorkoutSet
 
     /// Skip a set
-    func skipSet(id: Int) async throws -> WorkoutSet
+    func skipSet(id: String) async throws -> WorkoutSet
 
     /// Unlog a previously logged set (reset to pending)
-    func unlogSet(id: Int) async throws -> WorkoutSet
+    func unlogSet(id: String) async throws -> WorkoutSet
 
     /// Add a set to an exercise in a workout (also adds to future workouts)
-    func addSet(workoutId: Int, exerciseId: Int) async throws -> ModifySetCountResult
+    func addSet(workoutId: String, exerciseId: String) async throws -> ModifySetCountResult
 
     /// Remove the last pending set from an exercise (also removes from future workouts)
-    func removeSet(workoutId: Int, exerciseId: Int) async throws -> ModifySetCountResult
+    func removeSet(workoutId: String, exerciseId: String) async throws -> ModifySetCountResult
 
     // MARK: - Exercises
 
@@ -43,19 +43,19 @@ public protocol APIClientProtocol: Sendable {
     func getExercises() async throws -> [Exercise]
 
     /// Get a specific exercise by ID
-    func getExercise(id: Int) async throws -> Exercise
+    func getExercise(id: String) async throws -> Exercise
 
     /// Create a new exercise
     func createExercise(name: String, weightIncrement: Double) async throws -> Exercise
 
     /// Update an existing exercise
-    func updateExercise(id: Int, name: String?, weightIncrement: Double?) async throws -> Exercise
+    func updateExercise(id: String, name: String?, weightIncrement: Double?) async throws -> Exercise
 
     /// Delete an exercise
-    func deleteExercise(id: Int) async throws
+    func deleteExercise(id: String) async throws
 
     /// Get exercise history
-    func getExerciseHistory(id: Int) async throws -> ExerciseHistory
+    func getExerciseHistory(id: String) async throws -> ExerciseHistory
 
     // MARK: - Plans
 
@@ -63,16 +63,16 @@ public protocol APIClientProtocol: Sendable {
     func getPlans() async throws -> [Plan]
 
     /// Get a specific plan by ID
-    func getPlan(id: Int) async throws -> Plan
+    func getPlan(id: String) async throws -> Plan
 
     /// Create a new plan
     func createPlan(name: String, durationWeeks: Int) async throws -> Plan
 
     /// Update an existing plan
-    func updatePlan(id: Int, name: String?, durationWeeks: Int?) async throws -> Plan
+    func updatePlan(id: String, name: String?, durationWeeks: Int?) async throws -> Plan
 
     /// Delete a plan
-    func deletePlan(id: Int) async throws
+    func deletePlan(id: String) async throws
 
     // MARK: - Mesocycles
 
@@ -83,19 +83,19 @@ public protocol APIClientProtocol: Sendable {
     func getActiveMesocycle() async throws -> Mesocycle?
 
     /// Get a specific mesocycle by ID
-    func getMesocycle(id: Int) async throws -> Mesocycle
+    func getMesocycle(id: String) async throws -> Mesocycle
 
     /// Create a new mesocycle from a plan
-    func createMesocycle(planId: Int, startDate: Date) async throws -> Mesocycle
+    func createMesocycle(planId: String, startDate: Date) async throws -> Mesocycle
 
     /// Start a pending mesocycle
-    func startMesocycle(id: Int) async throws -> Mesocycle
+    func startMesocycle(id: String) async throws -> Mesocycle
 
     /// Complete an active mesocycle
-    func completeMesocycle(id: Int) async throws -> Mesocycle
+    func completeMesocycle(id: String) async throws -> Mesocycle
 
     /// Cancel a mesocycle
-    func cancelMesocycle(id: Int) async throws -> Mesocycle
+    func cancelMesocycle(id: String) async throws -> Mesocycle
 
     // MARK: - Stretch Sessions
 

@@ -2,7 +2,7 @@ import Foundation
 
 /// A workout plan template
 public struct Plan: Identifiable, Codable, Hashable, Sendable {
-    public let id: Int
+    public let id: String
     public var name: String
     public var durationWeeks: Int
     public let createdAt: Date
@@ -19,7 +19,7 @@ public struct Plan: Identifiable, Codable, Hashable, Sendable {
     }
 
     public init(
-        id: Int,
+        id: String,
         name: String,
         durationWeeks: Int,
         createdAt: Date,
@@ -37,8 +37,8 @@ public struct Plan: Identifiable, Codable, Hashable, Sendable {
 
 /// A day within a workout plan
 public struct PlanDay: Identifiable, Codable, Hashable, Sendable {
-    public let id: Int
-    public let planId: Int
+    public let id: String
+    public let planId: String
     public var dayOfWeek: Int // 0-6 (Sunday-Saturday)
     public var name: String
     public var sortOrder: Int
@@ -54,8 +54,8 @@ public struct PlanDay: Identifiable, Codable, Hashable, Sendable {
     }
 
     public init(
-        id: Int,
-        planId: Int,
+        id: String,
+        planId: String,
         dayOfWeek: Int,
         name: String,
         sortOrder: Int,
@@ -78,9 +78,9 @@ public struct PlanDay: Identifiable, Codable, Hashable, Sendable {
 
 /// An exercise configuration within a plan day
 public struct PlanDayExercise: Identifiable, Codable, Hashable, Sendable {
-    public let id: Int
-    public let planDayId: Int
-    public let exerciseId: Int
+    public let id: String
+    public let planDayId: String
+    public let exerciseId: String
     public var sets: Int
     public var reps: Int
     public var weight: Double
@@ -105,9 +105,9 @@ public struct PlanDayExercise: Identifiable, Codable, Hashable, Sendable {
     }
 
     public init(
-        id: Int,
-        planDayId: Int,
-        exerciseId: Int,
+        id: String,
+        planDayId: String,
+        exerciseId: String,
         sets: Int,
         reps: Int,
         weight: Double,
@@ -135,28 +135,28 @@ public struct PlanDayExercise: Identifiable, Codable, Hashable, Sendable {
 public extension Plan {
     static let mockPlans: [Plan] = [
         Plan(
-            id: 1,
+            id: "mock-plan-1",
             name: "Push Pull Legs",
             durationWeeks: 6,
             createdAt: Date(),
             updatedAt: Date(),
             days: [
-                PlanDay(id: 1, planId: 1, dayOfWeek: 1, name: "Push Day", sortOrder: 0, exercises: nil),
-                PlanDay(id: 2, planId: 1, dayOfWeek: 3, name: "Pull Day", sortOrder: 1, exercises: nil),
-                PlanDay(id: 3, planId: 1, dayOfWeek: 5, name: "Leg Day", sortOrder: 2, exercises: nil)
+                PlanDay(id: "mock-planday-1", planId: "mock-plan-1", dayOfWeek: 1, name: "Push Day", sortOrder: 0, exercises: nil),
+                PlanDay(id: "mock-planday-2", planId: "mock-plan-1", dayOfWeek: 3, name: "Pull Day", sortOrder: 1, exercises: nil),
+                PlanDay(id: "mock-planday-3", planId: "mock-plan-1", dayOfWeek: 5, name: "Leg Day", sortOrder: 2, exercises: nil)
             ]
         ),
         Plan(
-            id: 2,
+            id: "mock-plan-2",
             name: "Upper Lower Split",
             durationWeeks: 6,
             createdAt: Date(),
             updatedAt: Date(),
             days: [
-                PlanDay(id: 4, planId: 2, dayOfWeek: 1, name: "Upper A", sortOrder: 0, exercises: nil),
-                PlanDay(id: 5, planId: 2, dayOfWeek: 2, name: "Lower A", sortOrder: 1, exercises: nil),
-                PlanDay(id: 6, planId: 2, dayOfWeek: 4, name: "Upper B", sortOrder: 2, exercises: nil),
-                PlanDay(id: 7, planId: 2, dayOfWeek: 5, name: "Lower B", sortOrder: 3, exercises: nil)
+                PlanDay(id: "mock-planday-4", planId: "mock-plan-2", dayOfWeek: 1, name: "Upper A", sortOrder: 0, exercises: nil),
+                PlanDay(id: "mock-planday-5", planId: "mock-plan-2", dayOfWeek: 2, name: "Lower A", sortOrder: 1, exercises: nil),
+                PlanDay(id: "mock-planday-6", planId: "mock-plan-2", dayOfWeek: 4, name: "Upper B", sortOrder: 2, exercises: nil),
+                PlanDay(id: "mock-planday-7", planId: "mock-plan-2", dayOfWeek: 5, name: "Lower B", sortOrder: 3, exercises: nil)
             ]
         )
     ]

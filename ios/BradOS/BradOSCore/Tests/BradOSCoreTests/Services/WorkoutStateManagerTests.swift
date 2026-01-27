@@ -10,9 +10,9 @@ struct WorkoutStateManagerTests {
         let defaults = MockUserDefaults()
         let manager = WorkoutStateManager(userDefaults: defaults)
 
-        manager.initializeForWorkout(workoutId: 123)
+        manager.initializeForWorkout(workoutId: "workout-123")
 
-        #expect(manager.currentState?.workoutId == 123)
+        #expect(manager.currentState?.workoutId == "workout-123")
         #expect(manager.currentState?.sets.isEmpty == true)
         #expect(manager.currentState?.pendingEdits.isEmpty == true)
     }
@@ -21,11 +21,11 @@ struct WorkoutStateManagerTests {
     func updateSetPersistsState() {
         let defaults = MockUserDefaults()
         let manager = WorkoutStateManager(userDefaults: defaults)
-        manager.initializeForWorkout(workoutId: 1)
+        manager.initializeForWorkout(workoutId: "workout-1")
 
-        manager.updateSet(setId: 10, reps: 8, weight: 135.0, status: .completed)
+        manager.updateSet(setId: "set-10", reps: 8, weight: 135.0, status: .completed)
 
-        let stored = manager.currentState?.sets[10]
+        let stored = manager.currentState?.sets["set-10"]
         #expect(stored?.actualReps == 8)
         #expect(stored?.actualWeight == 135.0)
         #expect(stored?.status == .completed)
@@ -35,11 +35,11 @@ struct WorkoutStateManagerTests {
     func updatePendingEditStoresEdit() {
         let defaults = MockUserDefaults()
         let manager = WorkoutStateManager(userDefaults: defaults)
-        manager.initializeForWorkout(workoutId: 1)
+        manager.initializeForWorkout(workoutId: "workout-1")
 
-        manager.updatePendingEdit(setId: 5, weight: 140.0, reps: nil)
+        manager.updatePendingEdit(setId: "set-5", weight: 140.0, reps: nil)
 
-        let edit = manager.getPendingEdit(setId: 5)
+        let edit = manager.getPendingEdit(setId: "set-5")
         #expect(edit?.weight == 140.0)
         #expect(edit?.reps == nil)
     }
@@ -48,8 +48,8 @@ struct WorkoutStateManagerTests {
     func clearStateRemovesData() {
         let defaults = MockUserDefaults()
         let manager = WorkoutStateManager(userDefaults: defaults)
-        manager.initializeForWorkout(workoutId: 1)
-        manager.updateSet(setId: 1, reps: 10, weight: 100, status: .completed)
+        manager.initializeForWorkout(workoutId: "workout-1")
+        manager.updateSet(setId: "set-1", reps: 10, weight: 100, status: .completed)
 
         manager.clearState()
 
@@ -60,10 +60,10 @@ struct WorkoutStateManagerTests {
     func hasStateForWorkoutMatching() {
         let defaults = MockUserDefaults()
         let manager = WorkoutStateManager(userDefaults: defaults)
-        manager.initializeForWorkout(workoutId: 42)
+        manager.initializeForWorkout(workoutId: "workout-42")
 
-        #expect(manager.hasStateForWorkout(workoutId: 42) == true)
-        #expect(manager.hasStateForWorkout(workoutId: 99) == false)
+        #expect(manager.hasStateForWorkout(workoutId: "workout-42") == true)
+        #expect(manager.hasStateForWorkout(workoutId: "workout-99") == false)
     }
 
     @Test("loadState returns nil for corrupted data")
@@ -80,19 +80,19 @@ struct WorkoutStateManagerTests {
     func saveTimerStatePersists() {
         let defaults = MockUserDefaults()
         let manager = WorkoutStateManager(userDefaults: defaults)
-        manager.initializeForWorkout(workoutId: 1)
+        manager.initializeForWorkout(workoutId: "workout-1")
 
         let timer = StoredTimerState(
             startedAt: Date(),
             targetSeconds: 90,
-            exerciseId: 5,
+            exerciseId: "exercise-5",
             setNumber: 2
         )
         manager.saveTimerState(timer)
 
         let stored = manager.getTimerState()
         #expect(stored?.targetSeconds == 90)
-        #expect(stored?.exerciseId == 5)
+        #expect(stored?.exerciseId == "exercise-5")
         #expect(stored?.setNumber == 2)
     }
 
@@ -100,9 +100,9 @@ struct WorkoutStateManagerTests {
     func clearTimerStateRemoves() {
         let defaults = MockUserDefaults()
         let manager = WorkoutStateManager(userDefaults: defaults)
-        manager.initializeForWorkout(workoutId: 1)
+        manager.initializeForWorkout(workoutId: "workout-1")
         manager.saveTimerState(StoredTimerState(
-            startedAt: Date(), targetSeconds: 60, exerciseId: 1, setNumber: 1
+            startedAt: Date(), targetSeconds: 60, exerciseId: "exercise-1", setNumber: 1
         ))
 
         manager.clearTimerState()
@@ -116,40 +116,40 @@ struct WorkoutStateManagerTests {
 
         // First manager saves state
         let manager1 = WorkoutStateManager(userDefaults: defaults)
-        manager1.initializeForWorkout(workoutId: 999)
-        manager1.updateSet(setId: 1, reps: 12, weight: 200, status: .completed)
+        manager1.initializeForWorkout(workoutId: "workout-999")
+        manager1.updateSet(setId: "set-1", reps: 12, weight: 200, status: .completed)
 
         // Second manager loads same state
         let manager2 = WorkoutStateManager(userDefaults: defaults)
 
-        #expect(manager2.currentState?.workoutId == 999)
-        #expect(manager2.currentState?.sets[1]?.actualReps == 12)
+        #expect(manager2.currentState?.workoutId == "workout-999")
+        #expect(manager2.currentState?.sets["set-1"]?.actualReps == 12)
     }
 
     @Test("removePendingEdit removes specific edit")
     func removePendingEditRemovesSpecific() {
         let defaults = MockUserDefaults()
         let manager = WorkoutStateManager(userDefaults: defaults)
-        manager.initializeForWorkout(workoutId: 1)
+        manager.initializeForWorkout(workoutId: "workout-1")
 
-        manager.updatePendingEdit(setId: 1, weight: 100.0, reps: 10)
-        manager.updatePendingEdit(setId: 2, weight: 150.0, reps: 8)
+        manager.updatePendingEdit(setId: "set-1", weight: 100.0, reps: 10)
+        manager.updatePendingEdit(setId: "set-2", weight: 150.0, reps: 8)
 
-        manager.removePendingEdit(setId: 1)
+        manager.removePendingEdit(setId: "set-1")
 
-        #expect(manager.getPendingEdit(setId: 1) == nil)
-        #expect(manager.getPendingEdit(setId: 2) != nil)
+        #expect(manager.getPendingEdit(setId: "set-1") == nil)
+        #expect(manager.getPendingEdit(setId: "set-2") != nil)
     }
 
     @Test("updatePendingEdit with both nil removes edit")
     func updatePendingEditBothNilRemoves() {
         let defaults = MockUserDefaults()
         let manager = WorkoutStateManager(userDefaults: defaults)
-        manager.initializeForWorkout(workoutId: 1)
+        manager.initializeForWorkout(workoutId: "workout-1")
 
-        manager.updatePendingEdit(setId: 1, weight: 100.0, reps: 10)
-        manager.updatePendingEdit(setId: 1, weight: nil, reps: nil)
+        manager.updatePendingEdit(setId: "set-1", weight: 100.0, reps: 10)
+        manager.updatePendingEdit(setId: "set-1", weight: nil, reps: nil)
 
-        #expect(manager.getPendingEdit(setId: 1) == nil)
+        #expect(manager.getPendingEdit(setId: "set-1") == nil)
     }
 }

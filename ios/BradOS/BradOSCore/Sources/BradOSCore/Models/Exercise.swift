@@ -2,7 +2,7 @@ import Foundation
 
 /// An exercise in the exercise library
 public struct Exercise: Identifiable, Codable, Hashable, Sendable {
-    public let id: Int
+    public let id: String
     public var name: String
     public var weightIncrement: Double
     public var isCustom: Bool
@@ -19,7 +19,7 @@ public struct Exercise: Identifiable, Codable, Hashable, Sendable {
     }
 
     public init(
-        id: Int,
+        id: String,
         name: String,
         weightIncrement: Double,
         isCustom: Bool,
@@ -76,7 +76,7 @@ public struct UpdateExerciseDTO: Encodable, Sendable {
 public extension Exercise {
     static let mockExercises: [Exercise] = [
         Exercise(
-            id: 1,
+            id: "mock-exercise-1",
             name: "Bench Press",
             weightIncrement: 5,
             isCustom: false,
@@ -84,7 +84,7 @@ public extension Exercise {
             updatedAt: Date()
         ),
         Exercise(
-            id: 2,
+            id: "mock-exercise-2",
             name: "Squat",
             weightIncrement: 5,
             isCustom: false,
@@ -92,7 +92,7 @@ public extension Exercise {
             updatedAt: Date()
         ),
         Exercise(
-            id: 3,
+            id: "mock-exercise-3",
             name: "Deadlift",
             weightIncrement: 5,
             isCustom: false,
@@ -100,7 +100,7 @@ public extension Exercise {
             updatedAt: Date()
         ),
         Exercise(
-            id: 4,
+            id: "mock-exercise-4",
             name: "Overhead Press",
             weightIncrement: 5,
             isCustom: false,
@@ -108,7 +108,7 @@ public extension Exercise {
             updatedAt: Date()
         ),
         Exercise(
-            id: 5,
+            id: "mock-exercise-5",
             name: "Barbell Row",
             weightIncrement: 5,
             isCustom: false,

@@ -9,7 +9,7 @@ struct HistoryView: View {
     @State private var selectedFilter: ActivityType? = nil
     @State private var showingDayDetail: Bool = false
     @State private var selectedDayActivities: [CalendarActivity] = []
-    @State private var pendingWorkoutId: Int? = nil
+    @State private var pendingWorkoutId: String? = nil
     @State private var pendingStretchSessionId: String? = nil
 
     init(apiClient: APIClientProtocol = APIClient.shared) {
@@ -340,7 +340,7 @@ struct CalendarDayCell: View {
 struct DayDetailSheet: View {
     let date: Date
     let activities: [CalendarActivity]
-    var onWorkoutTapped: ((Int) -> Void)? = nil
+    var onWorkoutTapped: ((String) -> Void)? = nil
     var onStretchTapped: ((String) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
@@ -390,9 +390,9 @@ struct DayDetailSheet: View {
     private func handleActivityTap(_ activity: CalendarActivity) {
         switch activity.type {
         case .workout:
-            // Extract workout ID from activity.id (format: "workout-123")
-            if let workoutIdString = activity.id.split(separator: "-").last,
-               let workoutId = Int(workoutIdString) {
+            // Extract workout ID from activity.id (format: "workout-{id}")
+            if activity.id.hasPrefix("workout-") {
+                let workoutId = String(activity.id.dropFirst("workout-".count))
                 onWorkoutTapped?(workoutId)
             }
         case .stretch:

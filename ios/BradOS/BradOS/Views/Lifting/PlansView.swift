@@ -144,7 +144,7 @@ struct PlanCard: View {
 
 /// Detail view for a single plan
 struct PlanDetailView: View {
-    let planId: Int
+    let planId: String
     @Environment(\.apiClient) private var apiClient
     @Environment(\.dismiss) private var dismiss
 

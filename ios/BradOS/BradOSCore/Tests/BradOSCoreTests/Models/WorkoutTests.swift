@@ -9,9 +9,9 @@ struct WorkoutTests {
     func decodesFromServerJSON() throws {
         let json = """
         {
-            "id": 1,
-            "mesocycle_id": 10,
-            "plan_day_id": 5,
+            "id": "workout-abc123",
+            "mesocycle_id": "meso-xyz789",
+            "plan_day_id": "planday-def456",
             "week_number": 2,
             "scheduled_date": "2026-01-15T00:00:00Z",
             "status": "pending"
@@ -21,9 +21,9 @@ struct WorkoutTests {
         let decoder = makeDecoder()
         let workout = try decoder.decode(Workout.self, from: json)
 
-        #expect(workout.id == 1)
-        #expect(workout.mesocycleId == 10)
-        #expect(workout.planDayId == 5)
+        #expect(workout.id == "workout-abc123")
+        #expect(workout.mesocycleId == "meso-xyz789")
+        #expect(workout.planDayId == "planday-def456")
         #expect(workout.weekNumber == 2)
         #expect(workout.status == .pending)
     }
@@ -74,9 +74,9 @@ struct WorkoutTests {
     func decodesInProgressStatus() throws {
         let json = """
         {
-            "id": 1,
-            "mesocycle_id": 1,
-            "plan_day_id": 1,
+            "id": "workout-1",
+            "mesocycle_id": "meso-1",
+            "plan_day_id": "planday-1",
             "week_number": 1,
             "scheduled_date": "2026-01-15T00:00:00Z",
             "status": "in_progress"
@@ -94,7 +94,7 @@ struct WorkoutExerciseTests {
     @Test("formattedRestTime shows seconds under 60")
     func formattedRestTimeSeconds() {
         let exercise = WorkoutExercise(
-            exerciseId: 1,
+            exerciseId: "exercise-1",
             exerciseName: "Test",
             sets: [],
             totalSets: 3,
@@ -108,7 +108,7 @@ struct WorkoutExerciseTests {
     @Test("formattedRestTime shows minutes for 60+")
     func formattedRestTimeMinutes() {
         let exercise = WorkoutExercise(
-            exerciseId: 1,
+            exerciseId: "exercise-1",
             exerciseName: "Test",
             sets: [],
             totalSets: 3,
@@ -122,7 +122,7 @@ struct WorkoutExerciseTests {
     @Test("formattedRestTime shows mixed for non-even minutes")
     func formattedRestTimeMixed() {
         let exercise = WorkoutExercise(
-            exerciseId: 1,
+            exerciseId: "exercise-1",
             exerciseName: "Test",
             sets: [],
             totalSets: 3,

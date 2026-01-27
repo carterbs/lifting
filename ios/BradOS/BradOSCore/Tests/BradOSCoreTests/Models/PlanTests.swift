@@ -9,7 +9,7 @@ struct PlanTests {
     func decodesFromServerJSON() throws {
         let json = """
         {
-            "id": 1,
+            "id": "plan-abc123",
             "name": "Push Pull Legs",
             "duration_weeks": 6,
             "created_at": "2026-01-01T00:00:00Z",
@@ -19,7 +19,7 @@ struct PlanTests {
 
         let plan = try makeDecoder().decode(Plan.self, from: json)
 
-        #expect(plan.id == 1)
+        #expect(plan.id == "plan-abc123")
         #expect(plan.name == "Push Pull Legs")
         #expect(plan.durationWeeks == 6)
     }
@@ -34,7 +34,7 @@ struct PlanTests {
     @Test("encodes and decodes roundtrip")
     func encodesDecodesRoundtrip() throws {
         let original = Plan(
-            id: 99,
+            id: "plan-99",
             name: "Test Plan",
             durationWeeks: 4,
             createdAt: Date(),
@@ -56,19 +56,19 @@ struct PlanDayTests {
 
     @Test("dayOfWeekName returns correct name")
     func dayOfWeekNameCorrect() {
-        let monday = PlanDay(id: 1, planId: 1, dayOfWeek: 1, name: "Push", sortOrder: 0)
+        let monday = PlanDay(id: "planday-1", planId: "plan-1", dayOfWeek: 1, name: "Push", sortOrder: 0)
         #expect(monday.dayOfWeekName == "Monday")
 
-        let friday = PlanDay(id: 2, planId: 1, dayOfWeek: 5, name: "Legs", sortOrder: 2)
+        let friday = PlanDay(id: "planday-2", planId: "plan-1", dayOfWeek: 5, name: "Legs", sortOrder: 2)
         #expect(friday.dayOfWeekName == "Friday")
 
-        let sunday = PlanDay(id: 3, planId: 1, dayOfWeek: 0, name: "Rest", sortOrder: 3)
+        let sunday = PlanDay(id: "planday-3", planId: "plan-1", dayOfWeek: 0, name: "Rest", sortOrder: 3)
         #expect(sunday.dayOfWeekName == "Sunday")
     }
 
     @Test("dayOfWeekName returns Unknown for invalid day")
     func dayOfWeekNameInvalid() {
-        let invalid = PlanDay(id: 1, planId: 1, dayOfWeek: 99, name: "Invalid", sortOrder: 0)
+        let invalid = PlanDay(id: "planday-1", planId: "plan-1", dayOfWeek: 99, name: "Invalid", sortOrder: 0)
         #expect(invalid.dayOfWeekName == "Unknown")
     }
 }

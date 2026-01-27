@@ -10,8 +10,8 @@ public enum MesocycleStatus: String, Codable, Sendable {
 
 /// A 6-week training cycle instance
 public struct Mesocycle: Identifiable, Codable, Hashable, Sendable {
-    public let id: Int
-    public let planId: Int
+    public let id: String
+    public let planId: String
     public var startDate: Date
     public var currentWeek: Int // 0-7 (7 is deload)
     public var status: MesocycleStatus
@@ -39,8 +39,8 @@ public struct Mesocycle: Identifiable, Codable, Hashable, Sendable {
     }
 
     public init(
-        id: Int,
-        planId: Int,
+        id: String,
+        planId: String,
         startDate: Date,
         currentWeek: Int,
         status: MesocycleStatus,
@@ -102,7 +102,7 @@ public struct WeekSummary: Identifiable, Codable, Hashable, Sendable {
 
 /// Brief summary of a workout for week views
 public struct WorkoutSummary: Identifiable, Codable, Hashable, Sendable {
-    public let id: Int
+    public let id: String
     public let scheduledDate: Date
     public var status: WorkoutStatus
     public var planDayName: String
@@ -114,7 +114,7 @@ public struct WorkoutSummary: Identifiable, Codable, Hashable, Sendable {
         case planDayName = "plan_day_name"
     }
 
-    public init(id: Int, scheduledDate: Date, status: WorkoutStatus, planDayName: String) {
+    public init(id: String, scheduledDate: Date, status: WorkoutStatus, planDayName: String) {
         self.id = id
         self.scheduledDate = scheduledDate
         self.status = status
@@ -128,8 +128,8 @@ public struct WorkoutSummary: Identifiable, Codable, Hashable, Sendable {
 // MARK: - Mock Data
 public extension Mesocycle {
     static let mockActiveMesocycle: Mesocycle = Mesocycle(
-        id: 1,
-        planId: 1,
+        id: "mock-meso-1",
+        planId: "mock-plan-1",
         startDate: Calendar.current.date(byAdding: .weekOfYear, value: -2, to: Date())!,
         currentWeek: 2,
         status: .active,
@@ -143,8 +143,8 @@ public extension Mesocycle {
 
     static let mockCompletedMesocycles: [Mesocycle] = [
         Mesocycle(
-            id: 2,
-            planId: 1,
+            id: "mock-meso-2",
+            planId: "mock-plan-1",
             startDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!,
             currentWeek: 7,
             status: .completed,

@@ -4,7 +4,7 @@ import BradOSCore
 
 /// Full workout tracking view with API integration
 struct WorkoutView: View {
-    let workoutId: Int
+    let workoutId: String
     @Environment(\.apiClient) private var apiClient
     @Environment(\.dismiss) private var dismiss
 
@@ -23,7 +23,7 @@ struct WorkoutView: View {
     @State private var showingSkipAlert = false
 
     // Local edit state (set ID -> edited values)
-    @State private var localSetEdits: [Int: SetEditState] = [:]
+    @State private var localSetEdits: [String: SetEditState] = [:]
 
     // Full-screen timer overlay
     @State private var showingTimerOverlay = false
@@ -560,7 +560,7 @@ struct WorkoutView: View {
         }
     }
 
-    private func addSet(exerciseId: Int) async {
+    private func addSet(exerciseId: String) async {
         do {
             let result = try await apiClient.addSet(workoutId: workoutId, exerciseId: exerciseId)
             if let newSet = result.currentWorkoutSet {
@@ -573,7 +573,7 @@ struct WorkoutView: View {
         }
     }
 
-    private func removeSet(exerciseId: Int) async {
+    private func removeSet(exerciseId: String) async {
         do {
             _ = try await apiClient.removeSet(workoutId: workoutId, exerciseId: exerciseId)
             removeLastPendingSetFromExercise(exerciseId: exerciseId)
@@ -586,7 +586,7 @@ struct WorkoutView: View {
 
     // MARK: - Local State Helpers
 
-    private func localSetEditsForExercise(_ exerciseId: Int) -> [Int: SetEditState] {
+    private func localSetEditsForExercise(_ exerciseId: String) -> [String: SetEditState] {
         guard let exercises = workout?.exercises,
               let exercise = exercises.first(where: { $0.exerciseId == exerciseId }) else {
             return [:]
@@ -595,12 +595,12 @@ struct WorkoutView: View {
         return localSetEdits.filter { setIds.contains($0.key) }
     }
 
-    private func updateLocalEdit(setId: Int, weight: Double, reps: Int) {
+    private func updateLocalEdit(setId: String, weight: Double, reps: Int) {
         localSetEdits[setId] = SetEditState(weight: weight, reps: Double(reps))
         stateManager.updatePendingEdit(setId: setId, weight: weight, reps: reps)
     }
 
-    private func cascadeValue(setId: Int, weight: Double, reps: Int, editedField: EditedField, in exercise: WorkoutExercise) {
+    private func cascadeValue(setId: String, weight: Double, reps: Int, editedField: EditedField, in exercise: WorkoutExercise) {
         guard let setIndex = exercise.sets.firstIndex(where: { $0.id == setId }) else { return }
         let currentSet = exercise.sets[setIndex]
 
@@ -635,7 +635,7 @@ struct WorkoutView: View {
         }
     }
 
-    private func updateSetInWorkout(setId: Int, status: SetStatus, actualWeight: Double?, actualReps: Int?) {
+    private func updateSetInWorkout(setId: String, status: SetStatus, actualWeight: Double?, actualReps: Int?) {
         guard var workout = workout,
               var exercises = workout.exercises else { return }
 
@@ -655,7 +655,7 @@ struct WorkoutView: View {
         self.workout = workout
     }
 
-    private func appendSetToExercise(exerciseId: Int, set: WorkoutSet) {
+    private func appendSetToExercise(exerciseId: String, set: WorkoutSet) {
         guard var workout = workout,
               var exercises = workout.exercises,
               let exerciseIndex = exercises.firstIndex(where: { $0.exerciseId == exerciseId }) else { return }
@@ -666,7 +666,7 @@ struct WorkoutView: View {
         self.workout = workout
     }
 
-    private func removeLastPendingSetFromExercise(exerciseId: Int) {
+    private func removeLastPendingSetFromExercise(exerciseId: String) {
         guard var workout = workout,
               var exercises = workout.exercises,
               let exerciseIndex = exercises.firstIndex(where: { $0.exerciseId == exerciseId }) else { return }
@@ -685,7 +685,7 @@ struct WorkoutView: View {
 
     // MARK: - Rest Timer
 
-    private func startRestTimer(targetSeconds: Int, exerciseId: Int, setNumber: Int) {
+    private func startRestTimer(targetSeconds: Int, exerciseId: String, setNumber: Int) {
         restTimer.start(
             targetSeconds: targetSeconds,
             exerciseId: exerciseId,
@@ -724,10 +724,10 @@ enum EditedField {
 /// Card displaying an exercise with its sets
 struct ExerciseCard: View {
     let exercise: WorkoutExercise
-    let workoutId: Int
+    let workoutId: String
     let isEditable: Bool
-    let localEdits: [Int: SetEditState]
-    let onSetEdited: (Int, Double, Int, EditedField) -> Void
+    let localEdits: [String: SetEditState]
+    let onSetEdited: (String, Double, Int, EditedField) -> Void
     let onLogSet: (WorkoutSet) -> Void
     let onUnlogSet: (WorkoutSet) -> Void
     let onSkipSet: (WorkoutSet) -> Void
@@ -1017,7 +1017,7 @@ struct SetRow: View {
 
 #Preview {
     NavigationStack {
-        WorkoutView(workoutId: 1)
+        WorkoutView(workoutId: "1")
     }
     .environment(\.apiClient, MockAPIClient())
     .preferredColorScheme(.dark)

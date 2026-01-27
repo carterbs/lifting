@@ -4,16 +4,16 @@ import Foundation
 
 /// Persisted workout state for crash recovery
 public struct StoredWorkoutState: Codable, Sendable {
-    public let workoutId: Int
-    public var sets: [Int: StoredSetState]  // setId -> state
-    public var pendingEdits: [Int: PendingEdit]  // setId -> uncommitted edits
+    public let workoutId: String
+    public var sets: [String: StoredSetState]  // setId -> state
+    public var pendingEdits: [String: PendingEdit]  // setId -> uncommitted edits
     public var lastUpdated: Date
     public var activeTimer: StoredTimerState?
 
     public init(
-        workoutId: Int,
-        sets: [Int: StoredSetState] = [:],
-        pendingEdits: [Int: PendingEdit] = [:],
+        workoutId: String,
+        sets: [String: StoredSetState] = [:],
+        pendingEdits: [String: PendingEdit] = [:],
         lastUpdated: Date = Date(),
         activeTimer: StoredTimerState? = nil
     ) {
@@ -53,10 +53,10 @@ public struct PendingEdit: Codable, Sendable {
 public struct StoredTimerState: Codable, Sendable {
     public let startedAt: Date
     public let targetSeconds: Int
-    public let exerciseId: Int
+    public let exerciseId: String
     public let setNumber: Int
 
-    public init(startedAt: Date, targetSeconds: Int, exerciseId: Int, setNumber: Int) {
+    public init(startedAt: Date, targetSeconds: Int, exerciseId: String, setNumber: Int) {
         self.startedAt = startedAt
         self.targetSeconds = targetSeconds
         self.exerciseId = exerciseId
@@ -122,7 +122,7 @@ public final class WorkoutStateManager: ObservableObject {
     // MARK: - Set State Updates
 
     /// Update the state for a specific set
-    public func updateSet(setId: Int, reps: Int, weight: Double, status: SetStatus) {
+    public func updateSet(setId: String, reps: Int, weight: Double, status: SetStatus) {
         guard var state = currentState else { return }
 
         state.sets[setId] = StoredSetState(
@@ -136,7 +136,7 @@ public final class WorkoutStateManager: ObservableObject {
     }
 
     /// Update pending edits for a set (before logging)
-    public func updatePendingEdit(setId: Int, weight: Double?, reps: Int?) {
+    public func updatePendingEdit(setId: String, weight: Double?, reps: Int?) {
         guard var state = currentState else { return }
 
         if weight == nil && reps == nil {
@@ -150,12 +150,12 @@ public final class WorkoutStateManager: ObservableObject {
     }
 
     /// Get pending edits for a specific set
-    public func getPendingEdit(setId: Int) -> PendingEdit? {
+    public func getPendingEdit(setId: String) -> PendingEdit? {
         currentState?.pendingEdits[setId]
     }
 
     /// Remove a pending edit
-    public func removePendingEdit(setId: Int) {
+    public func removePendingEdit(setId: String) {
         guard var state = currentState else { return }
         state.pendingEdits.removeValue(forKey: setId)
         state.lastUpdated = Date()
@@ -188,7 +188,7 @@ public final class WorkoutStateManager: ObservableObject {
     // MARK: - Initialization for New Workout
 
     /// Initialize state for a new workout
-    public func initializeForWorkout(workoutId: Int) {
+    public func initializeForWorkout(workoutId: String) {
         let state = StoredWorkoutState(
             workoutId: workoutId,
             sets: [:],
@@ -200,7 +200,7 @@ public final class WorkoutStateManager: ObservableObject {
     }
 
     /// Check if stored state matches a workout ID
-    public func hasStateForWorkout(workoutId: Int) -> Bool {
+    public func hasStateForWorkout(workoutId: String) -> Bool {
         currentState?.workoutId == workoutId
     }
 
