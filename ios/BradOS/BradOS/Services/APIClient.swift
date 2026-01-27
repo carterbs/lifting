@@ -54,10 +54,11 @@ final class APIClient: APIClientProtocol {
             }
 
             // Try date-only format (YYYY-MM-DD)
+            // Use local timezone since the server already converts to local date
             let dateOnlyFormatter = DateFormatter()
             dateOnlyFormatter.dateFormat = "yyyy-MM-dd"
             dateOnlyFormatter.locale = Locale(identifier: "en_US_POSIX")
-            dateOnlyFormatter.timeZone = TimeZone(identifier: "UTC")
+            dateOnlyFormatter.timeZone = TimeZone.current
             if let date = dateOnlyFormatter.date(from: dateString) {
                 return date
             }
@@ -370,7 +371,7 @@ final class APIClient: APIClientProtocol {
         }
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.timeZone = TimeZone.current
         let dateString = formatter.string(from: startDate)
         return try await post("/mesocycles", body: CreateMesocycleBody(plan_id: planId, start_date: dateString))
     }

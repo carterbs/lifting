@@ -18,15 +18,15 @@ import {
 /**
  * Convert a UTC ISO timestamp to a local date string (YYYY-MM-DD) given a timezone offset.
  * @param isoTimestamp - UTC timestamp in ISO format (e.g., "2024-01-15T03:00:00.000Z")
- * @param timezoneOffsetMinutes - Timezone offset in minutes from Date.getTimezoneOffset()
- *                                 (positive for west of UTC, negative for east)
+ * @param timezoneOffsetMinutes - Timezone offset in minutes from TimeZone.secondsFromGMT() / 60
+ *                                 (negative for west of UTC, positive for east)
  * @returns Local date string in YYYY-MM-DD format
  */
 export function utcToLocalDate(isoTimestamp: string, timezoneOffsetMinutes: number): string {
   const utcTime = new Date(isoTimestamp).getTime();
-  // Subtract offset because getTimezoneOffset() returns positive for west of UTC
-  // localTime = utcTime - (offsetMinutes * 60 * 1000)
-  const localTime = utcTime - timezoneOffsetMinutes * 60 * 1000;
+  // Add offset because iOS sends secondsFromGMT/60 (negative for west, e.g., -300 for EST)
+  // localTime = utcTime + (offsetMinutes * 60 * 1000)
+  const localTime = utcTime + timezoneOffsetMinutes * 60 * 1000;
   const localDate = new Date(localTime);
   // Extract the UTC components of the adjusted date (which now represent local time)
   const year = localDate.getUTCFullYear();
