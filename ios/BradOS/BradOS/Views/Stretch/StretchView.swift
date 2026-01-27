@@ -137,8 +137,12 @@ struct StretchView: View {
                 }
             }
             .onDisappear {
-                // Clean up session manager when view is dismissed to prevent
-                // lingering timers/observers from causing issues
+                // Only cleanup if not dismissing from complete state.
+                // When status is .complete, calling reset() changes status to .idle,
+                // which triggers SwiftUI to re-render (showing StretchSetupView instead of
+                // StretchCompleteView) while the view is being dismissed. This race condition
+                // prevents navigation from completing properly.
+                guard sessionManager.status != .complete else { return }
                 sessionManager.reset()
             }
         }
@@ -895,95 +899,98 @@ struct StretchCompleteView: View {
     @State private var showSuccessAnimation = false
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.xl) {
-            Spacer()
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: Theme.Spacing.xl) {
+                    // Success header with icon
+                    VStack(spacing: Theme.Spacing.md) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 80))
+                            .foregroundColor(Theme.stretch)
+                            .scaleEffect(showSuccessAnimation ? 1.0 : 0.5)
+                            .opacity(showSuccessAnimation ? 1.0 : 0.0)
+                            .accessibilityHidden(true)
 
-            // Success header with icon
-            VStack(spacing: Theme.Spacing.md) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(Theme.stretch)
-                    .scaleEffect(showSuccessAnimation ? 1.0 : 0.5)
-                    .opacity(showSuccessAnimation ? 1.0 : 0.0)
-                    .accessibilityHidden(true)
+                        Text("Great Stretch!")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(Theme.textPrimary)
+                            .opacity(showSuccessAnimation ? 1.0 : 0.0)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Stretching session complete. Great stretch!")
+                    .onAppear {
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                            showSuccessAnimation = true
+                        }
+                    }
+                    .padding(.top, Theme.Spacing.xl)
 
-                Text("Great Stretch!")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(Theme.textPrimary)
-                    .opacity(showSuccessAnimation ? 1.0 : 0.0)
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("Stretching session complete. Great stretch!")
-            .onAppear {
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    showSuccessAnimation = true
-                }
-            }
+                    // Stats
+                    VStack(spacing: Theme.Spacing.md) {
+                        StatRow(label: "Duration", value: formattedDuration, valueColor: Theme.stretch)
+                        StatRow(label: "Stretches Completed", value: "\(completedCount)", valueColor: Theme.stretch)
+                        if skippedCount > 0 {
+                            StatRow(label: "Stretches Skipped", value: "\(skippedCount)", valueColor: Theme.statusSkipped)
+                        }
+                    }
+                    .padding(Theme.Spacing.md)
+                    .cardStyle()
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(sessionSummaryAccessibilityLabel)
 
-            // Stats
-            VStack(spacing: Theme.Spacing.md) {
-                StatRow(label: "Duration", value: formattedDuration, valueColor: Theme.stretch)
-                StatRow(label: "Stretches Completed", value: "\(completedCount)", valueColor: Theme.stretch)
-                if skippedCount > 0 {
-                    StatRow(label: "Stretches Skipped", value: "\(skippedCount)", valueColor: Theme.statusSkipped)
-                }
-            }
-            .padding(Theme.Spacing.md)
-            .cardStyle()
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(sessionSummaryAccessibilityLabel)
-
-            // Stretch breakdown
-            if !sessionManager.completedStretches.isEmpty {
-                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    Text("Session Details")
-                        .font(.headline)
-                        .foregroundColor(Theme.textPrimary)
-                        .padding(.bottom, Theme.Spacing.xs)
-
-                    ForEach(sessionManager.completedStretches) { completed in
-                        HStack {
-                            Image(systemName: completed.region.iconName)
-                                .foregroundColor(Theme.stretch)
-                                .frame(width: 24)
-                                .accessibilityHidden(true)
-
-                            Text(completed.stretchName)
-                                .font(.subheadline)
+                    // Stretch breakdown
+                    if !sessionManager.completedStretches.isEmpty {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                            Text("Session Details")
+                                .font(.headline)
                                 .foregroundColor(Theme.textPrimary)
+                                .padding(.bottom, Theme.Spacing.xs)
 
-                            Spacer()
+                            ForEach(sessionManager.completedStretches) { completed in
+                                HStack {
+                                    Image(systemName: completed.region.iconName)
+                                        .foregroundColor(Theme.stretch)
+                                        .frame(width: 24)
+                                        .accessibilityHidden(true)
 
-                            if completed.skippedSegments == 2 {
-                                Text("Skipped")
-                                    .font(.caption)
-                                    .foregroundColor(Theme.statusSkipped)
-                            } else if completed.skippedSegments == 1 {
-                                Text("Partial")
-                                    .font(.caption)
-                                    .foregroundColor(Theme.warning)
-                            } else {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(Theme.stretch)
-                                    .accessibilityHidden(true)
+                                    Text(completed.stretchName)
+                                        .font(.subheadline)
+                                        .foregroundColor(Theme.textPrimary)
+
+                                    Spacer()
+
+                                    if completed.skippedSegments == 2 {
+                                        Text("Skipped")
+                                            .font(.caption)
+                                            .foregroundColor(Theme.statusSkipped)
+                                    } else if completed.skippedSegments == 1 {
+                                        Text("Partial")
+                                            .font(.caption)
+                                            .foregroundColor(Theme.warning)
+                                    } else {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(Theme.stretch)
+                                            .accessibilityHidden(true)
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel(stretchAccessibilityLabel(for: completed))
                             }
                         }
-                        .padding(.vertical, 4)
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel(stretchAccessibilityLabel(for: completed))
+                        .padding(Theme.Spacing.md)
+                        .cardStyle()
                     }
+
+                    // Save status indicator (matches MeditationCompleteView pattern)
+                    syncStatusView
                 }
-                .padding(Theme.Spacing.md)
-                .cardStyle()
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.bottom, Theme.Spacing.md)
             }
 
-            Spacer()
-
-            // Save status indicator (matches MeditationCompleteView pattern)
-            syncStatusView
-
-            // Actions
+            // Actions pinned at bottom
             VStack(spacing: Theme.Spacing.md) {
                 Button(action: onDone) {
                     Text("Done")
@@ -997,8 +1004,8 @@ struct StretchCompleteView: View {
                 }
                 .buttonStyle(SecondaryButtonStyle())
             }
+            .padding(Theme.Spacing.md)
         }
-        .padding(Theme.Spacing.md)
     }
 
     // MARK: - Sync Status
