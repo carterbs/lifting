@@ -10,6 +10,7 @@ import {
 import { validate } from '../middleware/validate.js';
 import { errorHandler, NotFoundError, ValidationError, ConflictError } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';
+import { requireAppCheck } from '../middleware/app-check.js';
 import { MesocycleService } from '../services/mesocycle.service.js';
 import { getFirestoreDb } from '../firebase.js';
 
@@ -17,6 +18,7 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 app.use(stripPathPrefix('mesocycles'));
+app.use(requireAppCheck);
 
 // Lazy service initialization
 let mesocycleService: MesocycleService | null = null;

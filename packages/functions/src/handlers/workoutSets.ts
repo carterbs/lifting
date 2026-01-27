@@ -9,12 +9,14 @@ import {
 import { validate } from '../middleware/validate.js';
 import { errorHandler, NotFoundError, ValidationError } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';
+import { requireAppCheck } from '../middleware/app-check.js';
 import { getWorkoutSetService } from '../services/index.js';
 
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 app.use(stripPathPrefix('workout-sets'));
+app.use(requireAppCheck);
 
 // PUT /workout-sets/:id/log
 app.put(

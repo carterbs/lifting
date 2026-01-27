@@ -21,6 +21,7 @@ import {
 import { validate } from '../middleware/validate.js';
 import { errorHandler, NotFoundError, ConflictError } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';
+import { requireAppCheck } from '../middleware/app-check.js';
 import {
   PlanRepository,
   PlanDayRepository,
@@ -35,6 +36,7 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 app.use(stripPathPrefix('plans'));
+app.use(requireAppCheck);
 
 // Lazy repository initialization
 let planRepo: PlanRepository | null = null;

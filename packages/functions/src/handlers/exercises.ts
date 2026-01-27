@@ -4,6 +4,7 @@ import { createExerciseSchema, updateExerciseSchema } from '@brad-os/shared';
 import { validate } from '../middleware/validate.js';
 import { errorHandler, NotFoundError, ConflictError } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';
+import { requireAppCheck } from '../middleware/app-check.js';
 import { ExerciseRepository } from '../repositories/exercise.repository.js';
 import { getFirestoreDb } from '../firebase.js';
 
@@ -11,6 +12,7 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 app.use(stripPathPrefix('exercises'));
+app.use(requireAppCheck);
 
 // Lazy repository initialization
 let exerciseRepo: ExerciseRepository | null = null;

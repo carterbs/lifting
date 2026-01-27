@@ -4,6 +4,7 @@ import { createMeditationSessionSchema } from '@brad-os/shared';
 import { validate } from '../middleware/validate.js';
 import { errorHandler, NotFoundError } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';
+import { requireAppCheck } from '../middleware/app-check.js';
 import { MeditationSessionRepository } from '../repositories/meditationSession.repository.js';
 import { getFirestoreDb } from '../firebase.js';
 
@@ -11,6 +12,7 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 app.use(stripPathPrefix('meditation-sessions'));
+app.use(requireAppCheck);
 
 // Lazy repository initialization
 let repo: MeditationSessionRepository | null = null;
