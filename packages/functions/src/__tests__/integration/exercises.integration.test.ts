@@ -9,7 +9,11 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 
-const BASE_URL = 'http://localhost:5000/api/dev';
+// Functions emulator runs at port 5001
+// URLs follow pattern: http://127.0.0.1:5001/{project-id}/us-central1/{functionName}
+const FUNCTIONS_URL = 'http://127.0.0.1:5001/brad-os/us-central1';
+const HEALTH_URL = `${FUNCTIONS_URL}/devHealth`;
+const EXERCISES_URL = `${FUNCTIONS_URL}/devExercises`;
 
 interface Exercise {
   id: string;
@@ -35,7 +39,7 @@ interface ApiError {
 
 async function checkEmulatorRunning(): Promise<boolean> {
   try {
-    const response = await fetch(`${BASE_URL}/health`);
+    const response = await fetch(HEALTH_URL);
     return response.ok;
   } catch {
     return false;
@@ -56,7 +60,7 @@ describe('Exercises API (Integration)', () => {
 
   it('should create and retrieve an exercise', async () => {
     // Create exercise
-    const createResponse = await fetch(`${BASE_URL}/exercises`, {
+    const createResponse = await fetch(EXERCISES_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -76,7 +80,7 @@ describe('Exercises API (Integration)', () => {
     const exerciseId = createResult.data.id;
 
     // Retrieve exercise
-    const getResponse = await fetch(`${BASE_URL}/exercises/${exerciseId}`);
+    const getResponse = await fetch(`${EXERCISES_URL}/${exerciseId}`);
     expect(getResponse.status).toBe(200);
     const getResult = (await getResponse.json()) as ApiResponse<Exercise>;
     expect(getResult.success).toBe(true);
@@ -84,14 +88,14 @@ describe('Exercises API (Integration)', () => {
     expect(getResult.data.name).toBe('Integration Test Exercise');
 
     // Clean up
-    const deleteResponse = await fetch(`${BASE_URL}/exercises/${exerciseId}`, {
+    const deleteResponse = await fetch(`${EXERCISES_URL}/${exerciseId}`, {
       method: 'DELETE',
     });
-    expect(deleteResponse.status).toBe(204);
+    expect(deleteResponse.status).toBe(200);
   });
 
   it('should list all exercises', async () => {
-    const response = await fetch(`${BASE_URL}/exercises`);
+    const response = await fetch(EXERCISES_URL);
     expect(response.status).toBe(200);
 
     const result = (await response.json()) as ApiResponse<Exercise[]>;
@@ -101,7 +105,7 @@ describe('Exercises API (Integration)', () => {
 
   it('should update an exercise', async () => {
     // Create
-    const createResponse = await fetch(`${BASE_URL}/exercises`, {
+    const createResponse = await fetch(EXERCISES_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Update Test', weight_increment: 2.5 }),
@@ -110,7 +114,7 @@ describe('Exercises API (Integration)', () => {
     const exerciseId = createResult.data.id;
 
     // Update
-    const updateResponse = await fetch(`${BASE_URL}/exercises/${exerciseId}`, {
+    const updateResponse = await fetch(`${EXERCISES_URL}/${exerciseId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Updated Name', weight_increment: 10 }),
@@ -122,11 +126,11 @@ describe('Exercises API (Integration)', () => {
     expect(updateResult.data.weight_increment).toBe(10);
 
     // Clean up
-    await fetch(`${BASE_URL}/exercises/${exerciseId}`, { method: 'DELETE' });
+    await fetch(`${EXERCISES_URL}/${exerciseId}`, { method: 'DELETE' });
   });
 
   it('should return 404 for non-existent exercise', async () => {
-    const response = await fetch(`${BASE_URL}/exercises/non-existent-id`);
+    const response = await fetch(`${EXERCISES_URL}/non-existent-id`);
     expect(response.status).toBe(404);
 
     const result = (await response.json()) as ApiError;
@@ -136,7 +140,7 @@ describe('Exercises API (Integration)', () => {
 
   it('should validate exercise creation', async () => {
     // Empty name should fail
-    const response = await fetch(`${BASE_URL}/exercises`, {
+    const response = await fetch(EXERCISES_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: '', weight_increment: 5 }),

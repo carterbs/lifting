@@ -27,8 +27,8 @@
     "emulators": "npm run build:functions && firebase emulators:start --import=./emulator-data --export-on-exit=./emulator-data",
     "emulators:fresh": "npm run build:functions && firebase emulators:start",
     "emulators:seed": "npm run build:functions && firebase emulators:start --import=./seed-data",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
-    "test:integration:watch": "vitest --config vitest.integration.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts --no-file-parallelism",
+    "test:integration:watch": "vitest --config vitest.integration.config.ts --no-file-parallelism",
     "seed:generate": "npx tsx scripts/generate-seed-data.ts"
   },
   "devDependencies": {

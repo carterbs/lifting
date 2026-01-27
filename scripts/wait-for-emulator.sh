@@ -12,7 +12,8 @@
 
 set -e
 
-HEALTH_URL="${HEALTH_URL:-http://localhost:5000/api/dev/health}"
+# Functions emulator runs at port 5001
+HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:5001/brad-os/us-central1/devHealth}"
 TIMEOUT="${2:-120}"  # Default 120 seconds
 INTERVAL=2
 

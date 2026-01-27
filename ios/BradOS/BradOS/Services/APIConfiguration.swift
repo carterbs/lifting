@@ -13,8 +13,8 @@ struct APIConfiguration {
     private static let devCloudFunctionsURL = "https://brad-os.web.app/api/dev"
     private static let prodCloudFunctionsURL = "https://brad-os.web.app/api/prod"
 
-    /// Firebase Emulator URL (hosting emulator serves at port 5000)
-    private static let emulatorURL = "http://localhost:5000/api/dev"
+    /// Firebase Emulator URL (hosting emulator serves at port 5002)
+    private static let emulatorURL = "http://localhost:5002/api/dev"
 
     /// Default configuration based on build settings
     static var `default`: APIConfiguration {

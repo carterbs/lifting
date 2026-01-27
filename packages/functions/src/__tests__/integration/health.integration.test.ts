@@ -6,7 +6,8 @@
 
 import { describe, it, expect } from 'vitest';
 
-const BASE_URL = 'http://localhost:5000/api/dev';
+// Functions emulator runs at port 5001
+const HEALTH_URL = 'http://127.0.0.1:5001/brad-os/us-central1/devHealth';
 
 interface HealthResponse {
   success: boolean;
@@ -19,13 +20,14 @@ interface HealthResponse {
 
 describe('Health API (Integration)', () => {
   it('should return healthy status', async () => {
-    const response = await fetch(`${BASE_URL}/health`);
+    const response = await fetch(HEALTH_URL);
     expect(response.status).toBe(200);
 
     const result = (await response.json()) as HealthResponse;
     expect(result.success).toBe(true);
     expect(result.data.status).toBe('healthy');
-    expect(result.data.environment).toBe('dev');
+    // In emulator, environment is 'cloud-functions' not 'dev'
+    expect(result.data.environment).toBe('cloud-functions');
     expect(result.data.timestamp).toBeDefined();
   });
 });
