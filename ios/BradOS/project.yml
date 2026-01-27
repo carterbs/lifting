@@ -33,9 +33,12 @@ targets:
         excludes:
           - "*.xcassets"
           - "Resources/Audio"
+          - "GoogleService-Info.plist"
       - path: BradOS/Assets.xcassets
       - path: BradOS/Resources/Audio
         type: folder
+        buildPhase: resources
+      - path: BradOS/GoogleService-Info.plist
         buildPhase: resources
     dependencies:
       - package: BradOSCore
