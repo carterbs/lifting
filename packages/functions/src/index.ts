@@ -16,6 +16,9 @@ import { workoutsApp } from './handlers/workouts.js';
 import { workoutSetsApp } from './handlers/workoutSets.js';
 import { calendarApp } from './handlers/calendar.js';
 
+// Import handler apps - Phase 5: Mesocycle with Batch Writes
+import { mesocyclesApp } from './handlers/mesocycles.js';
+
 // Common options
 const defaultOptions: HttpsOptions = {
   region: 'us-central1',
@@ -33,3 +36,6 @@ export const plans = onRequest(defaultOptions, plansApp);
 export const workouts = onRequest(defaultOptions, workoutsApp);
 export const workoutSets = onRequest(defaultOptions, workoutSetsApp);
 export const calendar = onRequest(defaultOptions, calendarApp);
+
+// Export functions - Phase 5: Mesocycle with Batch Writes
+export const mesocycles = onRequest(defaultOptions, mesocyclesApp);

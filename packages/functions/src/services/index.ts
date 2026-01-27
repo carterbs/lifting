@@ -1,5 +1,6 @@
 import type { Firestore } from 'firebase-admin/firestore';
 import { getFirestoreDb } from '../firebase.js';
+import { MesocycleService } from './mesocycle.service.js';
 import { WorkoutSetService } from './workout-set.service.js';
 import { WorkoutService } from './workout.service.js';
 import { ProgressionService } from './progression.service.js';
@@ -8,6 +9,7 @@ import { PlanModificationService } from './plan-modification.service.js';
 import { CalendarService } from './calendar.service.js';
 import { createRepositories } from '../repositories/index.js';
 
+export { MesocycleService } from './mesocycle.service.js';
 export { WorkoutSetService } from './workout-set.service.js';
 export { WorkoutService } from './workout.service.js';
 export { ProgressionService } from './progression.service.js';
@@ -24,6 +26,7 @@ export type {
 } from './dynamic-progression.service.js';
 
 // Singleton instances for use with the default database
+let mesocycleService: MesocycleService | null = null;
 let workoutSetService: WorkoutSetService | null = null;
 let workoutService: WorkoutService | null = null;
 let progressionService: ProgressionService | null = null;
@@ -33,12 +36,20 @@ let calendarService: CalendarService | null = null;
 
 // Reset all service singletons (for testing)
 export function resetServices(): void {
+  mesocycleService = null;
   workoutSetService = null;
   workoutService = null;
   progressionService = null;
   dynamicProgressionService = null;
   planModificationService = null;
   calendarService = null;
+}
+
+export function getMesocycleService(): MesocycleService {
+  if (!mesocycleService) {
+    mesocycleService = new MesocycleService(getFirestoreDb());
+  }
+  return mesocycleService;
 }
 
 export function getWorkoutSetService(): WorkoutSetService {
@@ -89,6 +100,7 @@ export function getCalendarService(): CalendarService {
 
 // Helper to create services with a custom database (useful for testing)
 export function createServices(db: Firestore): {
+  mesocycle: MesocycleService;
   workoutSet: WorkoutSetService;
   workout: WorkoutService;
   progression: ProgressionService;
@@ -99,6 +111,7 @@ export function createServices(db: Firestore): {
   const repos = createRepositories(db);
   const progression = new ProgressionService();
   return {
+    mesocycle: new MesocycleService(db),
     workoutSet: new WorkoutSetService(db),
     workout: new WorkoutService(db),
     progression,
