@@ -64,15 +64,15 @@ struct LiftingTabView: View {
 // MARK: - Navigation Destinations
 
 struct WorkoutDestination: Hashable {
-    let workoutId: Int
+    let workoutId: String
 }
 
 struct PlanDestination: Hashable {
-    let planId: Int
+    let planId: String
 }
 
 struct ExerciseHistoryDestination: Hashable {
-    let exerciseId: Int
+    let exerciseId: String
     let exerciseName: String
 }
 

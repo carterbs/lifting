@@ -244,25 +244,25 @@ final class APIClient: APIClientProtocol {
         try await getOptional("/workouts/today")
     }
 
-    func getWorkout(id: Int) async throws -> Workout {
+    func getWorkout(id: String) async throws -> Workout {
         try await get("/workouts/\(id)")
     }
 
-    func startWorkout(id: Int) async throws -> Workout {
+    func startWorkout(id: String) async throws -> Workout {
         try await put("/workouts/\(id)/start")
     }
 
-    func completeWorkout(id: Int) async throws -> Workout {
+    func completeWorkout(id: String) async throws -> Workout {
         try await put("/workouts/\(id)/complete")
     }
 
-    func skipWorkout(id: Int) async throws -> Workout {
+    func skipWorkout(id: String) async throws -> Workout {
         try await put("/workouts/\(id)/skip")
     }
 
     // MARK: - Workout Sets
 
-    func logSet(id: Int, actualReps: Int, actualWeight: Double) async throws -> WorkoutSet {
+    func logSet(id: String, actualReps: Int, actualWeight: Double) async throws -> WorkoutSet {
         struct LogSetBody: Encodable {
             let actual_reps: Int
             let actual_weight: Double
@@ -270,19 +270,19 @@ final class APIClient: APIClientProtocol {
         return try await put("/workout-sets/\(id)/log", body: LogSetBody(actual_reps: actualReps, actual_weight: actualWeight))
     }
 
-    func skipSet(id: Int) async throws -> WorkoutSet {
+    func skipSet(id: String) async throws -> WorkoutSet {
         try await put("/workout-sets/\(id)/skip")
     }
 
-    func unlogSet(id: Int) async throws -> WorkoutSet {
+    func unlogSet(id: String) async throws -> WorkoutSet {
         try await put("/workout-sets/\(id)/unlog")
     }
 
-    func addSet(workoutId: Int, exerciseId: Int) async throws -> ModifySetCountResult {
+    func addSet(workoutId: String, exerciseId: String) async throws -> ModifySetCountResult {
         try await post("/workouts/\(workoutId)/exercises/\(exerciseId)/sets/add", body: EmptyBody())
     }
 
-    func removeSet(workoutId: Int, exerciseId: Int) async throws -> ModifySetCountResult {
+    func removeSet(workoutId: String, exerciseId: String) async throws -> ModifySetCountResult {
         try await delete("/workouts/\(workoutId)/exercises/\(exerciseId)/sets/remove")
     }
 
@@ -292,7 +292,7 @@ final class APIClient: APIClientProtocol {
         try await get("/exercises")
     }
 
-    func getExercise(id: Int) async throws -> Exercise {
+    func getExercise(id: String) async throws -> Exercise {
         try await get("/exercises/\(id)")
     }
 
@@ -304,7 +304,7 @@ final class APIClient: APIClientProtocol {
         return try await post("/exercises", body: CreateExerciseBody(name: name, weight_increment: weightIncrement))
     }
 
-    func updateExercise(id: Int, name: String? = nil, weightIncrement: Double? = nil) async throws -> Exercise {
+    func updateExercise(id: String, name: String? = nil, weightIncrement: Double? = nil) async throws -> Exercise {
         struct UpdateExerciseBody: Encodable {
             let name: String?
             let weight_increment: Double?
@@ -312,11 +312,11 @@ final class APIClient: APIClientProtocol {
         return try await put("/exercises/\(id)", body: UpdateExerciseBody(name: name, weight_increment: weightIncrement))
     }
 
-    func deleteExercise(id: Int) async throws {
+    func deleteExercise(id: String) async throws {
         try await delete("/exercises/\(id)")
     }
 
-    func getExerciseHistory(id: Int) async throws -> ExerciseHistory {
+    func getExerciseHistory(id: String) async throws -> ExerciseHistory {
         try await get("/exercises/\(id)/history")
     }
 
@@ -326,7 +326,7 @@ final class APIClient: APIClientProtocol {
         try await get("/plans")
     }
 
-    func getPlan(id: Int) async throws -> Plan {
+    func getPlan(id: String) async throws -> Plan {
         try await get("/plans/\(id)")
     }
 
@@ -338,7 +338,7 @@ final class APIClient: APIClientProtocol {
         return try await post("/plans", body: CreatePlanBody(name: name, duration_weeks: durationWeeks))
     }
 
-    func updatePlan(id: Int, name: String? = nil, durationWeeks: Int? = nil) async throws -> Plan {
+    func updatePlan(id: String, name: String? = nil, durationWeeks: Int? = nil) async throws -> Plan {
         struct UpdatePlanBody: Encodable {
             let name: String?
             let duration_weeks: Int?
@@ -346,7 +346,7 @@ final class APIClient: APIClientProtocol {
         return try await put("/plans/\(id)", body: UpdatePlanBody(name: name, duration_weeks: durationWeeks))
     }
 
-    func deletePlan(id: Int) async throws {
+    func deletePlan(id: String) async throws {
         try await delete("/plans/\(id)")
     }
 
@@ -360,13 +360,13 @@ final class APIClient: APIClientProtocol {
         try await getOptional("/mesocycles/active")
     }
 
-    func getMesocycle(id: Int) async throws -> Mesocycle {
+    func getMesocycle(id: String) async throws -> Mesocycle {
         try await get("/mesocycles/\(id)")
     }
 
-    func createMesocycle(planId: Int, startDate: Date) async throws -> Mesocycle {
+    func createMesocycle(planId: String, startDate: Date) async throws -> Mesocycle {
         struct CreateMesocycleBody: Encodable {
-            let plan_id: Int
+            let plan_id: String
             let start_date: String
         }
         let formatter = DateFormatter()
@@ -376,15 +376,15 @@ final class APIClient: APIClientProtocol {
         return try await post("/mesocycles", body: CreateMesocycleBody(plan_id: planId, start_date: dateString))
     }
 
-    func startMesocycle(id: Int) async throws -> Mesocycle {
+    func startMesocycle(id: String) async throws -> Mesocycle {
         try await put("/mesocycles/\(id)/start")
     }
 
-    func completeMesocycle(id: Int) async throws -> Mesocycle {
+    func completeMesocycle(id: String) async throws -> Mesocycle {
         try await put("/mesocycles/\(id)/complete")
     }
 
-    func cancelMesocycle(id: Int) async throws -> Mesocycle {
+    func cancelMesocycle(id: String) async throws -> Mesocycle {
         try await put("/mesocycles/\(id)/cancel")
     }
 

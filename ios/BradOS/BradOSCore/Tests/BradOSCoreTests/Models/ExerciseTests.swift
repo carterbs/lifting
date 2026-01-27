@@ -9,7 +9,7 @@ struct ExerciseTests {
     func decodesFromServerJSON() throws {
         let json = """
         {
-            "id": 1,
+            "id": "exercise-abc123",
             "name": "Bench Press",
             "weight_increment": 5.0,
             "is_custom": true,
@@ -20,7 +20,7 @@ struct ExerciseTests {
 
         let exercise = try makeDecoder().decode(Exercise.self, from: json)
 
-        #expect(exercise.id == 1)
+        #expect(exercise.id == "exercise-abc123")
         #expect(exercise.name == "Bench Press")
         #expect(exercise.weightIncrement == 5.0)
         #expect(exercise.isCustom == true)
@@ -36,7 +36,7 @@ struct ExerciseTests {
     @Test("encodes and decodes roundtrip")
     func encodesDecodesRoundtrip() throws {
         let original = Exercise(
-            id: 99,
+            id: "exercise-99",
             name: "Test Exercise",
             weightIncrement: 2.5,
             isCustom: true,
@@ -56,7 +56,7 @@ struct ExerciseTests {
     func decodesWithDefaultWeightIncrement() throws {
         let json = """
         {
-            "id": 1,
+            "id": "exercise-squat-1",
             "name": "Squat",
             "weight_increment": 10.0,
             "is_custom": false,

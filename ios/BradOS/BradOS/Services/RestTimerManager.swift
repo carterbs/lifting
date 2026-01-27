@@ -18,7 +18,7 @@ final class RestTimerManager: ObservableObject {
     private var audioPlayer: AVAudioPlayer?
 
     // For state persistence
-    private(set) var exerciseId: Int?
+    private(set) var exerciseId: String?
     private(set) var setNumber: Int?
 
     // MARK: - Computed Properties
@@ -39,7 +39,7 @@ final class RestTimerManager: ObservableObject {
     // MARK: - Public Methods
 
     /// Start a new rest timer
-    func start(targetSeconds: Int, exerciseId: Int? = nil, setNumber: Int? = nil) {
+    func start(targetSeconds: Int, exerciseId: String? = nil, setNumber: Int? = nil) {
         // Stop any existing timer
         dismiss()
 
@@ -57,7 +57,7 @@ final class RestTimerManager: ObservableObject {
     }
 
     /// Restore a timer from persisted state
-    func restore(startedAt: Date, targetSeconds: Int, exerciseId: Int? = nil, setNumber: Int? = nil) {
+    func restore(startedAt: Date, targetSeconds: Int, exerciseId: String? = nil, setNumber: Int? = nil) {
         self.targetSeconds = targetSeconds
         self.exerciseId = exerciseId
         self.setNumber = setNumber

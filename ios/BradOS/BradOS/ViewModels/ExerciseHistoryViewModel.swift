@@ -21,9 +21,9 @@ class ExerciseHistoryViewModel: ObservableObject {
     // MARK: - Dependencies
 
     private let apiClient: APIClientProtocol
-    let exerciseId: Int
+    let exerciseId: String
 
-    init(exerciseId: Int, apiClient: APIClientProtocol = APIClient.shared) {
+    init(exerciseId: String, apiClient: APIClientProtocol = APIClient.shared) {
         self.exerciseId = exerciseId
         self.apiClient = apiClient
     }
@@ -154,31 +154,31 @@ class ExerciseHistoryViewModel: ObservableObject {
 
 extension ExerciseHistoryViewModel {
     /// Create a view model with mock data for previews
-    static func preview(exerciseId: Int = 1) -> ExerciseHistoryViewModel {
+    static func preview(exerciseId: String = "1") -> ExerciseHistoryViewModel {
         let viewModel = ExerciseHistoryViewModel(exerciseId: exerciseId, apiClient: MockAPIClient())
         viewModel.historyState = .loaded(ExerciseHistory.mockHistory)
         return viewModel
     }
 
     /// Create a view model simulating loading state
-    static func loading(exerciseId: Int = 1) -> ExerciseHistoryViewModel {
+    static func loading(exerciseId: String = "1") -> ExerciseHistoryViewModel {
         let viewModel = ExerciseHistoryViewModel(exerciseId: exerciseId, apiClient: MockAPIClient.withDelay(2.0))
         viewModel.historyState = .loading
         return viewModel
     }
 
     /// Create a view model simulating error state
-    static func error(exerciseId: Int = 1) -> ExerciseHistoryViewModel {
+    static func error(exerciseId: String = "1") -> ExerciseHistoryViewModel {
         let viewModel = ExerciseHistoryViewModel(exerciseId: exerciseId, apiClient: MockAPIClient.failing())
         viewModel.historyState = .error(APIError.notFound("Exercise not found"))
         return viewModel
     }
 
     /// Create a view model with no history entries
-    static func empty(exerciseId: Int = 1) -> ExerciseHistoryViewModel {
+    static func empty(exerciseId: String = "1") -> ExerciseHistoryViewModel {
         let viewModel = ExerciseHistoryViewModel(exerciseId: exerciseId, apiClient: MockAPIClient.empty)
         viewModel.historyState = .loaded(ExerciseHistory(
-            exerciseId: 1,
+            exerciseId: "1",
             exerciseName: "Bench Press",
             entries: [],
             personalRecord: nil

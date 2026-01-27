@@ -7,7 +7,7 @@ public class ExercisesViewModel: ObservableObject {
 
     @Published public private(set) var exercisesState: LoadState<[Exercise]> = .idle
     @Published public private(set) var isCreating = false
-    @Published public private(set) var deletingExerciseId: Int?
+    @Published public private(set) var deletingExerciseId: String?
     @Published public var createError: String?
     @Published public var deleteError: String?
 

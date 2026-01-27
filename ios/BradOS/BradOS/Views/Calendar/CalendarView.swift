@@ -10,7 +10,7 @@ struct CalendarView: View {
     @State private var selectedDate: Date = Date()
     @State private var showingDayDetail: Bool = false
     @State private var selectedDayActivities: [CalendarActivity] = []
-    @State private var pendingWorkoutId: Int? = nil
+    @State private var pendingWorkoutId: String? = nil
 
     init(apiClient: APIClientProtocol = APIClient.shared) {
         _viewModel = StateObject(wrappedValue: CalendarViewModel(apiClient: apiClient))

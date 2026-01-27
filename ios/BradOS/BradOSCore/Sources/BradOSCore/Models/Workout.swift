@@ -10,9 +10,9 @@ public enum WorkoutStatus: String, Codable, Sendable {
 
 /// A scheduled workout instance
 public struct Workout: Identifiable, Codable, Hashable, Sendable {
-    public let id: Int
-    public let mesocycleId: Int
-    public let planDayId: Int
+    public let id: String
+    public let mesocycleId: String
+    public let planDayId: String
     public var weekNumber: Int
     public var scheduledDate: Date
     public var status: WorkoutStatus
@@ -39,9 +39,9 @@ public struct Workout: Identifiable, Codable, Hashable, Sendable {
     }
 
     public init(
-        id: Int,
-        mesocycleId: Int,
-        planDayId: Int,
+        id: String,
+        mesocycleId: String,
+        planDayId: String,
         weekNumber: Int,
         scheduledDate: Date,
         status: WorkoutStatus,
@@ -76,8 +76,8 @@ public struct Workout: Identifiable, Codable, Hashable, Sendable {
 
 /// An exercise within a workout with all its sets
 public struct WorkoutExercise: Identifiable, Codable, Hashable, Sendable {
-    public var id: Int { exerciseId }
-    public let exerciseId: Int
+    public var id: String { exerciseId }
+    public let exerciseId: String
     public let exerciseName: String
     public var sets: [WorkoutSet]
     public var totalSets: Int
@@ -94,7 +94,7 @@ public struct WorkoutExercise: Identifiable, Codable, Hashable, Sendable {
     }
 
     public init(
-        exerciseId: Int,
+        exerciseId: String,
         exerciseName: String,
         sets: [WorkoutSet],
         totalSets: Int,
@@ -129,9 +129,9 @@ public enum SetStatus: String, Codable, Sendable {
 
 /// An individual set within a workout
 public struct WorkoutSet: Identifiable, Codable, Hashable, Sendable {
-    public let id: Int
-    public let workoutId: Int
-    public let exerciseId: Int
+    public let id: String
+    public let workoutId: String
+    public let exerciseId: String
     public var setNumber: Int
     public var targetReps: Int
     public var targetWeight: Double
@@ -152,9 +152,9 @@ public struct WorkoutSet: Identifiable, Codable, Hashable, Sendable {
     }
 
     public init(
-        id: Int,
-        workoutId: Int,
-        exerciseId: Int,
+        id: String,
+        workoutId: String,
+        exerciseId: String,
         setNumber: Int,
         targetReps: Int,
         targetWeight: Double,
@@ -177,9 +177,9 @@ public struct WorkoutSet: Identifiable, Codable, Hashable, Sendable {
 // MARK: - Mock Data
 public extension Workout {
     static let mockTodayWorkout: Workout = Workout(
-        id: 1,
-        mesocycleId: 1,
-        planDayId: 1,
+        id: "mock-workout-1",
+        mesocycleId: "mock-meso-1",
+        planDayId: "mock-planday-1",
         weekNumber: 2,
         scheduledDate: Date(),
         status: .pending,
@@ -187,24 +187,24 @@ public extension Workout {
         completedAt: nil,
         exercises: [
             WorkoutExercise(
-                exerciseId: 1,
+                exerciseId: "mock-exercise-1",
                 exerciseName: "Bench Press",
                 sets: [
-                    WorkoutSet(id: 1, workoutId: 1, exerciseId: 1, setNumber: 1, targetReps: 10, targetWeight: 135, actualReps: nil, actualWeight: nil, status: .pending),
-                    WorkoutSet(id: 2, workoutId: 1, exerciseId: 1, setNumber: 2, targetReps: 10, targetWeight: 135, actualReps: nil, actualWeight: nil, status: .pending),
-                    WorkoutSet(id: 3, workoutId: 1, exerciseId: 1, setNumber: 3, targetReps: 10, targetWeight: 135, actualReps: nil, actualWeight: nil, status: .pending)
+                    WorkoutSet(id: "mock-set-1", workoutId: "mock-workout-1", exerciseId: "mock-exercise-1", setNumber: 1, targetReps: 10, targetWeight: 135, actualReps: nil, actualWeight: nil, status: .pending),
+                    WorkoutSet(id: "mock-set-2", workoutId: "mock-workout-1", exerciseId: "mock-exercise-1", setNumber: 2, targetReps: 10, targetWeight: 135, actualReps: nil, actualWeight: nil, status: .pending),
+                    WorkoutSet(id: "mock-set-3", workoutId: "mock-workout-1", exerciseId: "mock-exercise-1", setNumber: 3, targetReps: 10, targetWeight: 135, actualReps: nil, actualWeight: nil, status: .pending)
                 ],
                 totalSets: 3,
                 completedSets: 0,
                 restSeconds: 90
             ),
             WorkoutExercise(
-                exerciseId: 4,
+                exerciseId: "mock-exercise-4",
                 exerciseName: "Overhead Press",
                 sets: [
-                    WorkoutSet(id: 4, workoutId: 1, exerciseId: 4, setNumber: 1, targetReps: 10, targetWeight: 95, actualReps: nil, actualWeight: nil, status: .pending),
-                    WorkoutSet(id: 5, workoutId: 1, exerciseId: 4, setNumber: 2, targetReps: 10, targetWeight: 95, actualReps: nil, actualWeight: nil, status: .pending),
-                    WorkoutSet(id: 6, workoutId: 1, exerciseId: 4, setNumber: 3, targetReps: 10, targetWeight: 95, actualReps: nil, actualWeight: nil, status: .pending)
+                    WorkoutSet(id: "mock-set-4", workoutId: "mock-workout-1", exerciseId: "mock-exercise-4", setNumber: 1, targetReps: 10, targetWeight: 95, actualReps: nil, actualWeight: nil, status: .pending),
+                    WorkoutSet(id: "mock-set-5", workoutId: "mock-workout-1", exerciseId: "mock-exercise-4", setNumber: 2, targetReps: 10, targetWeight: 95, actualReps: nil, actualWeight: nil, status: .pending),
+                    WorkoutSet(id: "mock-set-6", workoutId: "mock-workout-1", exerciseId: "mock-exercise-4", setNumber: 3, targetReps: 10, targetWeight: 95, actualReps: nil, actualWeight: nil, status: .pending)
                 ],
                 totalSets: 3,
                 completedSets: 0,

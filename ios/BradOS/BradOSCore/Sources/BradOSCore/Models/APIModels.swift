@@ -42,7 +42,7 @@ public struct MeditationStats: Codable, Sendable {
 
 /// Exercise history from API
 public struct ExerciseHistory: Codable, Sendable {
-    public let exerciseId: Int
+    public let exerciseId: String
     public let exerciseName: String
     public let entries: [ExerciseHistoryEntry]
     public let personalRecord: PersonalRecord?
@@ -55,7 +55,7 @@ public struct ExerciseHistory: Codable, Sendable {
     }
 
     public init(
-        exerciseId: Int,
+        exerciseId: String,
         exerciseName: String,
         entries: [ExerciseHistoryEntry],
         personalRecord: PersonalRecord?
@@ -81,11 +81,11 @@ public struct ExerciseHistory: Codable, Sendable {
 
 /// A single entry in exercise history
 public struct ExerciseHistoryEntry: Codable, Identifiable, Sendable {
-    public var id: Int { workoutId }
-    public let workoutId: Int
+    public var id: String { workoutId }
+    public let workoutId: String
     public let date: Date
     public let weekNumber: Int
-    public let mesocycleId: Int
+    public let mesocycleId: String
     public let sets: [HistorySet]
     public let bestWeight: Double
     public let bestSetReps: Int
@@ -101,10 +101,10 @@ public struct ExerciseHistoryEntry: Codable, Identifiable, Sendable {
     }
 
     public init(
-        workoutId: Int,
+        workoutId: String,
         date: Date,
         weekNumber: Int,
-        mesocycleId: Int,
+        mesocycleId: String,
         sets: [HistorySet],
         bestWeight: Double,
         bestSetReps: Int
@@ -164,7 +164,7 @@ public extension MeditationStats {
 
 public extension ExerciseHistory {
     static let mockHistory = ExerciseHistory(
-        exerciseId: 1,
+        exerciseId: "mock-exercise-1",
         exerciseName: "Bench Press",
         entries: [],
         personalRecord: PersonalRecord(

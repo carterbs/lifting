@@ -63,7 +63,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return mockWorkout
     }
 
-    public func getWorkout(id: Int) async throws -> Workout {
+    public func getWorkout(id: String) async throws -> Workout {
         await simulateDelay()
         try checkForError()
         guard let workout = mockWorkout else {
@@ -72,7 +72,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return workout
     }
 
-    public func startWorkout(id: Int) async throws -> Workout {
+    public func startWorkout(id: String) async throws -> Workout {
         await simulateDelay()
         try checkForError()
         guard var workout = mockWorkout else {
@@ -84,7 +84,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return workout
     }
 
-    public func completeWorkout(id: Int) async throws -> Workout {
+    public func completeWorkout(id: String) async throws -> Workout {
         await simulateDelay()
         try checkForError()
         guard var workout = mockWorkout else {
@@ -96,7 +96,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return workout
     }
 
-    public func skipWorkout(id: Int) async throws -> Workout {
+    public func skipWorkout(id: String) async throws -> Workout {
         await simulateDelay()
         try checkForError()
         guard var workout = mockWorkout else {
@@ -109,13 +109,13 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
 
     // MARK: - Workout Sets
 
-    public func logSet(id: Int, actualReps: Int, actualWeight: Double) async throws -> WorkoutSet {
+    public func logSet(id: String, actualReps: Int, actualWeight: Double) async throws -> WorkoutSet {
         await simulateDelay()
         try checkForError()
         return WorkoutSet(
             id: id,
-            workoutId: 1,
-            exerciseId: 1,
+            workoutId: "mock-workout-1",
+            exerciseId: "mock-exercise-1",
             setNumber: 1,
             targetReps: actualReps,
             targetWeight: actualWeight,
@@ -125,13 +125,13 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         )
     }
 
-    public func skipSet(id: Int) async throws -> WorkoutSet {
+    public func skipSet(id: String) async throws -> WorkoutSet {
         await simulateDelay()
         try checkForError()
         return WorkoutSet(
             id: id,
-            workoutId: 1,
-            exerciseId: 1,
+            workoutId: "mock-workout-1",
+            exerciseId: "mock-exercise-1",
             setNumber: 1,
             targetReps: 10,
             targetWeight: 100,
@@ -141,13 +141,13 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         )
     }
 
-    public func unlogSet(id: Int) async throws -> WorkoutSet {
+    public func unlogSet(id: String) async throws -> WorkoutSet {
         await simulateDelay()
         try checkForError()
         return WorkoutSet(
             id: id,
-            workoutId: 1,
-            exerciseId: 1,
+            workoutId: "mock-workout-1",
+            exerciseId: "mock-exercise-1",
             setNumber: 1,
             targetReps: 10,
             targetWeight: 100,
@@ -157,11 +157,11 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         )
     }
 
-    public func addSet(workoutId: Int, exerciseId: Int) async throws -> ModifySetCountResult {
+    public func addSet(workoutId: String, exerciseId: String) async throws -> ModifySetCountResult {
         await simulateDelay()
         try checkForError()
         let newSet = WorkoutSet(
-            id: Int.random(in: 1000...9999),
+            id: "mock-set-\(UUID().uuidString.prefix(8))",
             workoutId: workoutId,
             exerciseId: exerciseId,
             setNumber: 4,
@@ -178,7 +178,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         )
     }
 
-    public func removeSet(workoutId: Int, exerciseId: Int) async throws -> ModifySetCountResult {
+    public func removeSet(workoutId: String, exerciseId: String) async throws -> ModifySetCountResult {
         await simulateDelay()
         try checkForError()
         return ModifySetCountResult(
@@ -196,7 +196,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return mockExercises
     }
 
-    public func getExercise(id: Int) async throws -> Exercise {
+    public func getExercise(id: String) async throws -> Exercise {
         await simulateDelay()
         try checkForError()
         guard let exercise = mockExercises.first(where: { $0.id == id }) else {
@@ -208,7 +208,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
     public func createExercise(name: String, weightIncrement: Double) async throws -> Exercise {
         await simulateDelay()
         try checkForError()
-        let newId = (mockExercises.map { $0.id }.max() ?? 0) + 1
+        let newId = "mock-exercise-\(UUID().uuidString.prefix(8))"
         let exercise = Exercise(
             id: newId,
             name: name,
@@ -221,7 +221,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return exercise
     }
 
-    public func updateExercise(id: Int, name: String?, weightIncrement: Double?) async throws -> Exercise {
+    public func updateExercise(id: String, name: String?, weightIncrement: Double?) async throws -> Exercise {
         await simulateDelay()
         try checkForError()
         guard let index = mockExercises.firstIndex(where: { $0.id == id }) else {
@@ -239,13 +239,13 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return exercise
     }
 
-    public func deleteExercise(id: Int) async throws {
+    public func deleteExercise(id: String) async throws {
         await simulateDelay()
         try checkForError()
         mockExercises.removeAll { $0.id == id }
     }
 
-    public func getExerciseHistory(id: Int) async throws -> ExerciseHistory {
+    public func getExerciseHistory(id: String) async throws -> ExerciseHistory {
         await simulateDelay()
         try checkForError()
         guard let history = mockExerciseHistory else {
@@ -262,7 +262,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return mockPlans
     }
 
-    public func getPlan(id: Int) async throws -> Plan {
+    public func getPlan(id: String) async throws -> Plan {
         await simulateDelay()
         try checkForError()
         guard let plan = mockPlans.first(where: { $0.id == id }) else {
@@ -274,7 +274,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
     public func createPlan(name: String, durationWeeks: Int) async throws -> Plan {
         await simulateDelay()
         try checkForError()
-        let newId = (mockPlans.map { $0.id }.max() ?? 0) + 1
+        let newId = "mock-plan-\(UUID().uuidString.prefix(8))"
         let plan = Plan(
             id: newId,
             name: name,
@@ -287,7 +287,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return plan
     }
 
-    public func updatePlan(id: Int, name: String?, durationWeeks: Int?) async throws -> Plan {
+    public func updatePlan(id: String, name: String?, durationWeeks: Int?) async throws -> Plan {
         await simulateDelay()
         try checkForError()
         guard let index = mockPlans.firstIndex(where: { $0.id == id }) else {
@@ -305,7 +305,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return plan
     }
 
-    public func deletePlan(id: Int) async throws {
+    public func deletePlan(id: String) async throws {
         await simulateDelay()
         try checkForError()
         mockPlans.removeAll { $0.id == id }
@@ -325,7 +325,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return mockActiveMesocycle
     }
 
-    public func getMesocycle(id: Int) async throws -> Mesocycle {
+    public func getMesocycle(id: String) async throws -> Mesocycle {
         await simulateDelay()
         try checkForError()
         guard let mesocycle = mockMesocycles.first(where: { $0.id == id }) else {
@@ -334,10 +334,10 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return mesocycle
     }
 
-    public func createMesocycle(planId: Int, startDate: Date) async throws -> Mesocycle {
+    public func createMesocycle(planId: String, startDate: Date) async throws -> Mesocycle {
         await simulateDelay()
         try checkForError()
-        let newId = (mockMesocycles.map { $0.id }.max() ?? 0) + 1
+        let newId = "mock-mesocycle-\(UUID().uuidString.prefix(8))"
         let mesocycle = Mesocycle(
             id: newId,
             planId: planId,
@@ -355,7 +355,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return mesocycle
     }
 
-    public func startMesocycle(id: Int) async throws -> Mesocycle {
+    public func startMesocycle(id: String) async throws -> Mesocycle {
         await simulateDelay()
         try checkForError()
         guard let index = mockMesocycles.firstIndex(where: { $0.id == id }) else {
@@ -369,7 +369,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return mesocycle
     }
 
-    public func completeMesocycle(id: Int) async throws -> Mesocycle {
+    public func completeMesocycle(id: String) async throws -> Mesocycle {
         await simulateDelay()
         try checkForError()
         guard let index = mockMesocycles.firstIndex(where: { $0.id == id }) else {
@@ -385,7 +385,7 @@ public final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         return mesocycle
     }
 
-    public func cancelMesocycle(id: Int) async throws -> Mesocycle {
+    public func cancelMesocycle(id: String) async throws -> Mesocycle {
         await simulateDelay()
         try checkForError()
         guard let index = mockMesocycles.firstIndex(where: { $0.id == id }) else {

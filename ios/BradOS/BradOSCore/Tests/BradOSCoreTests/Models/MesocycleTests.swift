@@ -9,8 +9,8 @@ struct MesocycleTests {
     func decodesFromServerJSON() throws {
         let json = """
         {
-            "id": 1,
-            "plan_id": 5,
+            "id": "meso-abc123",
+            "plan_id": "plan-xyz789",
             "start_date": "2026-01-15T00:00:00Z",
             "current_week": 3,
             "status": "active",
@@ -21,8 +21,8 @@ struct MesocycleTests {
 
         let mesocycle = try makeDecoder().decode(Mesocycle.self, from: json)
 
-        #expect(mesocycle.id == 1)
-        #expect(mesocycle.planId == 5)
+        #expect(mesocycle.id == "meso-abc123")
+        #expect(mesocycle.planId == "plan-xyz789")
         #expect(mesocycle.currentWeek == 3)
         #expect(mesocycle.status == .active)
     }
@@ -97,8 +97,8 @@ struct WeekSummaryTests {
         let summary = WeekSummary(
             weekNumber: 1,
             workouts: [
-                WorkoutSummary(id: 1, scheduledDate: Date(), status: .completed, planDayName: "Day 1"),
-                WorkoutSummary(id: 2, scheduledDate: Date(), status: .skipped, planDayName: "Day 2")
+                WorkoutSummary(id: "workout-1", scheduledDate: Date(), status: .completed, planDayName: "Day 1"),
+                WorkoutSummary(id: "workout-2", scheduledDate: Date(), status: .skipped, planDayName: "Day 2")
             ],
             isDeload: false
         )
@@ -111,8 +111,8 @@ struct WeekSummaryTests {
         let summary = WeekSummary(
             weekNumber: 1,
             workouts: [
-                WorkoutSummary(id: 1, scheduledDate: Date(), status: .completed, planDayName: "Day 1"),
-                WorkoutSummary(id: 2, scheduledDate: Date(), status: .pending, planDayName: "Day 2")
+                WorkoutSummary(id: "workout-1", scheduledDate: Date(), status: .completed, planDayName: "Day 1"),
+                WorkoutSummary(id: "workout-2", scheduledDate: Date(), status: .pending, planDayName: "Day 2")
             ],
             isDeload: false
         )
