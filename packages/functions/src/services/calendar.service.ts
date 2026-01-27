@@ -6,7 +6,7 @@ import type {
   WorkoutActivitySummary,
   StretchActivitySummary,
   MeditationActivitySummary,
-} from '@brad-os/shared';
+} from '../shared.js';
 import {
   WorkoutRepository,
   WorkoutSetRepository,

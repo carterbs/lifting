@@ -1,6 +1,5 @@
 /**
- * Shared types and utilities for the Lifting app.
- * This package contains code shared between client and server.
+ * Shared types and utilities for the Brad OS app.
  */
 
 // Export all types

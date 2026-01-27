@@ -4,7 +4,7 @@ import type {
   CreateMesocycleDTO,
   UpdateMesocycleDTO,
   MesocycleStatus,
-} from '@brad-os/shared';
+} from '../shared.js';
 import { BaseRepository } from './base.repository.js';
 
 export class MesocycleRepository extends BaseRepository<

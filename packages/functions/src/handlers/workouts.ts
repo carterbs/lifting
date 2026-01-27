@@ -12,7 +12,7 @@ import {
   type UpdateWorkoutInput,
   type UpdateWorkoutDTO,
   type LogWorkoutSetInput,
-} from '@brad-os/shared';
+} from '../shared.js';
 import { validate } from '../middleware/validate.js';
 import { errorHandler, NotFoundError, ValidationError } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';

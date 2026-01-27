@@ -6,7 +6,7 @@ import {
   type Mesocycle,
   type MesocycleWithDetails,
   type CreateMesocycleRequest,
-} from '@brad-os/shared';
+} from '../shared.js';
 import { validate } from '../middleware/validate.js';
 import { errorHandler, NotFoundError, ValidationError, ConflictError } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';

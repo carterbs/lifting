@@ -3,16 +3,11 @@ import { defineWorkspace } from 'vitest/config';
 export default defineWorkspace([
   {
     test: {
-      name: 'shared',
-      root: './packages/shared',
+      name: 'functions',
+      root: './packages/functions',
       environment: 'node',
-    },
-  },
-  {
-    test: {
-      name: 'server',
-      root: './packages/server',
-      environment: 'node',
+      include: ['src/**/*.test.ts'],
+      exclude: ['src/__tests__/integration/**'],
     },
   },
 ]);

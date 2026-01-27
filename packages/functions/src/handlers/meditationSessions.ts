@@ -1,6 +1,6 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
-import { createMeditationSessionSchema } from '@brad-os/shared';
+import { createMeditationSessionSchema } from '../shared.js';
 import { validate } from '../middleware/validate.js';
 import { errorHandler, NotFoundError } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';

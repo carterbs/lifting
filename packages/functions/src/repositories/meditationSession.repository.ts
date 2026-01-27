@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type {
   MeditationSessionRecord,
   CreateMeditationSessionRequest,
-} from '@brad-os/shared';
+} from '../shared.js';
 import { getFirestoreDb, getCollectionName } from '../firebase.js';
 
 /**

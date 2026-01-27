@@ -2,7 +2,7 @@ import type {
   ExerciseProgression,
   WeekTargets,
   CompletionStatus,
-} from '@brad-os/shared';
+} from '../shared.js';
 
 /**
  * Service for calculating progressive overload targets for exercises

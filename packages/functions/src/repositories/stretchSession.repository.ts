@@ -4,7 +4,7 @@ import type {
   StretchSessionRecord,
   CreateStretchSessionRequest,
   CompletedStretch,
-} from '@brad-os/shared';
+} from '../shared.js';
 import { getFirestoreDb, getCollectionName } from '../firebase.js';
 
 /**

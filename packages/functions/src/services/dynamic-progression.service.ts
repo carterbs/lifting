@@ -1,7 +1,7 @@
 import type {
   ExerciseProgression,
   PreviousWeekPerformance,
-} from '@brad-os/shared';
+} from '../shared.js';
 
 /**
  * Result of dynamic progression calculation

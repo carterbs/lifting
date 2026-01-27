@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import type { ApiError } from '@brad-os/shared';
+import type { ApiError } from '../shared.js';
 
 export class AppError extends Error {
   constructor(

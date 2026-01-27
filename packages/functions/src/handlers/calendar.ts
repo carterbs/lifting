@@ -4,7 +4,7 @@ import {
   createSuccessResponse,
   createErrorResponse,
   type CalendarDataResponse,
-} from '@brad-os/shared';
+} from '../shared.js';
 import { getCalendarService } from '../services/index.js';
 import { errorHandler } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';

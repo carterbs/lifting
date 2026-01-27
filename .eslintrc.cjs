@@ -18,7 +18,6 @@ module.exports = {
     project: [
       './tsconfig.json',
       './packages/*/tsconfig.json',
-      './packages/server/tsconfig.test.json',
     ],
     tsconfigRootDir: __dirname,
   },
@@ -38,6 +37,7 @@ module.exports = {
   },
   ignorePatterns: [
     'dist/',
+    'lib/',
     'node_modules/',
     '*.config.js',
     '*.config.ts',

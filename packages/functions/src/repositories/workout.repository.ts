@@ -4,7 +4,7 @@ import type {
   CreateWorkoutDTO,
   UpdateWorkoutDTO,
   WorkoutStatus,
-} from '@brad-os/shared';
+} from '../shared.js';
 import { BaseRepository } from './base.repository.js';
 
 /**

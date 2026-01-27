@@ -1,5 +1,5 @@
 import type { Firestore } from 'firebase-admin/firestore';
-import type { WorkoutSet, LogWorkoutSetInput, ModifySetCountResult } from '@brad-os/shared';
+import type { WorkoutSet, LogWorkoutSetInput, ModifySetCountResult } from '../shared.js';
 import {
   WorkoutSetRepository,
   WorkoutRepository,

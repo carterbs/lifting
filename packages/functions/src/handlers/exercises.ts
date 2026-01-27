@@ -1,6 +1,6 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
-import { createExerciseSchema, updateExerciseSchema } from '@brad-os/shared';
+import { createExerciseSchema, updateExerciseSchema } from '../shared.js';
 import { validate } from '../middleware/validate.js';
 import { errorHandler, NotFoundError, ConflictError } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';

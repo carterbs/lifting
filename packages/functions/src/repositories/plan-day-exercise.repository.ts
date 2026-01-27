@@ -3,7 +3,7 @@ import type {
   PlanDayExercise,
   CreatePlanDayExerciseDTO,
   UpdatePlanDayExerciseDTO,
-} from '@brad-os/shared';
+} from '../shared.js';
 import { BaseRepository } from './base.repository.js';
 
 export class PlanDayExerciseRepository extends BaseRepository<

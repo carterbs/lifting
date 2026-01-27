@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "npm run emulators",
-    "build": "npm run build -w @brad-os/shared && npm run build -w @brad-os/functions",
+    "build": "npm run build -w @brad-os/functions",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"**/*.{ts,json,md}\"",

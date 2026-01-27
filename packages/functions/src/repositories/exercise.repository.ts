@@ -3,7 +3,7 @@ import type {
   Exercise,
   CreateExerciseDTO,
   UpdateExerciseDTO,
-} from '@brad-os/shared';
+} from '../shared.js';
 import { BaseRepository } from './base.repository.js';
 import { getCollectionName } from '../firebase.js';
 

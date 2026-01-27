@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
 import { getAppCheck } from 'firebase-admin/app-check';
-import type { ApiError } from '@brad-os/shared';
+import type { ApiError } from '../shared.js';
 
 // Log once at startup if running in emulator mode
 if (process.env['FUNCTIONS_EMULATOR'] === 'true') {

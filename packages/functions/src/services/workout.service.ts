@@ -5,7 +5,7 @@ import type {
   WorkoutExercise,
   ExerciseProgression,
   PreviousWeekPerformance,
-} from '@brad-os/shared';
+} from '../shared.js';
 import {
   WorkoutRepository,
   WorkoutSetRepository,

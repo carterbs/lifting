@@ -3,7 +3,7 @@ import {
   APP_VERSION,
   createSuccessResponse,
   createErrorResponse,
-} from './index.js';
+} from './shared.js';
 
 describe('shared utilities', () => {
   describe('APP_VERSION', () => {

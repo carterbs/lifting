@@ -1,5 +1,5 @@
 import type { Firestore } from 'firebase-admin/firestore';
-import type { Plan, CreatePlanDTO, UpdatePlanDTO } from '@brad-os/shared';
+import type { Plan, CreatePlanDTO, UpdatePlanDTO } from '../shared.js';
 import { BaseRepository } from './base.repository.js';
 import { getCollectionName } from '../firebase.js';
 

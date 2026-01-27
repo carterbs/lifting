@@ -10,7 +10,7 @@ import type {
   PlanDay,
   PlanDayExercise,
   Exercise,
-} from '@brad-os/shared';
+} from '../shared.js';
 import {
   MesocycleRepository,
   PlanRepository,
