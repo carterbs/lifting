@@ -9,3 +9,4 @@ export {
 
 export { validate, validateParams, validateQuery } from './validate.js';
 export { requireAppCheck } from './app-check.js';
+export { asyncHandler } from './async-handler.js';

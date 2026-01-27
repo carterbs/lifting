@@ -1,10 +1,11 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
-import { createStretchSessionSchema } from '../shared.js';
+import { createStretchSessionSchema, type CreateStretchSessionRequest } from '../shared.js';
 import { validate } from '../middleware/validate.js';
 import { errorHandler, NotFoundError } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';
 import { requireAppCheck } from '../middleware/app-check.js';
+import { asyncHandler } from '../middleware/async-handler.js';
 import { StretchSessionRepository } from '../repositories/stretchSession.repository.js';
 import { getFirestoreDb } from '../firebase.js';
 
@@ -17,54 +18,41 @@ app.use(requireAppCheck);
 // Lazy repository initialization
 let repo: StretchSessionRepository | null = null;
 function getRepo(): StretchSessionRepository {
-  if (!repo) {
+  if (repo === null) {
     repo = new StretchSessionRepository(getFirestoreDb());
   }
   return repo;
 }
 
 // POST /stretch-sessions
-app.post('/', validate(createStretchSessionSchema), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const session = await getRepo().create(req.body);
-    res.status(201).json({ success: true, data: session });
-  } catch (error) {
-    next(error);
-  }
-});
+app.post('/', validate(createStretchSessionSchema), asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+  const body = req.body as CreateStretchSessionRequest;
+  const session = await getRepo().create(body);
+  res.status(201).json({ success: true, data: session });
+}));
 
 // GET /stretch-sessions
-app.get('/', async (_req: Request, res: Response, next: NextFunction) => {
-  try {
-    const sessions = await getRepo().findAll();
-    res.json({ success: true, data: sessions });
-  } catch (error) {
-    next(error);
-  }
-});
+app.get('/', asyncHandler(async (_req: Request, res: Response, _next: NextFunction) => {
+  const sessions = await getRepo().findAll();
+  res.json({ success: true, data: sessions });
+}));
 
 // GET /stretch-sessions/latest
-app.get('/latest', async (_req: Request, res: Response, next: NextFunction) => {
-  try {
-    const session = await getRepo().findLatest();
-    res.json({ success: true, data: session });
-  } catch (error) {
-    next(error);
-  }
-});
+app.get('/latest', asyncHandler(async (_req: Request, res: Response, _next: NextFunction) => {
+  const session = await getRepo().findLatest();
+  res.json({ success: true, data: session });
+}));
 
 // GET /stretch-sessions/:id
-app.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const session = await getRepo().findById(req.params['id'] ?? '');
-    if (!session) {
-      throw new NotFoundError('StretchSession', req.params['id'] ?? '');
-    }
-    res.json({ success: true, data: session });
-  } catch (error) {
-    next(error);
+app.get('/:id', asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const id = req.params['id'] ?? '';
+  const session = await getRepo().findById(id);
+  if (session === null) {
+    next(new NotFoundError('StretchSession', id));
+    return;
   }
-});
+  res.json({ success: true, data: session });
+}));
 
 // Error handler must be last
 app.use(errorHandler);

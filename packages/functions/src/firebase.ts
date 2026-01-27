@@ -40,7 +40,7 @@ export function getFirestoreDb(): Firestore {
 export function getEnvironment(): 'dev' | 'prod' {
   // K_SERVICE is the function name in Cloud Functions v2
   // FUNCTION_NAME is for v1 (fallback)
-  const functionName = process.env.K_SERVICE || process.env.FUNCTION_NAME || '';
+  const functionName = process.env.K_SERVICE ?? process.env.FUNCTION_NAME ?? '';
   return functionName.startsWith('dev') ? 'dev' : 'prod';
 }
 

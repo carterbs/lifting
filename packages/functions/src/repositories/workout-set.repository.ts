@@ -223,7 +223,7 @@ export class WorkoutSetRepository extends BaseRepository<
 
     // Sort by completed_at, scheduled_date, set_number
     results.sort((a, b) => {
-      if (a.completed_at && b.completed_at) {
+      if (a.completed_at !== null && b.completed_at !== null) {
         const cmp = a.completed_at.localeCompare(b.completed_at);
         if (cmp !== 0) return cmp;
       }

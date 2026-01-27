@@ -47,7 +47,7 @@ export class MeditationSessionRepository {
     this.collectionName = getCollectionName('meditation_sessions');
   }
 
-  private get collection() {
+  private get collection(): FirebaseFirestore.CollectionReference<FirebaseFirestore.DocumentData> {
     return this.db.collection(this.collectionName);
   }
 

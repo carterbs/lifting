@@ -9,6 +9,7 @@ import { getCalendarService } from '../services/index.js';
 import { errorHandler } from '../middleware/error-handler.js';
 import { stripPathPrefix } from '../middleware/strip-path-prefix.js';
 import { requireAppCheck } from '../middleware/app-check.js';
+import { asyncHandler } from '../middleware/async-handler.js';
 
 const app = express();
 app.use(cors({ origin: true }));
@@ -47,7 +48,7 @@ function isValidTimezoneOffset(value: string | undefined): boolean {
  * Get calendar data for a specific month.
  * @query tz - Optional timezone offset in minutes (from Date.getTimezoneOffset())
  */
-app.get('/:year/:month', async (req: Request, res: Response): Promise<void> => {
+app.get('/:year/:month', asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const yearParam = req.params['year'] ?? '';
   const monthParam = req.params['month'] ?? '';
   const tzParam = req.query['tz'] as string | undefined;
@@ -99,7 +100,7 @@ app.get('/:year/:month', async (req: Request, res: Response): Promise<void> => {
       createErrorResponse('INTERNAL_ERROR', 'Failed to get calendar data')
     );
   }
-});
+}));
 
 // Error handler must be last
 app.use(errorHandler);

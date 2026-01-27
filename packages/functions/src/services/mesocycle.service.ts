@@ -371,7 +371,7 @@ export class MesocycleService {
       const workoutId = workoutIds[i];
       const sets = workoutsToCreate[i]?.sets ?? [];
 
-      if (!workoutId) continue;
+      if (workoutId === undefined) continue;
 
       for (const setData of sets) {
         const docRef = workoutSetsCollection.doc();

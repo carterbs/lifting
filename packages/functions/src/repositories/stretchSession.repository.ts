@@ -43,7 +43,7 @@ export class StretchSessionRepository {
     this.collectionName = getCollectionName('stretch_sessions');
   }
 
-  private get collection() {
+  private get collection(): FirebaseFirestore.CollectionReference<FirebaseFirestore.DocumentData> {
     return this.db.collection(this.collectionName);
   }
 
