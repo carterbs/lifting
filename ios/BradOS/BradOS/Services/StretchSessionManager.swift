@@ -86,7 +86,8 @@ class StretchSessionManager: ObservableObject {
     private var segmentStartedAt: Date?
     private var pausedElapsed: TimeInterval = 0
     private var pausedAt: Date?
-    private var timer: AnyCancellable?
+    private var timer: DispatchSourceTimer?
+    private let timerQueue = DispatchQueue(label: "com.bradcarter.brad-os.stretch-timer", qos: .userInteractive)
     private var skippedSegments: [String: Int] = [:]  // stretchId -> skipped count
 
     private let audioManager: StretchAudioManager
@@ -427,13 +428,17 @@ class StretchSessionManager: ObservableObject {
 
     private func startTimer() {
         timer?.cancel()
+        timer = nil
 
-        timer = Timer.publish(every: 0.1, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                guard let self = self else { return }
-                self.updateTimer()
+        let newTimer = DispatchSource.makeTimerSource(queue: timerQueue)
+        newTimer.schedule(deadline: .now(), repeating: .milliseconds(100))
+        newTimer.setEventHandler { [weak self] in
+            Task { @MainActor in
+                self?.updateTimer()
             }
+        }
+        newTimer.resume()
+        timer = newTimer
     }
 
     private func updateTimer() {
